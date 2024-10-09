@@ -203,6 +203,9 @@
      },
      "type": "array"
     },
+    "RestartPolicy": {
+     "$ref": "#/definitions/RestartPolicy"
+    },
     "Secrets": {
      "insertionOrder": false,
      "items": {
@@ -666,6 +669,25 @@
    ],
    "type": "object"
   },
+  "RestartPolicy": {
+   "additionalProperties": false,
+   "properties": {
+    "Enabled": {
+     "type": "boolean"
+    },
+    "IgnoredExitCodes": {
+     "insertionOrder": false,
+     "items": {
+      "type": "integer"
+     },
+     "type": "array"
+    },
+    "RestartAttemptPeriod": {
+     "type": "integer"
+    }
+   },
+   "type": "object"
+  },
   "RuntimePlatform": {
    "additionalProperties": false,
    "properties": {
@@ -810,46 +832,6 @@
     }
    },
    "type": "object"
-  }
- },
- "handlers": {
-  "create": {
-   "permissions": [
-    "ecs:RegisterTaskDefinition",
-    "ecs:DescribeTaskDefinition",
-    "ecs:TagResource",
-    "iam:GetRole",
-    "iam:PassRole"
-   ]
-  },
-  "delete": {
-   "permissions": [
-    "ecs:DeregisterTaskDefinition",
-    "ecs:DescribeTaskDefinition",
-    "iam:GetRole",
-    "iam:PassRole"
-   ]
-  },
-  "list": {
-   "permissions": [
-    "ecs:ListTaskDefinitions",
-    "ecs:DescribeTaskDefinition"
-   ]
-  },
-  "read": {
-   "permissions": [
-    "ecs:DescribeTaskDefinition"
-   ]
-  },
-  "update": {
-   "permissions": [
-    "ecs:TagResource",
-    "ecs:UntagResource",
-    "ecs:ListTagsForResource",
-    "ecs:DescribeTaskDefinition",
-    "iam:GetRole",
-    "iam:PassRole"
-   ]
   }
  },
  "primaryIdentifier": [

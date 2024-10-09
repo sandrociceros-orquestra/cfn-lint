@@ -5,6 +5,12 @@
   "value": [
    {
     "if": {
+     "properties": {
+      "LocalSecondaryIndexes": {
+       "minItems": 1,
+       "type": "array"
+      }
+     },
      "required": [
       "LocalSecondaryIndexes"
      ],
@@ -23,5 +29,21 @@
     }
    }
   ]
+ },
+ {
+  "op": "add",
+  "path": "/definitions/SSESpecification/properties/SSEType/enum",
+  "value": [
+   "KMS"
+  ]
+ },
+ {
+  "op": "add",
+  "path": "/definitions/SSESpecification/dependentRequired",
+  "value": {
+   "KMSMasterKeyId": [
+    "SSEType"
+   ]
+  }
  }
 ]

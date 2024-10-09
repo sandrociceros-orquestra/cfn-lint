@@ -230,62 +230,6 @@
    "type": "array"
   }
  },
- "handlers": {
-  "create": {
-   "permissions": [
-    "lightsail:CreateInstances",
-    "lightsail:GetInstances",
-    "lightsail:EnableAddOn",
-    "lightsail:GetInstance",
-    "lightsail:DisableAddOn",
-    "lightsail:PutInstancePublicPorts",
-    "lightsail:AttachDisk",
-    "lightsail:DetachDisk",
-    "lightsail:StartInstance",
-    "lightsail:StopInstance",
-    "lightsail:GetDisk",
-    "lightsail:GetRegions",
-    "lightsail:TagResource",
-    "lightsail:UntagResource"
-   ]
-  },
-  "delete": {
-   "permissions": [
-    "lightsail:GetInstances",
-    "lightsail:GetInstance",
-    "lightsail:DeleteInstance"
-   ]
-  },
-  "list": {
-   "permissions": [
-    "lightsail:GetInstances"
-   ]
-  },
-  "read": {
-   "permissions": [
-    "lightsail:GetInstances",
-    "lightsail:GetInstance"
-   ]
-  },
-  "update": {
-   "permissions": [
-    "lightsail:GetInstances",
-    "lightsail:GetInstance",
-    "lightsail:DeleteInstance",
-    "lightsail:EnableAddOn",
-    "lightsail:DisableAddOn",
-    "lightsail:PutInstancePublicPorts",
-    "lightsail:AttachDisk",
-    "lightsail:DetachDisk",
-    "lightsail:StartInstance",
-    "lightsail:StopInstance",
-    "lightsail:GetDisk",
-    "lightsail:TagResource",
-    "lightsail:UntagResource"
-   ],
-   "timeoutInMinutes": 2160
-  }
- },
  "primaryIdentifier": [
   "/properties/InstanceName"
  ],
@@ -400,7 +344,13 @@
   "BundleId"
  ],
  "sourceUrl": "https://github.com/aws-cloudformation/aws-cloudformation-resource-providers-lightsail.git",
- "taggable": true,
+ "tagging": {
+  "cloudFormationSystemTags": false,
+  "tagOnCreate": true,
+  "tagProperty": "/properties/Tags",
+  "tagUpdatable": true,
+  "taggable": true
+ },
  "typeName": "AWS::Lightsail::Instance",
  "writeOnlyProperties": [
   "/properties/UserData"

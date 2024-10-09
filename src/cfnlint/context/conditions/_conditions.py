@@ -34,14 +34,16 @@ class Conditions:
 
     @classmethod
     def create_from_instance(
-        cls, conditions: Any, parameters: dict[str, "Parameter"]
+        cls, conditions: Any, rules: dict[str, dict], parameters: dict[str, "Parameter"]
     ) -> "Conditions":
         obj: dict[str, Condition] = {}
         if not isinstance(conditions, dict):
             raise ValueError("Conditions must be a object")
         for k, v in conditions.items():
             try:
-                obj[k] = Condition.create_from_instance(v, conditions)
+                other_conditions = conditions.copy()
+                del other_conditions[k]
+                obj[k] = Condition.create_from_instance(v, other_conditions)
             except ValueError:
                 # this is a default condition so we can keep the name but it will
                 # not associate with another condition and will always be true/false

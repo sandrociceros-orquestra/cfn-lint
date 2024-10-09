@@ -1719,68 +1719,6 @@
    "type": "string"
   }
  },
- "handlers": {
-  "create": {
-   "permissions": [
-    "pipes:CreatePipe",
-    "pipes:DescribePipe",
-    "pipes:TagResource",
-    "iam:PassRole",
-    "logs:PutResourcePolicy",
-    "logs:DescribeResourcePolicies",
-    "logs:DescribeLogGroups",
-    "iam:CreateServiceLinkedRole",
-    "logs:CreateLogDelivery",
-    "logs:GetLogDelivery",
-    "logs:ListLogDeliveries",
-    "s3:PutBucketPolicy",
-    "s3:GetBucketPolicy",
-    "firehose:TagDeliveryStream"
-   ]
-  },
-  "delete": {
-   "permissions": [
-    "pipes:DeletePipe",
-    "pipes:DescribePipe",
-    "logs:CreateLogDelivery",
-    "logs:UpdateLogDelivery",
-    "logs:DeleteLogDelivery",
-    "logs:GetLogDelivery",
-    "logs:ListLogDeliveries"
-   ]
-  },
-  "list": {
-   "permissions": [
-    "pipes:ListPipes"
-   ]
-  },
-  "read": {
-   "permissions": [
-    "pipes:DescribePipe"
-   ]
-  },
-  "update": {
-   "permissions": [
-    "pipes:UpdatePipe",
-    "pipes:TagResource",
-    "pipes:UntagResource",
-    "pipes:DescribePipe",
-    "iam:PassRole",
-    "logs:PutResourcePolicy",
-    "logs:DescribeResourcePolicies",
-    "logs:DescribeLogGroups",
-    "iam:CreateServiceLinkedRole",
-    "logs:CreateLogDelivery",
-    "logs:UpdateLogDelivery",
-    "logs:DeleteLogDelivery",
-    "logs:GetLogDelivery",
-    "logs:ListLogDeliveries",
-    "s3:PutBucketPolicy",
-    "s3:GetBucketPolicy",
-    "firehose:TagDeliveryStream"
-   ]
-  }
- },
  "primaryIdentifier": [
   "/properties/Name"
  ],
@@ -1815,6 +1753,11 @@
   },
   "EnrichmentParameters": {
    "$ref": "#/definitions/PipeEnrichmentParameters"
+  },
+  "KmsKeyIdentifier": {
+   "maxLength": 2048,
+   "minLength": 0,
+   "type": "string"
   },
   "LastModifiedTime": {
    "format": "date-time",

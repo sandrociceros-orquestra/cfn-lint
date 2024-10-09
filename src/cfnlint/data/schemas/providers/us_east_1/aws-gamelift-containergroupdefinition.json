@@ -279,44 +279,6 @@
    "type": "object"
   }
  },
- "handlers": {
-  "create": {
-   "permissions": [
-    "gamelift:CreateContainerGroupDefinition",
-    "gamelift:DescribeContainerGroupDefinition",
-    "gamelift:ListTagsForResource",
-    "gamelift:TagResource",
-    "ecr:BatchCheckLayerAvailability",
-    "ecr:BatchGetImage",
-    "ecr:GetDownloadUrlForLayer",
-    "ecr:DescribeImages"
-   ]
-  },
-  "delete": {
-   "permissions": [
-    "gamelift:DescribeContainerGroupDefinition",
-    "gamelift:DeleteContainerGroupDefinition"
-   ]
-  },
-  "list": {
-   "permissions": [
-    "gamelift:ListContainerGroupDefinitions"
-   ]
-  },
-  "read": {
-   "permissions": [
-    "gamelift:DescribeContainerGroupDefinition",
-    "gamelift:ListTagsForResource"
-   ]
-  },
-  "update": {
-   "permissions": [
-    "gamelift:ListTagsForResource",
-    "gamelift:TagResource",
-    "gamelift:UntagResource"
-   ]
-  }
- },
  "primaryIdentifier": [
   "/properties/Name"
  ],
@@ -334,7 +296,7 @@
   "ContainerGroupDefinitionArn": {
    "maxLength": 512,
    "minLength": 1,
-   "pattern": "^arn:.*:containergroupdefinition/containergroupdefinition-[a-zA-Z0-9-]+$",
+   "pattern": "^arn:.*:containergroupdefinition/containergroupdefinition-[a-zA-Z0-9-]+$|^arn:.*:containergroupdefinition/[a-zA-Z0-9-\\:]+$",
    "type": "string"
   },
   "CreationTime": {

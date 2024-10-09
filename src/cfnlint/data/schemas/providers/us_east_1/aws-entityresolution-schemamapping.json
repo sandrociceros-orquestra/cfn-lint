@@ -35,7 +35,7 @@
    "items": {
     "$ref": "#/definitions/SchemaInputAttribute"
    },
-   "maxItems": 25,
+   "maxItems": 35,
    "minItems": 2,
    "type": "array"
   },
@@ -118,41 +118,6 @@
   },
   "UpdatedAt": {
    "type": "string"
-  }
- },
- "handlers": {
-  "create": {
-   "permissions": [
-    "entityresolution:CreateSchemaMapping",
-    "entityresolution:GetSchemaMapping",
-    "entityresolution:TagResource"
-   ]
-  },
-  "delete": {
-   "permissions": [
-    "entityresolution:DeleteSchemaMapping",
-    "entityresolution:GetSchemaMapping"
-   ]
-  },
-  "list": {
-   "permissions": [
-    "entityresolution:ListSchemaMappings"
-   ]
-  },
-  "read": {
-   "permissions": [
-    "entityresolution:GetSchemaMapping",
-    "entityresolution:ListTagsForResource"
-   ]
-  },
-  "update": {
-   "permissions": [
-    "entityresolution:GetSchemaMapping",
-    "entityresolution:UpdateSchemaMapping",
-    "entityresolution:ListTagsForResource",
-    "entityresolution:TagResource",
-    "entityresolution:UntagResource"
-   ]
   }
  },
  "primaryIdentifier": [

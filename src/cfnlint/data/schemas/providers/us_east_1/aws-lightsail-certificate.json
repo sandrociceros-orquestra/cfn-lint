@@ -26,39 +26,6 @@
    "type": "object"
   }
  },
- "handlers": {
-  "create": {
-   "permissions": [
-    "lightsail:CreateCertificate",
-    "lightsail:GetCertificates",
-    "lightsail:TagResource",
-    "lightsail:UntagResource"
-   ]
-  },
-  "delete": {
-   "permissions": [
-    "lightsail:DeleteCertificate",
-    "lightsail:GetCertificates"
-   ]
-  },
-  "list": {
-   "permissions": [
-    "lightsail:GetCertificates"
-   ]
-  },
-  "read": {
-   "permissions": [
-    "lightsail:GetCertificates"
-   ]
-  },
-  "update": {
-   "permissions": [
-    "lightsail:GetCertificates",
-    "lightsail:TagResource",
-    "lightsail:UntagResource"
-   ]
-  }
- },
  "primaryIdentifier": [
   "/properties/CertificateName"
  ],
@@ -101,6 +68,12 @@
   "DomainName"
  ],
  "sourceUrl": "https://github.com/aws-cloudformation/aws-cloudformation-rpdk.git",
- "taggable": true,
+ "tagging": {
+  "cloudFormationSystemTags": false,
+  "tagOnCreate": true,
+  "tagProperty": "/properties/Tags",
+  "tagUpdatable": true,
+  "taggable": true
+ },
  "typeName": "AWS::Lightsail::Certificate"
 }

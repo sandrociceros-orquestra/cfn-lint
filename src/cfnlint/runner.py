@@ -223,6 +223,7 @@ class Runner:
                 settings for the template scan.
         """
         self.config = config
+        self.config.templates
         self.formatter = get_formatter(self.config)
         self.rules: Rules = Rules()
         self._get_rules()
@@ -293,12 +294,9 @@ class Runner:
                     "E0000".startswith(x) for x in self.config.ignore_checks
                 ):
                     matches = [match for match in matches if match.rule.id != "E0000"]
-                    if matches:
-                        yield from iter(matches)
-                    return
-                else:
-                    yield from iter(matches)
-                    return
+
+                yield from iter(matches)
+                continue
             yield from self.validate_template(filename, template)  # type: ignore[arg-type] # noqa: E501
 
     def validate_template(
@@ -391,7 +389,8 @@ class Runner:
         Raises:
             None: This function does not raise any exceptions.
         """
-        if not sys.stdin.isatty() and not self.config.templates:
+
+        if (not sys.stdin.isatty()) and (not self.config.templates_to_process):
             yield from self._validate_filenames([None])
             return
 
@@ -420,6 +419,10 @@ class Runner:
             cfnlint.maintenance.update_resource_specs(self.config.force)
             sys.exit(0)
 
+        if self.config.patch_specs:
+            cfnlint.maintenance.patch_resource_specs()
+            sys.exit(0)
+
         if self.config.update_iam_policies:
             cfnlint.maintenance.update_iam_policies()
             sys.exit(0)
@@ -433,7 +436,7 @@ class Runner:
             print(self.rules)
             sys.exit(0)
 
-        if not self.config.templates:
+        if not self.config.templates_to_process:
             if sys.stdin.isatty():
                 self.config.parser.print_help()
                 sys.exit(1)

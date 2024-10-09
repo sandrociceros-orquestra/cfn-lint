@@ -33,43 +33,21 @@
    "type": "object"
   }
  },
- "handlers": {
-  "create": {
-   "permissions": [
-    "ec2:DescribeSubnets",
-    "ec2:CreateSubnet",
-    "ec2:CreateTags",
-    "ec2:ModifySubnetAttribute"
-   ]
-  },
-  "delete": {
-   "permissions": [
-    "ec2:DescribeSubnets",
-    "ec2:DeleteSubnet"
-   ]
-  },
-  "list": {
-   "permissions": [
-    "ec2:DescribeSubnets",
-    "ec2:DescribeNetworkAcls"
-   ]
-  },
-  "read": {
-   "permissions": [
-    "ec2:DescribeSubnets",
-    "ec2:DescribeNetworkAcls"
-   ]
-  },
-  "update": {
-   "permissions": [
-    "ec2:DescribeSubnets",
-    "ec2:ModifySubnetAttribute",
-    "ec2:CreateTags",
-    "ec2:DeleteTags",
-    "ec2:AssociateSubnetCidrBlock",
-    "ec2:DisassociateSubnetCidrBlock"
-   ]
-  }
+ "dependentExcluded": {
+  "AvailabilityZone": [
+   "AvailabilityZoneId"
+  ],
+  "AvailabilityZoneId": [
+   "AvailabilityZone"
+  ]
+ },
+ "dependentRequired": {
+  "Ipv4IpamPoolId": [
+   "Ipv4NetmaskLength"
+  ],
+  "Ipv4NetmaskLength": [
+   "Ipv4IpamPoolId"
+  ]
  },
  "primaryIdentifier": [
   "/properties/SubnetId"
@@ -159,10 +137,15 @@
  },
  "readOnlyProperties": [
   "/properties/NetworkAclAssociationId",
-  "/properties/SubnetId"
+  "/properties/SubnetId",
+  "/properties/Ipv6CidrBlocks"
  ],
  "required": [
   "VpcId"
+ ],
+ "requiredXor": [
+  "CidrBlock",
+  "Ipv4IpamPoolId"
  ],
  "tagging": {
   "cloudFormationSystemTags": true,

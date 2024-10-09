@@ -82,54 +82,60 @@ class GetAtt(BaseFn):
                 yield err
                 break
             else:
-                for attribute_name, _, _ in validator.resolve_value(value[1]):
-                    if all(
-                        not (bool(re.fullmatch(each, attribute_name)))
-                        for each in validator.context.resources[resource_name].get_atts
-                    ):
-                        err = ValidationError(
-                            (
-                                f"{attribute_name!r} is not one of "
-                                f"{validator.context.resources[resource_name].get_atts!r}"
-                            ),
-                            validator=self.fn.py,
-                            path=deque([self.fn.name, 1]),
-                        )
-                        if attribute_name != value[1]:
-                            err.message = (
-                                err.message + f" when {value[1]!r} is resolved"
+                t = validator.context.resources[resource_name].type
+                for (
+                    regions,
+                    schema,
+                ) in PROVIDER_SCHEMA_MANAGER.get_resource_schemas_by_regions(
+                    t, validator.context.regions
+                ):
+                    region = regions[0]
+                    for attribute_name, _, _ in validator.resolve_value(value[1]):
+                        if all(
+                            not (bool(re.fullmatch(each, attribute_name)))
+                            for each in validator.context.resources[
+                                resource_name
+                            ].get_atts(region)
+                        ):
+                            err = ValidationError(
+                                (
+                                    f"{attribute_name!r} is not one of "
+                                    f"{validator.context.resources[resource_name].get_atts(region)!r}"
+                                    f" in {regions!r}"
+                                ),
+                                validator=self.fn.py,
+                                path=deque([self.fn.name, 1]),
                             )
-                        yield err
-                        continue
+                            if attribute_name != value[1]:
+                                err.message = (
+                                    err.message + f" when {value[1]!r} is resolved"
+                                )
+                            yield err
+                            continue
 
-                    evolved = validator.evolve(schema=s)  # type: ignore
-                    evolved.validators = {  # type: ignore
-                        "type": validator.validators.get("type"),  # type: ignore
-                    }
+                        evolved = validator.evolve(schema=s)  # type: ignore
+                        evolved.validators = {  # type: ignore
+                            "type": validator.validators.get("type"),  # type: ignore
+                        }
 
-                    getatts = validator.cfn.get_valid_getatts()
-                    t = validator.context.resources[resource_name].type
-                    pointer = getatts.match(
-                        validator.context.regions[0], [resource_name, attribute_name]
-                    )
+                        getatts = validator.cfn.get_valid_getatts()
+                        t = validator.context.resources[resource_name].type
+                        pointer = getatts.match(region, [resource_name, attribute_name])
 
-                    for (
-                        _,
-                        schema,
-                    ) in PROVIDER_SCHEMA_MANAGER.get_resource_schemas_by_regions(
-                        t, validator.context.regions
-                    ):
                         getatt_schema = schema.resolver.resolve_cfn_pointer(pointer)
                         if not getatt_schema.get("type") or not s.get("type"):
                             continue
 
                         schema_types = ensure_list(getatt_schema.get("type"))
-
                         types = ensure_list(s.get("type"))
 
-                        if is_types_compatible(
-                            types, schema_types, validator.context.strict_types
-                        ):
+                        # GetAtt type checking is strict.
+                        # It must match in all cases
+                        if any(t in ["boolean", "integer", "boolean"] for t in types):
+                            # this should be switched to validate the value of the
+                            # property if it was available
+                            continue
+                        if is_types_compatible(types, schema_types, True):
                             continue
 
                         reprs = ", ".join(repr(type) for type in types)

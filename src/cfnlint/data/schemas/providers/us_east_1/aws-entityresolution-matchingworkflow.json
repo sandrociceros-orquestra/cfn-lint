@@ -24,6 +24,21 @@
    "pattern": "^[a-zA-Z_0-9-]*$",
    "type": "string"
   },
+  "IncrementalRunConfig": {
+   "additionalProperties": false,
+   "properties": {
+    "IncrementalRunType": {
+     "enum": [
+      "IMMEDIATE"
+     ],
+     "type": "string"
+    }
+   },
+   "required": [
+    "IncrementalRunType"
+   ],
+   "type": "object"
+  },
   "InputSource": {
    "additionalProperties": false,
    "properties": {
@@ -242,48 +257,6 @@
    "type": "string"
   }
  },
- "handlers": {
-  "create": {
-   "permissions": [
-    "entityresolution:CreateMatchingWorkflow",
-    "entityresolution:GetMatchingWorkflow",
-    "entityresolution:TagResource",
-    "kms:CreateGrant",
-    "kms:DescribeKey",
-    "iam:PassRole"
-   ]
-  },
-  "delete": {
-   "permissions": [
-    "entityresolution:DeleteMatchingWorkflow",
-    "entityresolution:GetMatchingWorkflow",
-    "entityresolution:UntagResource"
-   ]
-  },
-  "list": {
-   "permissions": [
-    "entityresolution:ListMatchingWorkflows"
-   ]
-  },
-  "read": {
-   "permissions": [
-    "entityresolution:GetMatchingWorkflow",
-    "entityresolution:ListTagsForResource"
-   ]
-  },
-  "update": {
-   "permissions": [
-    "entityresolution:GetMatchingWorkflow",
-    "entityresolution:UpdateMatchingWorkflow",
-    "entityresolution:ListTagsForResource",
-    "entityresolution:TagResource",
-    "entityresolution:UntagResource",
-    "iam:PassRole",
-    "kms:CreateGrant",
-    "kms:DescribeKey"
-   ]
-  }
- },
  "primaryIdentifier": [
   "/properties/WorkflowName"
  ],
@@ -293,6 +266,9 @@
   },
   "Description": {
    "$ref": "#/definitions/Description"
+  },
+  "IncrementalRunConfig": {
+   "$ref": "#/definitions/IncrementalRunConfig"
   },
   "InputSourceConfig": {
    "insertionOrder": false,

@@ -637,6 +637,18 @@
   },
   "NetworkInterface": {
    "additionalProperties": false,
+   "dependentExcluded": {
+    "AssociateCarrierIpAddress": [
+     "NetworkInterfaceId"
+    ],
+    "AssociatePublicIpAddress": [
+     "NetworkInterfaceId"
+    ],
+    "NetworkInterfaceId": [
+     "AssociateCarrierIpAddress",
+     "AssociatePublicIpAddress"
+    ]
+   },
    "properties": {
     "AssociateCarrierIpAddress": {
      "type": "boolean"
@@ -978,36 +990,6 @@
     }
    },
    "type": "object"
-  }
- },
- "handlers": {
-  "create": {
-   "permissions": [
-    "ec2:CreateLaunchTemplate",
-    "ec2:CreateTags"
-   ]
-  },
-  "delete": {
-   "permissions": [
-    "ec2:DeleteLaunchTemplate",
-    "ec2:DeleteTags",
-    "ec2:DescribeLaunchTemplates"
-   ]
-  },
-  "list": {
-   "permissions": [
-    "ec2:DescribeLaunchTemplates"
-   ]
-  },
-  "read": {
-   "permissions": [
-    "ec2:DescribeLaunchTemplates"
-   ]
-  },
-  "update": {
-   "permissions": [
-    "ec2:CreateLaunchTemplateVersion"
-   ]
   }
  },
  "primaryIdentifier": [

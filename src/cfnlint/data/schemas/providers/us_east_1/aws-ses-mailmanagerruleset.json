@@ -631,6 +631,20 @@
      ],
      "title": "Attribute",
      "type": "object"
+    },
+    {
+     "additionalProperties": false,
+     "properties": {
+      "MimeHeaderAttribute": {
+       "pattern": "^X-[a-zA-Z0-9-]{1,256}$",
+       "type": "string"
+      }
+     },
+     "required": [
+      "MimeHeaderAttribute"
+     ],
+     "title": "MimeHeaderAttribute",
+     "type": "object"
     }
    ]
   },
@@ -790,42 +804,6 @@
    "type": "object"
   }
  },
- "handlers": {
-  "create": {
-   "permissions": [
-    "ses:TagResource",
-    "ses:ListTagsForResource",
-    "ses:GetRuleSet",
-    "ses:CreateRuleSet"
-   ]
-  },
-  "delete": {
-   "permissions": [
-    "ses:GetRuleSet",
-    "ses:DeleteRuleSet"
-   ]
-  },
-  "list": {
-   "permissions": [
-    "ses:ListRuleSets"
-   ]
-  },
-  "read": {
-   "permissions": [
-    "ses:ListTagsForResource",
-    "ses:GetRuleSet"
-   ]
-  },
-  "update": {
-   "permissions": [
-    "ses:TagResource",
-    "ses:UntagResource",
-    "ses:ListTagsForResource",
-    "ses:GetRuleSet",
-    "ses:UpdateRuleSet"
-   ]
-  }
- },
  "primaryIdentifier": [
   "/properties/RuleSetId"
  ],
@@ -871,10 +849,6 @@
  "sourceUrl": "https://github.com/aws-cloudformation/aws-cloudformation-resource-providers-ses-mailmanager",
  "tagging": {
   "cloudFormationSystemTags": true,
-  "permissions": [
-   "ses:TagResource",
-   "ses:UntagResource"
-  ],
   "tagOnCreate": true,
   "tagProperty": "/properties/Tags",
   "tagUpdatable": true,

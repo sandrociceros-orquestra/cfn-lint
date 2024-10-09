@@ -3,31 +3,6 @@
  "createOnlyProperties": [
   "/properties/ResourceIdentifier"
  ],
- "handlers": {
-  "create": {
-   "permissions": [
-    "vpc-lattice:GetAuthPolicy",
-    "vpc-lattice:PutAuthPolicy"
-   ]
-  },
-  "delete": {
-   "permissions": [
-    "vpc-lattice:GetAuthPolicy",
-    "vpc-lattice:DeleteAuthPolicy"
-   ]
-  },
-  "read": {
-   "permissions": [
-    "vpc-lattice:GetAuthPolicy"
-   ]
-  },
-  "update": {
-   "permissions": [
-    "vpc-lattice:GetAuthPolicy",
-    "vpc-lattice:PutAuthPolicy"
-   ]
-  }
- },
  "primaryIdentifier": [
   "/properties/ResourceIdentifier"
  ],
@@ -41,7 +16,7 @@
   },
   "ResourceIdentifier": {
    "maxLength": 200,
-   "minLength": 21,
+   "minLength": 17,
    "pattern": "^((((sn)|(svc))-[0-9a-z]{17})|(arn(:[a-z0-9]+([.-][a-z0-9]+)*){2}(:([a-z0-9]+([.-][a-z0-9]+)*)?){2}:((servicenetwork/sn)|(service/svc))-[0-9a-z]{17}))$",
    "type": "string"
   },

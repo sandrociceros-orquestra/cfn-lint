@@ -43,30 +43,6 @@
    "type": "object"
   }
  },
- "handlers": {
-  "create": {
-   "permissions": [
-    "omics:CreateReferenceStore",
-    "omics:TagResource"
-   ]
-  },
-  "delete": {
-   "permissions": [
-    "omics:DeleteReferenceStore"
-   ]
-  },
-  "list": {
-   "permissions": [
-    "omics:ListReferenceStores"
-   ]
-  },
-  "read": {
-   "permissions": [
-    "omics:GetReferenceStore",
-    "omics:ListTagsForResource"
-   ]
-  }
- },
  "primaryIdentifier": [
   "/properties/ReferenceStoreId"
  ],

@@ -22,41 +22,6 @@
    "type": "object"
   }
  },
- "handlers": {
-  "create": {
-   "permissions": [
-    "ivs:CreateChannel",
-    "ivs:TagResource"
-   ]
-  },
-  "delete": {
-   "permissions": [
-    "ivs:DeleteChannel",
-    "ivs:UnTagResource"
-   ]
-  },
-  "list": {
-   "permissions": [
-    "ivs:ListChannels",
-    "ivs:ListTagsForResource"
-   ]
-  },
-  "read": {
-   "permissions": [
-    "ivs:GetChannel",
-    "ivs:ListTagsForResource"
-   ]
-  },
-  "update": {
-   "permissions": [
-    "ivs:GetChannel",
-    "ivs:UpdateChannel",
-    "ivs:TagResource",
-    "ivs:UnTagResource",
-    "ivs:ListTagsForResource"
-   ]
-  }
- },
  "primaryIdentifier": [
   "/properties/Arn"
  ],
@@ -98,6 +63,7 @@
   },
   "Preset": {
    "enum": [
+    "",
     "HIGHER_BANDWIDTH_DELIVERY",
     "CONSTRAINED_BANDWIDTH_DELIVERY"
    ],

@@ -22,39 +22,6 @@
    "type": "object"
   }
  },
- "handlers": {
-  "create": {
-   "permissions": [
-    "ec2:CreateVpnGateway",
-    "ec2:DescribeVpnGateways",
-    "ec2:CreateTags"
-   ]
-  },
-  "delete": {
-   "permissions": [
-    "ec2:DeleteVpnGateway",
-    "ec2:DescribeVpnGateways",
-    "ec2:DeleteTags"
-   ]
-  },
-  "list": {
-   "permissions": [
-    "ec2:DescribeVpnGateways"
-   ]
-  },
-  "read": {
-   "permissions": [
-    "ec2:DescribeVpnGateways"
-   ]
-  },
-  "update": {
-   "permissions": [
-    "ec2:DescribeVpnGateways",
-    "ec2:CreateTags",
-    "ec2:DeleteTags"
-   ]
-  }
- },
  "primaryIdentifier": [
   "/properties/VPNGatewayId"
  ],

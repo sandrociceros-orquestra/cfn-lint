@@ -39,6 +39,7 @@ class TestFormatters(BaseTestCase):
         super().setUp()
         self.rules = Rules.create_from_directory(cfnlint.config._DEFAULT_RULESDIR)
         self.filename = str(Path("test/fixtures/templates/bad/formatters.yaml"))
+        self.sarif_schema = str(Path("test/fixtures/schemas/sarif/schema-2.1.0.json"))
         self.config = ConfigMixIn(
             cli_args=[
                 "--include-checks",
@@ -213,6 +214,20 @@ class TestFormatters(BaseTestCase):
                 ),
             )
 
+    def test_pretty_formatter_pipe(self):
+        """Test pretty formatter"""
+        formatter = PrettyFormatter()
+        self.config.cli_args.templates = None
+        results = formatter.print_matches(
+            self.results, rules=self.rules, config=self.config
+        ).splitlines()
+
+        if sys.stdout.isatty():
+            self.assertIn("Cfn-lint scanned 1 templates", results[5])
+        else:
+            # Check the errors
+            self.assertIn("Cfn-lint scanned 1 templates", results[5])
+
     def test_json_formatter(self):
         """Test JSON formatter"""
         formatter = JsonFormatter()
@@ -295,8 +310,10 @@ class TestFormatters(BaseTestCase):
             formatter.print_matches(self.results, self.rules, self.config)
         )
 
+        with open(self.sarif_schema, encoding="utf-8") as f:
+            schema = json.load(f)
         # Fetch the SARIF schema
-        schema = json.loads(cfnlint.helpers.get_url_content(sarif["$schema"], False))
+        # schema = json.loads(cfnlint.helpers.get_url_content(sarif["$schema"], False))
         validator = StandardValidator(schema=schema)
         validator.validate(sarif)
 

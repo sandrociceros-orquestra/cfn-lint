@@ -103,47 +103,6 @@
    "type": "object"
   }
  },
- "handlers": {
-  "create": {
-   "permissions": [
-    "guardduty:CreateFilter",
-    "guardduty:GetFilter",
-    "guardduty:TagResource"
-   ]
-  },
-  "delete": {
-   "permissions": [
-    "guardduty:ListDetectors",
-    "guardduty:ListFilters",
-    "guardduty:GetFilter",
-    "guardduty:DeleteFilter"
-   ]
-  },
-  "list": {
-   "handlerSchema": {
-    "properties": {
-     "DetectorId": {
-      "type": "string"
-     }
-    }
-   },
-   "permissions": [
-    "guardduty:ListFilters"
-   ]
-  },
-  "read": {
-   "permissions": [
-    "guardduty:GetFilter"
-   ]
-  },
-  "update": {
-   "permissions": [
-    "guardduty:UpdateFilter",
-    "guardduty:GetFilter",
-    "guardduty:ListFilters"
-   ]
-  }
- },
  "primaryIdentifier": [
   "/properties/DetectorId",
   "/properties/Name"
@@ -178,6 +137,7 @@
    "type": "integer"
   },
   "Tags": {
+   "insertionOrder": false,
    "items": {
     "$ref": "#/definitions/TagItem"
    },
@@ -192,7 +152,8 @@
  "tagging": {
   "cloudFormationSystemTags": false,
   "tagOnCreate": true,
-  "tagUpdatable": false,
+  "tagProperty": "/properties/Tags",
+  "tagUpdatable": true,
   "taggable": true
  },
  "typeName": "AWS::GuardDuty::Filter"

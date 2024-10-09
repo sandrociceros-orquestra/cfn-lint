@@ -19,7 +19,7 @@
      "type": "string"
     },
     "Expression": {
-     "maxLength": 4096,
+     "maxLength": 250000,
      "minLength": 1,
      "type": "string"
     }
@@ -197,9 +197,6 @@
      "$ref": "#/definitions/RefreshConfiguration"
     }
    },
-   "required": [
-    "RefreshConfiguration"
-   ],
    "type": "object"
   },
   "DataSetUsageConfiguration": {
@@ -616,8 +613,7 @@
     }
    },
    "required": [
-    "Alias",
-    "Source"
+    "Alias"
    ],
    "type": "object"
   },
@@ -1224,66 +1220,6 @@
    "type": "object"
   }
  },
- "handlers": {
-  "create": {
-   "permissions": [
-    "quicksight:DescribeDataSet",
-    "quicksight:DescribeDataSetPermissions",
-    "quicksight:DescribeIngestion",
-    "quicksight:ListIngestions",
-    "quicksight:CreateDataSet",
-    "quicksight:PassDataSource",
-    "quicksight:PassDataSet",
-    "quicksight:TagResource",
-    "quicksight:ListTagsForResource",
-    "quicksight:DescribeDataSetRefreshProperties",
-    "quicksight:PutDataSetRefreshProperties"
-   ]
-  },
-  "delete": {
-   "permissions": [
-    "quicksight:DescribeDataSet",
-    "quicksight:DeleteDataSet",
-    "quicksight:ListTagsForResource",
-    "quicksight:DescribeIngestion",
-    "quicksight:DeleteDataSetRefreshProperties",
-    "quicksight:DescribeDataSetRefreshProperties"
-   ]
-  },
-  "list": {
-   "permissions": [
-    "quicksight:DescribeDataSet",
-    "quicksight:ListDataSets"
-   ]
-  },
-  "read": {
-   "permissions": [
-    "quicksight:DescribeDataSet",
-    "quicksight:DescribeDataSetPermissions",
-    "quicksight:ListTagsForResource",
-    "quicksight:DescribeDataSetRefreshProperties"
-   ]
-  },
-  "update": {
-   "permissions": [
-    "quicksight:DescribeDataSet",
-    "quicksight:DescribeDataSetPermissions",
-    "quicksight:PassDataSource",
-    "quicksight:UpdateDataSet",
-    "quicksight:UpdateDataSetPermissions",
-    "quicksight:PassDataSet",
-    "quicksight:DescribeIngestion",
-    "quicksight:ListIngestions",
-    "quicksight:CancelIngestion",
-    "quicksight:TagResource",
-    "quicksight:UntagResource",
-    "quicksight:ListTagsForResource",
-    "quicksight:PutDataSetRefreshProperties",
-    "quicksight:DescribeDataSetRefreshProperties",
-    "quicksight:DeleteDataSetRefreshProperties"
-   ]
-  }
- },
  "primaryIdentifier": [
   "/properties/AwsAccountId",
   "/properties/DataSetId"
@@ -1340,6 +1276,14 @@
   },
   "FieldFolders": {
    "$ref": "#/definitions/FieldFolderMap"
+  },
+  "FolderArns": {
+   "items": {
+    "type": "string"
+   },
+   "maxItems": 10,
+   "minItems": 0,
+   "type": "array"
   },
   "ImportMode": {
    "$ref": "#/definitions/DataSetImportMode"
@@ -1408,6 +1352,7 @@
  "typeName": "AWS::QuickSight::DataSet",
  "writeOnlyProperties": [
   "/properties/FieldFolders",
-  "/properties/IngestionWaitPolicy"
+  "/properties/IngestionWaitPolicy",
+  "/properties/FolderArns"
  ]
 }

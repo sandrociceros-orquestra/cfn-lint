@@ -145,51 +145,6 @@
    "type": "object"
   }
  },
- "handlers": {
-  "create": {
-   "permissions": [
-    "lightsail:AttachCertificateToDistribution",
-    "lightsail:CreateDistribution",
-    "lightsail:DetachCertificateFromDistribution",
-    "lightsail:GetCertificates",
-    "lightsail:GetCertificateDetails",
-    "lightsail:GetDistributions",
-    "lightsail:TagResource",
-    "lightsail:UntagResource",
-    "lightsail:UpdateDistribution",
-    "lightsail:UpdateDistributionBundle"
-   ]
-  },
-  "delete": {
-   "permissions": [
-    "lightsail:DeleteDistribution",
-    "lightsail:GetDistributions"
-   ]
-  },
-  "list": {
-   "permissions": [
-    "lightsail:GetDistributions"
-   ]
-  },
-  "read": {
-   "permissions": [
-    "lightsail:GetDistributions"
-   ]
-  },
-  "update": {
-   "permissions": [
-    "lightsail:AttachCertificateToDistribution",
-    "lightsail:DetachCertificateFromDistribution",
-    "lightsail:GetCertificates",
-    "lightsail:GetCertificateDetails",
-    "lightsail:GetDistributions",
-    "lightsail:TagResource",
-    "lightsail:UntagResource",
-    "lightsail:UpdateDistribution",
-    "lightsail:UpdateDistributionBundle"
-   ]
-  }
- },
  "primaryIdentifier": [
   "/properties/DistributionName"
  ],
@@ -257,6 +212,12 @@
   "Origin"
  ],
  "sourceUrl": "https://github.com/aws-cloudformation/aws-cloudformation-resource-providers-lightsail.git",
- "taggable": true,
+ "tagging": {
+  "cloudFormationSystemTags": false,
+  "tagOnCreate": true,
+  "tagProperty": "/properties/Tags",
+  "tagUpdatable": true,
+  "taggable": true
+ },
  "typeName": "AWS::Lightsail::Distribution"
 }

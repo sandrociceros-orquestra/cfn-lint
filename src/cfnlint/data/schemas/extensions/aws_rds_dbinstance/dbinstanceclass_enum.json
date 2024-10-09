@@ -4230,6 +4230,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t3.large",
         "db.t3.medium",
@@ -4287,6 +4294,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t3.large",
         "db.t3.medium",
@@ -4560,6 +4574,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t3.large",
         "db.t3.medium",
@@ -4618,6 +4639,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t3.large",
         "db.t3.medium",
@@ -4673,6 +4701,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.t3.large",
         "db.t3.medium",
         "db.t3.small",
@@ -4730,6 +4765,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.t3.large",
         "db.t3.medium",
         "db.t3.small",
@@ -7778,6 +7820,13 @@
         "db.r6i.xlarge",
         "db.r6id.24xlarge",
         "db.r6id.32xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t3.large",
         "db.t3.medium",
@@ -7849,9 +7898,320 @@
         "db.r6i.xlarge",
         "db.r6id.24xlarge",
         "db.r6id.32xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t3.large",
         "db.t3.medium",
+        "db.t4g.large",
+        "db.t4g.medium"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "aurora-mysql"
+      },
+      "LicenseModel": false
+     },
+     "required": [
+      "Engine",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.r3.2xlarge",
+        "db.r3.4xlarge",
+        "db.r3.8xlarge",
+        "db.r3.large",
+        "db.r3.xlarge",
+        "db.r4.16xlarge",
+        "db.r4.2xlarge",
+        "db.r4.4xlarge",
+        "db.r4.8xlarge",
+        "db.r4.large",
+        "db.r4.xlarge",
+        "db.r5.12xlarge",
+        "db.r5.16xlarge",
+        "db.r5.24xlarge",
+        "db.r5.2xlarge",
+        "db.r5.4xlarge",
+        "db.r5.8xlarge",
+        "db.r5.large",
+        "db.r5.xlarge",
+        "db.r6g.12xlarge",
+        "db.r6g.16xlarge",
+        "db.r6g.2xlarge",
+        "db.r6g.4xlarge",
+        "db.r6g.8xlarge",
+        "db.r6g.large",
+        "db.r6g.xlarge",
+        "db.r6i.12xlarge",
+        "db.r6i.16xlarge",
+        "db.r6i.24xlarge",
+        "db.r6i.2xlarge",
+        "db.r6i.32xlarge",
+        "db.r6i.4xlarge",
+        "db.r6i.8xlarge",
+        "db.r6i.large",
+        "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
+        "db.serverless",
+        "db.t2.medium",
+        "db.t2.small",
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t3.small",
+        "db.t4g.large",
+        "db.t4g.medium"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "aurora-mysql"
+      },
+      "LicenseModel": {
+       "const": "general-public-license"
+      }
+     },
+     "required": [
+      "Engine",
+      "LicenseModel",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.r3.2xlarge",
+        "db.r3.4xlarge",
+        "db.r3.8xlarge",
+        "db.r3.large",
+        "db.r3.xlarge",
+        "db.r4.16xlarge",
+        "db.r4.2xlarge",
+        "db.r4.4xlarge",
+        "db.r4.8xlarge",
+        "db.r4.large",
+        "db.r4.xlarge",
+        "db.r5.12xlarge",
+        "db.r5.16xlarge",
+        "db.r5.24xlarge",
+        "db.r5.2xlarge",
+        "db.r5.4xlarge",
+        "db.r5.8xlarge",
+        "db.r5.large",
+        "db.r5.xlarge",
+        "db.r6g.12xlarge",
+        "db.r6g.16xlarge",
+        "db.r6g.2xlarge",
+        "db.r6g.4xlarge",
+        "db.r6g.8xlarge",
+        "db.r6g.large",
+        "db.r6g.xlarge",
+        "db.r6i.12xlarge",
+        "db.r6i.16xlarge",
+        "db.r6i.24xlarge",
+        "db.r6i.2xlarge",
+        "db.r6i.32xlarge",
+        "db.r6i.4xlarge",
+        "db.r6i.8xlarge",
+        "db.r6i.large",
+        "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
+        "db.serverless",
+        "db.t2.medium",
+        "db.t2.small",
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t3.small",
+        "db.t4g.large",
+        "db.t4g.medium"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "aurora"
+      },
+      "LicenseModel": false
+     },
+     "required": [
+      "Engine",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.r3.2xlarge",
+        "db.r3.4xlarge",
+        "db.r3.8xlarge",
+        "db.r3.large",
+        "db.r3.xlarge",
+        "db.r4.16xlarge",
+        "db.r4.2xlarge",
+        "db.r4.4xlarge",
+        "db.r4.8xlarge",
+        "db.r4.large",
+        "db.r4.xlarge",
+        "db.r5.12xlarge",
+        "db.r5.16xlarge",
+        "db.r5.24xlarge",
+        "db.r5.2xlarge",
+        "db.r5.4xlarge",
+        "db.r5.8xlarge",
+        "db.r5.large",
+        "db.r5.xlarge",
+        "db.r6g.12xlarge",
+        "db.r6g.16xlarge",
+        "db.r6g.2xlarge",
+        "db.r6g.4xlarge",
+        "db.r6g.8xlarge",
+        "db.r6g.large",
+        "db.r6g.xlarge",
+        "db.r6i.12xlarge",
+        "db.r6i.16xlarge",
+        "db.r6i.24xlarge",
+        "db.r6i.2xlarge",
+        "db.r6i.32xlarge",
+        "db.r6i.4xlarge",
+        "db.r6i.8xlarge",
+        "db.r6i.large",
+        "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
+        "db.t2.medium",
+        "db.t2.small",
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t3.small",
+        "db.t4g.large",
+        "db.t4g.medium"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "aurora"
+      },
+      "LicenseModel": {
+       "const": "general-public-license"
+      }
+     },
+     "required": [
+      "Engine",
+      "LicenseModel",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.r3.2xlarge",
+        "db.r3.4xlarge",
+        "db.r3.8xlarge",
+        "db.r3.large",
+        "db.r3.xlarge",
+        "db.r4.16xlarge",
+        "db.r4.2xlarge",
+        "db.r4.4xlarge",
+        "db.r4.8xlarge",
+        "db.r4.large",
+        "db.r4.xlarge",
+        "db.r5.12xlarge",
+        "db.r5.16xlarge",
+        "db.r5.24xlarge",
+        "db.r5.2xlarge",
+        "db.r5.4xlarge",
+        "db.r5.8xlarge",
+        "db.r5.large",
+        "db.r5.xlarge",
+        "db.r6g.12xlarge",
+        "db.r6g.16xlarge",
+        "db.r6g.2xlarge",
+        "db.r6g.4xlarge",
+        "db.r6g.8xlarge",
+        "db.r6g.large",
+        "db.r6g.xlarge",
+        "db.r6i.12xlarge",
+        "db.r6i.16xlarge",
+        "db.r6i.24xlarge",
+        "db.r6i.2xlarge",
+        "db.r6i.32xlarge",
+        "db.r6i.4xlarge",
+        "db.r6i.8xlarge",
+        "db.r6i.large",
+        "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
+        "db.t2.medium",
+        "db.t2.small",
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t3.small",
         "db.t4g.large",
         "db.t4g.medium"
        ]
@@ -9203,282 +9563,6 @@
         "db.t4g.micro",
         "db.t4g.small",
         "db.t4g.xlarge"
-       ]
-      }
-     }
-    }
-   },
-   {
-    "if": {
-     "properties": {
-      "DBInstanceClass": {
-       "type": "string"
-      },
-      "Engine": {
-       "const": "aurora-mysql"
-      },
-      "LicenseModel": false
-     },
-     "required": [
-      "Engine",
-      "DBInstanceClass"
-     ]
-    },
-    "then": {
-     "properties": {
-      "DBInstanceClass": {
-       "enum": [
-        "db.r3.2xlarge",
-        "db.r3.4xlarge",
-        "db.r3.8xlarge",
-        "db.r3.large",
-        "db.r3.xlarge",
-        "db.r4.16xlarge",
-        "db.r4.2xlarge",
-        "db.r4.4xlarge",
-        "db.r4.8xlarge",
-        "db.r4.large",
-        "db.r4.xlarge",
-        "db.r5.12xlarge",
-        "db.r5.16xlarge",
-        "db.r5.24xlarge",
-        "db.r5.2xlarge",
-        "db.r5.4xlarge",
-        "db.r5.8xlarge",
-        "db.r5.large",
-        "db.r5.xlarge",
-        "db.r6g.12xlarge",
-        "db.r6g.16xlarge",
-        "db.r6g.2xlarge",
-        "db.r6g.4xlarge",
-        "db.r6g.8xlarge",
-        "db.r6g.large",
-        "db.r6g.xlarge",
-        "db.r6i.12xlarge",
-        "db.r6i.16xlarge",
-        "db.r6i.24xlarge",
-        "db.r6i.2xlarge",
-        "db.r6i.32xlarge",
-        "db.r6i.4xlarge",
-        "db.r6i.8xlarge",
-        "db.r6i.large",
-        "db.r6i.xlarge",
-        "db.serverless",
-        "db.t2.medium",
-        "db.t2.small",
-        "db.t3.large",
-        "db.t3.medium",
-        "db.t3.small",
-        "db.t4g.large",
-        "db.t4g.medium"
-       ]
-      }
-     }
-    }
-   },
-   {
-    "if": {
-     "properties": {
-      "DBInstanceClass": {
-       "type": "string"
-      },
-      "Engine": {
-       "const": "aurora-mysql"
-      },
-      "LicenseModel": {
-       "const": "general-public-license"
-      }
-     },
-     "required": [
-      "Engine",
-      "LicenseModel",
-      "DBInstanceClass"
-     ]
-    },
-    "then": {
-     "properties": {
-      "DBInstanceClass": {
-       "enum": [
-        "db.r3.2xlarge",
-        "db.r3.4xlarge",
-        "db.r3.8xlarge",
-        "db.r3.large",
-        "db.r3.xlarge",
-        "db.r4.16xlarge",
-        "db.r4.2xlarge",
-        "db.r4.4xlarge",
-        "db.r4.8xlarge",
-        "db.r4.large",
-        "db.r4.xlarge",
-        "db.r5.12xlarge",
-        "db.r5.16xlarge",
-        "db.r5.24xlarge",
-        "db.r5.2xlarge",
-        "db.r5.4xlarge",
-        "db.r5.8xlarge",
-        "db.r5.large",
-        "db.r5.xlarge",
-        "db.r6g.12xlarge",
-        "db.r6g.16xlarge",
-        "db.r6g.2xlarge",
-        "db.r6g.4xlarge",
-        "db.r6g.8xlarge",
-        "db.r6g.large",
-        "db.r6g.xlarge",
-        "db.r6i.12xlarge",
-        "db.r6i.16xlarge",
-        "db.r6i.24xlarge",
-        "db.r6i.2xlarge",
-        "db.r6i.32xlarge",
-        "db.r6i.4xlarge",
-        "db.r6i.8xlarge",
-        "db.r6i.large",
-        "db.r6i.xlarge",
-        "db.serverless",
-        "db.t2.medium",
-        "db.t2.small",
-        "db.t3.large",
-        "db.t3.medium",
-        "db.t3.small",
-        "db.t4g.large",
-        "db.t4g.medium"
-       ]
-      }
-     }
-    }
-   },
-   {
-    "if": {
-     "properties": {
-      "DBInstanceClass": {
-       "type": "string"
-      },
-      "Engine": {
-       "const": "aurora"
-      },
-      "LicenseModel": false
-     },
-     "required": [
-      "Engine",
-      "DBInstanceClass"
-     ]
-    },
-    "then": {
-     "properties": {
-      "DBInstanceClass": {
-       "enum": [
-        "db.r3.2xlarge",
-        "db.r3.4xlarge",
-        "db.r3.8xlarge",
-        "db.r3.large",
-        "db.r3.xlarge",
-        "db.r4.16xlarge",
-        "db.r4.2xlarge",
-        "db.r4.4xlarge",
-        "db.r4.8xlarge",
-        "db.r4.large",
-        "db.r4.xlarge",
-        "db.r5.12xlarge",
-        "db.r5.16xlarge",
-        "db.r5.24xlarge",
-        "db.r5.2xlarge",
-        "db.r5.4xlarge",
-        "db.r5.8xlarge",
-        "db.r5.large",
-        "db.r5.xlarge",
-        "db.r6g.12xlarge",
-        "db.r6g.16xlarge",
-        "db.r6g.2xlarge",
-        "db.r6g.4xlarge",
-        "db.r6g.8xlarge",
-        "db.r6g.large",
-        "db.r6g.xlarge",
-        "db.r6i.12xlarge",
-        "db.r6i.16xlarge",
-        "db.r6i.24xlarge",
-        "db.r6i.2xlarge",
-        "db.r6i.32xlarge",
-        "db.r6i.4xlarge",
-        "db.r6i.8xlarge",
-        "db.r6i.large",
-        "db.r6i.xlarge",
-        "db.t2.medium",
-        "db.t2.small",
-        "db.t3.large",
-        "db.t3.medium",
-        "db.t3.small",
-        "db.t4g.large",
-        "db.t4g.medium"
-       ]
-      }
-     }
-    }
-   },
-   {
-    "if": {
-     "properties": {
-      "DBInstanceClass": {
-       "type": "string"
-      },
-      "Engine": {
-       "const": "aurora"
-      },
-      "LicenseModel": {
-       "const": "general-public-license"
-      }
-     },
-     "required": [
-      "Engine",
-      "LicenseModel",
-      "DBInstanceClass"
-     ]
-    },
-    "then": {
-     "properties": {
-      "DBInstanceClass": {
-       "enum": [
-        "db.r3.2xlarge",
-        "db.r3.4xlarge",
-        "db.r3.8xlarge",
-        "db.r3.large",
-        "db.r3.xlarge",
-        "db.r4.16xlarge",
-        "db.r4.2xlarge",
-        "db.r4.4xlarge",
-        "db.r4.8xlarge",
-        "db.r4.large",
-        "db.r4.xlarge",
-        "db.r5.12xlarge",
-        "db.r5.16xlarge",
-        "db.r5.24xlarge",
-        "db.r5.2xlarge",
-        "db.r5.4xlarge",
-        "db.r5.8xlarge",
-        "db.r5.large",
-        "db.r5.xlarge",
-        "db.r6g.12xlarge",
-        "db.r6g.16xlarge",
-        "db.r6g.2xlarge",
-        "db.r6g.4xlarge",
-        "db.r6g.8xlarge",
-        "db.r6g.large",
-        "db.r6g.xlarge",
-        "db.r6i.12xlarge",
-        "db.r6i.16xlarge",
-        "db.r6i.24xlarge",
-        "db.r6i.2xlarge",
-        "db.r6i.32xlarge",
-        "db.r6i.4xlarge",
-        "db.r6i.8xlarge",
-        "db.r6i.large",
-        "db.r6i.xlarge",
-        "db.t2.medium",
-        "db.t2.small",
-        "db.t3.large",
-        "db.t3.medium",
-        "db.t3.small",
-        "db.t4g.large",
-        "db.t4g.medium"
        ]
       }
      }
@@ -11589,6 +11673,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t2.medium",
         "db.t2.small",
@@ -11660,6 +11751,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t2.medium",
         "db.t2.small",
@@ -11728,6 +11826,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.t2.medium",
         "db.t2.small",
         "db.t3.large",
@@ -11798,6 +11903,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.t2.medium",
         "db.t2.small",
         "db.t3.large",
@@ -11868,6 +11980,13 @@
         "db.r6i.xlarge",
         "db.r6id.24xlarge",
         "db.r6id.32xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t3.large",
         "db.t3.medium",
@@ -11939,6 +12058,13 @@
         "db.r6i.xlarge",
         "db.r6id.24xlarge",
         "db.r6id.32xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t3.large",
         "db.t3.medium",
@@ -18627,6 +18753,159 @@
        "type": "string"
       },
       "Engine": {
+       "const": "aurora-postgresql"
+      },
+      "LicenseModel": false
+     },
+     "required": [
+      "Engine",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.r4.16xlarge",
+        "db.r4.2xlarge",
+        "db.r4.4xlarge",
+        "db.r4.8xlarge",
+        "db.r4.large",
+        "db.r4.xlarge",
+        "db.r5.12xlarge",
+        "db.r5.16xlarge",
+        "db.r5.24xlarge",
+        "db.r5.2xlarge",
+        "db.r5.4xlarge",
+        "db.r5.8xlarge",
+        "db.r5.large",
+        "db.r5.xlarge",
+        "db.r6g.12xlarge",
+        "db.r6g.16xlarge",
+        "db.r6g.2xlarge",
+        "db.r6g.4xlarge",
+        "db.r6g.8xlarge",
+        "db.r6g.large",
+        "db.r6g.xlarge",
+        "db.r6gd.12xlarge",
+        "db.r6gd.16xlarge",
+        "db.r6gd.2xlarge",
+        "db.r6gd.4xlarge",
+        "db.r6gd.8xlarge",
+        "db.r6gd.xlarge",
+        "db.r6i.12xlarge",
+        "db.r6i.16xlarge",
+        "db.r6i.24xlarge",
+        "db.r6i.2xlarge",
+        "db.r6i.32xlarge",
+        "db.r6i.4xlarge",
+        "db.r6i.8xlarge",
+        "db.r6i.large",
+        "db.r6i.xlarge",
+        "db.r6id.24xlarge",
+        "db.r6id.32xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
+        "db.serverless",
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t4g.large",
+        "db.t4g.medium"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "aurora-postgresql"
+      },
+      "LicenseModel": {
+       "const": "general-public-license"
+      }
+     },
+     "required": [
+      "Engine",
+      "LicenseModel",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.r4.16xlarge",
+        "db.r4.2xlarge",
+        "db.r4.4xlarge",
+        "db.r4.8xlarge",
+        "db.r4.large",
+        "db.r4.xlarge",
+        "db.r5.12xlarge",
+        "db.r5.16xlarge",
+        "db.r5.24xlarge",
+        "db.r5.2xlarge",
+        "db.r5.4xlarge",
+        "db.r5.8xlarge",
+        "db.r5.large",
+        "db.r5.xlarge",
+        "db.r6g.12xlarge",
+        "db.r6g.16xlarge",
+        "db.r6g.2xlarge",
+        "db.r6g.4xlarge",
+        "db.r6g.8xlarge",
+        "db.r6g.large",
+        "db.r6g.xlarge",
+        "db.r6gd.12xlarge",
+        "db.r6gd.16xlarge",
+        "db.r6gd.2xlarge",
+        "db.r6gd.4xlarge",
+        "db.r6gd.8xlarge",
+        "db.r6gd.xlarge",
+        "db.r6i.12xlarge",
+        "db.r6i.16xlarge",
+        "db.r6i.24xlarge",
+        "db.r6i.2xlarge",
+        "db.r6i.32xlarge",
+        "db.r6i.4xlarge",
+        "db.r6i.8xlarge",
+        "db.r6i.large",
+        "db.r6i.xlarge",
+        "db.r6id.24xlarge",
+        "db.r6id.32xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
+        "db.serverless",
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t4g.large",
+        "db.t4g.medium"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
        "const": "mariadb"
       },
       "LicenseModel": false
@@ -19596,6 +19875,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t2.medium",
         "db.t2.small",
@@ -19667,6 +19953,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t2.medium",
         "db.t2.small",
@@ -19735,6 +20028,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.t2.medium",
         "db.t2.small",
         "db.t3.large",
@@ -19805,150 +20105,18 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.t2.medium",
         "db.t2.small",
         "db.t3.large",
         "db.t3.medium",
         "db.t3.small",
-        "db.t4g.large",
-        "db.t4g.medium"
-       ]
-      }
-     }
-    }
-   },
-   {
-    "if": {
-     "properties": {
-      "DBInstanceClass": {
-       "type": "string"
-      },
-      "Engine": {
-       "const": "aurora-postgresql"
-      },
-      "LicenseModel": false
-     },
-     "required": [
-      "Engine",
-      "DBInstanceClass"
-     ]
-    },
-    "then": {
-     "properties": {
-      "DBInstanceClass": {
-       "enum": [
-        "db.r4.16xlarge",
-        "db.r4.2xlarge",
-        "db.r4.4xlarge",
-        "db.r4.8xlarge",
-        "db.r4.large",
-        "db.r4.xlarge",
-        "db.r5.12xlarge",
-        "db.r5.16xlarge",
-        "db.r5.24xlarge",
-        "db.r5.2xlarge",
-        "db.r5.4xlarge",
-        "db.r5.8xlarge",
-        "db.r5.large",
-        "db.r5.xlarge",
-        "db.r6g.12xlarge",
-        "db.r6g.16xlarge",
-        "db.r6g.2xlarge",
-        "db.r6g.4xlarge",
-        "db.r6g.8xlarge",
-        "db.r6g.large",
-        "db.r6g.xlarge",
-        "db.r6gd.12xlarge",
-        "db.r6gd.16xlarge",
-        "db.r6gd.2xlarge",
-        "db.r6gd.4xlarge",
-        "db.r6gd.8xlarge",
-        "db.r6gd.xlarge",
-        "db.r6i.12xlarge",
-        "db.r6i.16xlarge",
-        "db.r6i.24xlarge",
-        "db.r6i.2xlarge",
-        "db.r6i.32xlarge",
-        "db.r6i.4xlarge",
-        "db.r6i.8xlarge",
-        "db.r6i.large",
-        "db.r6i.xlarge",
-        "db.r6id.24xlarge",
-        "db.r6id.32xlarge",
-        "db.serverless",
-        "db.t3.large",
-        "db.t3.medium",
-        "db.t4g.large",
-        "db.t4g.medium"
-       ]
-      }
-     }
-    }
-   },
-   {
-    "if": {
-     "properties": {
-      "DBInstanceClass": {
-       "type": "string"
-      },
-      "Engine": {
-       "const": "aurora-postgresql"
-      },
-      "LicenseModel": {
-       "const": "general-public-license"
-      }
-     },
-     "required": [
-      "Engine",
-      "LicenseModel",
-      "DBInstanceClass"
-     ]
-    },
-    "then": {
-     "properties": {
-      "DBInstanceClass": {
-       "enum": [
-        "db.r4.16xlarge",
-        "db.r4.2xlarge",
-        "db.r4.4xlarge",
-        "db.r4.8xlarge",
-        "db.r4.large",
-        "db.r4.xlarge",
-        "db.r5.12xlarge",
-        "db.r5.16xlarge",
-        "db.r5.24xlarge",
-        "db.r5.2xlarge",
-        "db.r5.4xlarge",
-        "db.r5.8xlarge",
-        "db.r5.large",
-        "db.r5.xlarge",
-        "db.r6g.12xlarge",
-        "db.r6g.16xlarge",
-        "db.r6g.2xlarge",
-        "db.r6g.4xlarge",
-        "db.r6g.8xlarge",
-        "db.r6g.large",
-        "db.r6g.xlarge",
-        "db.r6gd.12xlarge",
-        "db.r6gd.16xlarge",
-        "db.r6gd.2xlarge",
-        "db.r6gd.4xlarge",
-        "db.r6gd.8xlarge",
-        "db.r6gd.xlarge",
-        "db.r6i.12xlarge",
-        "db.r6i.16xlarge",
-        "db.r6i.24xlarge",
-        "db.r6i.2xlarge",
-        "db.r6i.32xlarge",
-        "db.r6i.4xlarge",
-        "db.r6i.8xlarge",
-        "db.r6i.large",
-        "db.r6i.xlarge",
-        "db.r6id.24xlarge",
-        "db.r6id.32xlarge",
-        "db.serverless",
-        "db.t3.large",
-        "db.t3.medium",
         "db.t4g.large",
         "db.t4g.medium"
        ]
@@ -21313,6 +21481,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t3.large",
         "db.t3.medium",
@@ -21370,6 +21545,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t3.large",
         "db.t3.medium",
@@ -21603,6 +21785,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t3.large",
         "db.t3.medium",
@@ -21661,6 +21850,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t3.large",
         "db.t3.medium",
@@ -21716,6 +21912,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.t3.large",
         "db.t3.medium",
         "db.t3.small",
@@ -21773,6 +21976,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.t3.large",
         "db.t3.medium",
         "db.t3.small",
@@ -22691,6 +22901,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t2.medium",
         "db.t2.small",
@@ -22762,6 +22979,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t2.medium",
         "db.t2.small",
@@ -22830,6 +23054,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.t2.medium",
         "db.t2.small",
         "db.t3.large",
@@ -22900,6 +23131,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.t2.medium",
         "db.t2.small",
         "db.t3.large",
@@ -23317,6 +23555,13 @@
         "db.r6i.xlarge",
         "db.r6id.24xlarge",
         "db.r6id.32xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t3.large",
         "db.t3.medium",
@@ -23388,6 +23633,13 @@
         "db.r6i.xlarge",
         "db.r6id.24xlarge",
         "db.r6id.32xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t3.large",
         "db.t3.medium",
@@ -28855,6 +29107,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t2.medium",
         "db.t2.small",
@@ -28926,6 +29185,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t2.medium",
         "db.t2.small",
@@ -28994,6 +29260,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.t2.medium",
         "db.t2.small",
         "db.t3.large",
@@ -29064,6 +29337,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.t2.medium",
         "db.t2.small",
         "db.t3.large",
@@ -29505,6 +29785,13 @@
         "db.r6i.xlarge",
         "db.r6id.24xlarge",
         "db.r6id.32xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t3.large",
         "db.t3.medium",
@@ -29576,6 +29863,13 @@
         "db.r6i.xlarge",
         "db.r6id.24xlarge",
         "db.r6id.32xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t3.large",
         "db.t3.medium",
@@ -34661,6 +34955,2375 @@
    }
   ]
  },
+ "ap-southeast-5": {
+  "allOf": [
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "mariadb"
+      },
+      "LicenseModel": false
+     },
+     "required": [
+      "Engine",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.m6g.12xlarge",
+        "db.m6g.16xlarge",
+        "db.m6g.2xlarge",
+        "db.m6g.4xlarge",
+        "db.m6g.8xlarge",
+        "db.m6g.large",
+        "db.m6g.xlarge",
+        "db.m6gd.12xlarge",
+        "db.m6gd.16xlarge",
+        "db.m6gd.2xlarge",
+        "db.m6gd.4xlarge",
+        "db.m6gd.8xlarge",
+        "db.m6gd.large",
+        "db.m6gd.xlarge",
+        "db.m6i.12xlarge",
+        "db.m6i.16xlarge",
+        "db.m6i.24xlarge",
+        "db.m6i.2xlarge",
+        "db.m6i.32xlarge",
+        "db.m6i.4xlarge",
+        "db.m6i.8xlarge",
+        "db.m6i.large",
+        "db.m6i.xlarge",
+        "db.m6id.12xlarge",
+        "db.m6id.16xlarge",
+        "db.m6id.24xlarge",
+        "db.m6id.2xlarge",
+        "db.m6id.32xlarge",
+        "db.m6id.4xlarge",
+        "db.m6id.8xlarge",
+        "db.m6id.large",
+        "db.m6id.xlarge",
+        "db.m7g.12xlarge",
+        "db.m7g.16xlarge",
+        "db.m7g.2xlarge",
+        "db.m7g.4xlarge",
+        "db.m7g.8xlarge",
+        "db.m7g.large",
+        "db.m7g.xlarge",
+        "db.r6g.12xlarge",
+        "db.r6g.16xlarge",
+        "db.r6g.2xlarge",
+        "db.r6g.4xlarge",
+        "db.r6g.8xlarge",
+        "db.r6g.large",
+        "db.r6g.xlarge",
+        "db.r6gd.12xlarge",
+        "db.r6gd.16xlarge",
+        "db.r6gd.2xlarge",
+        "db.r6gd.4xlarge",
+        "db.r6gd.8xlarge",
+        "db.r6gd.large",
+        "db.r6gd.xlarge",
+        "db.r6i.12xlarge",
+        "db.r6i.16xlarge",
+        "db.r6i.24xlarge",
+        "db.r6i.2xlarge",
+        "db.r6i.32xlarge",
+        "db.r6i.4xlarge",
+        "db.r6i.8xlarge",
+        "db.r6i.large",
+        "db.r6i.xlarge",
+        "db.r6id.12xlarge",
+        "db.r6id.16xlarge",
+        "db.r6id.24xlarge",
+        "db.r6id.2xlarge",
+        "db.r6id.32xlarge",
+        "db.r6id.4xlarge",
+        "db.r6id.8xlarge",
+        "db.r6id.large",
+        "db.r6id.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
+        "db.t3.2xlarge",
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t3.micro",
+        "db.t3.small",
+        "db.t3.xlarge",
+        "db.t4g.2xlarge",
+        "db.t4g.large",
+        "db.t4g.medium",
+        "db.t4g.micro",
+        "db.t4g.small",
+        "db.t4g.xlarge"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "mariadb"
+      },
+      "LicenseModel": {
+       "const": "general-public-license"
+      }
+     },
+     "required": [
+      "Engine",
+      "LicenseModel",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.m6g.12xlarge",
+        "db.m6g.16xlarge",
+        "db.m6g.2xlarge",
+        "db.m6g.4xlarge",
+        "db.m6g.8xlarge",
+        "db.m6g.large",
+        "db.m6g.xlarge",
+        "db.m6gd.12xlarge",
+        "db.m6gd.16xlarge",
+        "db.m6gd.2xlarge",
+        "db.m6gd.4xlarge",
+        "db.m6gd.8xlarge",
+        "db.m6gd.large",
+        "db.m6gd.xlarge",
+        "db.m6i.12xlarge",
+        "db.m6i.16xlarge",
+        "db.m6i.24xlarge",
+        "db.m6i.2xlarge",
+        "db.m6i.32xlarge",
+        "db.m6i.4xlarge",
+        "db.m6i.8xlarge",
+        "db.m6i.large",
+        "db.m6i.xlarge",
+        "db.m6id.12xlarge",
+        "db.m6id.16xlarge",
+        "db.m6id.24xlarge",
+        "db.m6id.2xlarge",
+        "db.m6id.32xlarge",
+        "db.m6id.4xlarge",
+        "db.m6id.8xlarge",
+        "db.m6id.large",
+        "db.m6id.xlarge",
+        "db.m7g.12xlarge",
+        "db.m7g.16xlarge",
+        "db.m7g.2xlarge",
+        "db.m7g.4xlarge",
+        "db.m7g.8xlarge",
+        "db.m7g.large",
+        "db.m7g.xlarge",
+        "db.r6g.12xlarge",
+        "db.r6g.16xlarge",
+        "db.r6g.2xlarge",
+        "db.r6g.4xlarge",
+        "db.r6g.8xlarge",
+        "db.r6g.large",
+        "db.r6g.xlarge",
+        "db.r6gd.12xlarge",
+        "db.r6gd.16xlarge",
+        "db.r6gd.2xlarge",
+        "db.r6gd.4xlarge",
+        "db.r6gd.8xlarge",
+        "db.r6gd.large",
+        "db.r6gd.xlarge",
+        "db.r6i.12xlarge",
+        "db.r6i.16xlarge",
+        "db.r6i.24xlarge",
+        "db.r6i.2xlarge",
+        "db.r6i.32xlarge",
+        "db.r6i.4xlarge",
+        "db.r6i.8xlarge",
+        "db.r6i.large",
+        "db.r6i.xlarge",
+        "db.r6id.12xlarge",
+        "db.r6id.16xlarge",
+        "db.r6id.24xlarge",
+        "db.r6id.2xlarge",
+        "db.r6id.32xlarge",
+        "db.r6id.4xlarge",
+        "db.r6id.8xlarge",
+        "db.r6id.large",
+        "db.r6id.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
+        "db.t3.2xlarge",
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t3.micro",
+        "db.t3.small",
+        "db.t3.xlarge",
+        "db.t4g.2xlarge",
+        "db.t4g.large",
+        "db.t4g.medium",
+        "db.t4g.micro",
+        "db.t4g.small",
+        "db.t4g.xlarge"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "postgres"
+      },
+      "LicenseModel": false
+     },
+     "required": [
+      "Engine",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.m6g.12xlarge",
+        "db.m6g.16xlarge",
+        "db.m6g.2xlarge",
+        "db.m6g.4xlarge",
+        "db.m6g.8xlarge",
+        "db.m6g.large",
+        "db.m6g.xlarge",
+        "db.m6gd.12xlarge",
+        "db.m6gd.16xlarge",
+        "db.m6gd.2xlarge",
+        "db.m6gd.4xlarge",
+        "db.m6gd.8xlarge",
+        "db.m6gd.large",
+        "db.m6gd.xlarge",
+        "db.m6i.12xlarge",
+        "db.m6i.16xlarge",
+        "db.m6i.24xlarge",
+        "db.m6i.2xlarge",
+        "db.m6i.32xlarge",
+        "db.m6i.4xlarge",
+        "db.m6i.8xlarge",
+        "db.m6i.large",
+        "db.m6i.xlarge",
+        "db.m6id.12xlarge",
+        "db.m6id.16xlarge",
+        "db.m6id.24xlarge",
+        "db.m6id.2xlarge",
+        "db.m6id.32xlarge",
+        "db.m6id.4xlarge",
+        "db.m6id.8xlarge",
+        "db.m6id.large",
+        "db.m6id.xlarge",
+        "db.m7g.12xlarge",
+        "db.m7g.16xlarge",
+        "db.m7g.2xlarge",
+        "db.m7g.4xlarge",
+        "db.m7g.8xlarge",
+        "db.m7g.large",
+        "db.m7g.xlarge",
+        "db.r6g.12xlarge",
+        "db.r6g.16xlarge",
+        "db.r6g.2xlarge",
+        "db.r6g.4xlarge",
+        "db.r6g.8xlarge",
+        "db.r6g.large",
+        "db.r6g.xlarge",
+        "db.r6gd.12xlarge",
+        "db.r6gd.16xlarge",
+        "db.r6gd.2xlarge",
+        "db.r6gd.4xlarge",
+        "db.r6gd.8xlarge",
+        "db.r6gd.large",
+        "db.r6gd.xlarge",
+        "db.r6i.12xlarge",
+        "db.r6i.16xlarge",
+        "db.r6i.24xlarge",
+        "db.r6i.2xlarge",
+        "db.r6i.32xlarge",
+        "db.r6i.4xlarge",
+        "db.r6i.8xlarge",
+        "db.r6i.large",
+        "db.r6i.xlarge",
+        "db.r6id.12xlarge",
+        "db.r6id.16xlarge",
+        "db.r6id.24xlarge",
+        "db.r6id.2xlarge",
+        "db.r6id.32xlarge",
+        "db.r6id.4xlarge",
+        "db.r6id.8xlarge",
+        "db.r6id.large",
+        "db.r6id.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
+        "db.t3.2xlarge",
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t3.micro",
+        "db.t3.small",
+        "db.t3.xlarge",
+        "db.t4g.2xlarge",
+        "db.t4g.large",
+        "db.t4g.medium",
+        "db.t4g.micro",
+        "db.t4g.small",
+        "db.t4g.xlarge"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "postgres"
+      },
+      "LicenseModel": {
+       "const": "general-public-license"
+      }
+     },
+     "required": [
+      "Engine",
+      "LicenseModel",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.m6g.12xlarge",
+        "db.m6g.16xlarge",
+        "db.m6g.2xlarge",
+        "db.m6g.4xlarge",
+        "db.m6g.8xlarge",
+        "db.m6g.large",
+        "db.m6g.xlarge",
+        "db.m6gd.12xlarge",
+        "db.m6gd.16xlarge",
+        "db.m6gd.2xlarge",
+        "db.m6gd.4xlarge",
+        "db.m6gd.8xlarge",
+        "db.m6gd.large",
+        "db.m6gd.xlarge",
+        "db.m6i.12xlarge",
+        "db.m6i.16xlarge",
+        "db.m6i.24xlarge",
+        "db.m6i.2xlarge",
+        "db.m6i.32xlarge",
+        "db.m6i.4xlarge",
+        "db.m6i.8xlarge",
+        "db.m6i.large",
+        "db.m6i.xlarge",
+        "db.m6id.12xlarge",
+        "db.m6id.16xlarge",
+        "db.m6id.24xlarge",
+        "db.m6id.2xlarge",
+        "db.m6id.32xlarge",
+        "db.m6id.4xlarge",
+        "db.m6id.8xlarge",
+        "db.m6id.large",
+        "db.m6id.xlarge",
+        "db.m7g.12xlarge",
+        "db.m7g.16xlarge",
+        "db.m7g.2xlarge",
+        "db.m7g.4xlarge",
+        "db.m7g.8xlarge",
+        "db.m7g.large",
+        "db.m7g.xlarge",
+        "db.r6g.12xlarge",
+        "db.r6g.16xlarge",
+        "db.r6g.2xlarge",
+        "db.r6g.4xlarge",
+        "db.r6g.8xlarge",
+        "db.r6g.large",
+        "db.r6g.xlarge",
+        "db.r6gd.12xlarge",
+        "db.r6gd.16xlarge",
+        "db.r6gd.2xlarge",
+        "db.r6gd.4xlarge",
+        "db.r6gd.8xlarge",
+        "db.r6gd.large",
+        "db.r6gd.xlarge",
+        "db.r6i.12xlarge",
+        "db.r6i.16xlarge",
+        "db.r6i.24xlarge",
+        "db.r6i.2xlarge",
+        "db.r6i.32xlarge",
+        "db.r6i.4xlarge",
+        "db.r6i.8xlarge",
+        "db.r6i.large",
+        "db.r6i.xlarge",
+        "db.r6id.12xlarge",
+        "db.r6id.16xlarge",
+        "db.r6id.24xlarge",
+        "db.r6id.2xlarge",
+        "db.r6id.32xlarge",
+        "db.r6id.4xlarge",
+        "db.r6id.8xlarge",
+        "db.r6id.large",
+        "db.r6id.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
+        "db.t3.2xlarge",
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t3.micro",
+        "db.t3.small",
+        "db.t3.xlarge",
+        "db.t4g.2xlarge",
+        "db.t4g.large",
+        "db.t4g.medium",
+        "db.t4g.micro",
+        "db.t4g.small",
+        "db.t4g.xlarge"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "mysql"
+      },
+      "LicenseModel": false
+     },
+     "required": [
+      "Engine",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.m6g.12xlarge",
+        "db.m6g.16xlarge",
+        "db.m6g.2xlarge",
+        "db.m6g.4xlarge",
+        "db.m6g.8xlarge",
+        "db.m6g.large",
+        "db.m6g.xlarge",
+        "db.m6gd.12xlarge",
+        "db.m6gd.16xlarge",
+        "db.m6gd.2xlarge",
+        "db.m6gd.4xlarge",
+        "db.m6gd.8xlarge",
+        "db.m6gd.large",
+        "db.m6gd.xlarge",
+        "db.m6i.12xlarge",
+        "db.m6i.16xlarge",
+        "db.m6i.24xlarge",
+        "db.m6i.2xlarge",
+        "db.m6i.32xlarge",
+        "db.m6i.4xlarge",
+        "db.m6i.8xlarge",
+        "db.m6i.large",
+        "db.m6i.xlarge",
+        "db.m6id.12xlarge",
+        "db.m6id.16xlarge",
+        "db.m6id.24xlarge",
+        "db.m6id.2xlarge",
+        "db.m6id.32xlarge",
+        "db.m6id.4xlarge",
+        "db.m6id.8xlarge",
+        "db.m6id.large",
+        "db.m6id.xlarge",
+        "db.m7g.12xlarge",
+        "db.m7g.16xlarge",
+        "db.m7g.2xlarge",
+        "db.m7g.4xlarge",
+        "db.m7g.8xlarge",
+        "db.m7g.large",
+        "db.m7g.xlarge",
+        "db.r6g.12xlarge",
+        "db.r6g.16xlarge",
+        "db.r6g.2xlarge",
+        "db.r6g.4xlarge",
+        "db.r6g.8xlarge",
+        "db.r6g.large",
+        "db.r6g.xlarge",
+        "db.r6gd.12xlarge",
+        "db.r6gd.16xlarge",
+        "db.r6gd.2xlarge",
+        "db.r6gd.4xlarge",
+        "db.r6gd.8xlarge",
+        "db.r6gd.large",
+        "db.r6gd.xlarge",
+        "db.r6i.12xlarge",
+        "db.r6i.16xlarge",
+        "db.r6i.24xlarge",
+        "db.r6i.2xlarge",
+        "db.r6i.32xlarge",
+        "db.r6i.4xlarge",
+        "db.r6i.8xlarge",
+        "db.r6i.large",
+        "db.r6i.xlarge",
+        "db.r6id.12xlarge",
+        "db.r6id.16xlarge",
+        "db.r6id.24xlarge",
+        "db.r6id.2xlarge",
+        "db.r6id.32xlarge",
+        "db.r6id.4xlarge",
+        "db.r6id.8xlarge",
+        "db.r6id.large",
+        "db.r6id.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
+        "db.t3.2xlarge",
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t3.micro",
+        "db.t3.small",
+        "db.t3.xlarge",
+        "db.t4g.2xlarge",
+        "db.t4g.large",
+        "db.t4g.medium",
+        "db.t4g.micro",
+        "db.t4g.small",
+        "db.t4g.xlarge"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "mysql"
+      },
+      "LicenseModel": {
+       "const": "general-public-license"
+      }
+     },
+     "required": [
+      "Engine",
+      "LicenseModel",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.m6g.12xlarge",
+        "db.m6g.16xlarge",
+        "db.m6g.2xlarge",
+        "db.m6g.4xlarge",
+        "db.m6g.8xlarge",
+        "db.m6g.large",
+        "db.m6g.xlarge",
+        "db.m6gd.12xlarge",
+        "db.m6gd.16xlarge",
+        "db.m6gd.2xlarge",
+        "db.m6gd.4xlarge",
+        "db.m6gd.8xlarge",
+        "db.m6gd.large",
+        "db.m6gd.xlarge",
+        "db.m6i.12xlarge",
+        "db.m6i.16xlarge",
+        "db.m6i.24xlarge",
+        "db.m6i.2xlarge",
+        "db.m6i.32xlarge",
+        "db.m6i.4xlarge",
+        "db.m6i.8xlarge",
+        "db.m6i.large",
+        "db.m6i.xlarge",
+        "db.m6id.12xlarge",
+        "db.m6id.16xlarge",
+        "db.m6id.24xlarge",
+        "db.m6id.2xlarge",
+        "db.m6id.32xlarge",
+        "db.m6id.4xlarge",
+        "db.m6id.8xlarge",
+        "db.m6id.large",
+        "db.m6id.xlarge",
+        "db.m7g.12xlarge",
+        "db.m7g.16xlarge",
+        "db.m7g.2xlarge",
+        "db.m7g.4xlarge",
+        "db.m7g.8xlarge",
+        "db.m7g.large",
+        "db.m7g.xlarge",
+        "db.r6g.12xlarge",
+        "db.r6g.16xlarge",
+        "db.r6g.2xlarge",
+        "db.r6g.4xlarge",
+        "db.r6g.8xlarge",
+        "db.r6g.large",
+        "db.r6g.xlarge",
+        "db.r6gd.12xlarge",
+        "db.r6gd.16xlarge",
+        "db.r6gd.2xlarge",
+        "db.r6gd.4xlarge",
+        "db.r6gd.8xlarge",
+        "db.r6gd.large",
+        "db.r6gd.xlarge",
+        "db.r6i.12xlarge",
+        "db.r6i.16xlarge",
+        "db.r6i.24xlarge",
+        "db.r6i.2xlarge",
+        "db.r6i.32xlarge",
+        "db.r6i.4xlarge",
+        "db.r6i.8xlarge",
+        "db.r6i.large",
+        "db.r6i.xlarge",
+        "db.r6id.12xlarge",
+        "db.r6id.16xlarge",
+        "db.r6id.24xlarge",
+        "db.r6id.2xlarge",
+        "db.r6id.32xlarge",
+        "db.r6id.4xlarge",
+        "db.r6id.8xlarge",
+        "db.r6id.large",
+        "db.r6id.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
+        "db.t3.2xlarge",
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t3.micro",
+        "db.t3.small",
+        "db.t3.xlarge",
+        "db.t4g.2xlarge",
+        "db.t4g.large",
+        "db.t4g.medium",
+        "db.t4g.micro",
+        "db.t4g.small",
+        "db.t4g.xlarge"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "sqlserver-ee"
+      },
+      "LicenseModel": {
+       "const": "license-included"
+      }
+     },
+     "required": [
+      "Engine",
+      "LicenseModel",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.m6i.12xlarge",
+        "db.m6i.16xlarge",
+        "db.m6i.24xlarge",
+        "db.m6i.2xlarge",
+        "db.m6i.32xlarge",
+        "db.m6i.4xlarge",
+        "db.m6i.8xlarge",
+        "db.m6i.xlarge",
+        "db.r6i.12xlarge",
+        "db.r6i.16xlarge",
+        "db.r6i.24xlarge",
+        "db.r6i.2xlarge",
+        "db.r6i.32xlarge",
+        "db.r6i.4xlarge",
+        "db.r6i.8xlarge",
+        "db.r6i.xlarge",
+        "db.t3.2xlarge",
+        "db.t3.xlarge"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "sqlserver-se"
+      },
+      "LicenseModel": {
+       "const": "license-included"
+      }
+     },
+     "required": [
+      "Engine",
+      "LicenseModel",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.m6i.2xlarge",
+        "db.m6i.4xlarge",
+        "db.m6i.8xlarge",
+        "db.m6i.large",
+        "db.m6i.xlarge",
+        "db.r6i.2xlarge",
+        "db.r6i.4xlarge",
+        "db.r6i.8xlarge",
+        "db.r6i.large",
+        "db.r6i.xlarge",
+        "db.t3.2xlarge",
+        "db.t3.large",
+        "db.t3.xlarge"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "oracle-se2"
+      },
+      "LicenseModel": {
+       "const": "bring-your-own-license"
+      }
+     },
+     "required": [
+      "Engine",
+      "LicenseModel",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.m6i.12xlarge",
+        "db.m6i.16xlarge",
+        "db.m6i.24xlarge",
+        "db.m6i.2xlarge",
+        "db.m6i.32xlarge",
+        "db.m6i.4xlarge",
+        "db.m6i.8xlarge",
+        "db.m6i.large",
+        "db.m6i.xlarge",
+        "db.r6i.12xlarge",
+        "db.r6i.16xlarge",
+        "db.r6i.24xlarge",
+        "db.r6i.2xlarge",
+        "db.r6i.2xlarge.tpc1.mem2x",
+        "db.r6i.2xlarge.tpc2.mem4x",
+        "db.r6i.2xlarge.tpc2.mem8x",
+        "db.r6i.32xlarge",
+        "db.r6i.4xlarge",
+        "db.r6i.4xlarge.tpc2.mem2x",
+        "db.r6i.4xlarge.tpc2.mem3x",
+        "db.r6i.4xlarge.tpc2.mem4x",
+        "db.r6i.8xlarge",
+        "db.r6i.large",
+        "db.r6i.large.tpc1.mem2x",
+        "db.r6i.xlarge",
+        "db.r6i.xlarge.tpc2.mem2x",
+        "db.r6i.xlarge.tpc2.mem4x",
+        "db.t3.2xlarge",
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t3.small",
+        "db.t3.xlarge"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "oracle-se1"
+      },
+      "LicenseModel": {
+       "const": "bring-your-own-license"
+      }
+     },
+     "required": [
+      "Engine",
+      "LicenseModel",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.t3.2xlarge",
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t3.small",
+        "db.t3.xlarge"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "oracle-ee"
+      },
+      "LicenseModel": {
+       "const": "bring-your-own-license"
+      }
+     },
+     "required": [
+      "Engine",
+      "LicenseModel",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.m6i.12xlarge",
+        "db.m6i.16xlarge",
+        "db.m6i.24xlarge",
+        "db.m6i.2xlarge",
+        "db.m6i.32xlarge",
+        "db.m6i.4xlarge",
+        "db.m6i.8xlarge",
+        "db.m6i.large",
+        "db.m6i.xlarge",
+        "db.r6i.12xlarge",
+        "db.r6i.12xlarge.tpc2.mem2x",
+        "db.r6i.16xlarge",
+        "db.r6i.24xlarge",
+        "db.r6i.2xlarge",
+        "db.r6i.2xlarge.tpc1.mem2x",
+        "db.r6i.2xlarge.tpc2.mem4x",
+        "db.r6i.2xlarge.tpc2.mem8x",
+        "db.r6i.32xlarge",
+        "db.r6i.4xlarge",
+        "db.r6i.4xlarge.tpc2.mem2x",
+        "db.r6i.4xlarge.tpc2.mem3x",
+        "db.r6i.4xlarge.tpc2.mem4x",
+        "db.r6i.4xlarge.tpc2.mem8x",
+        "db.r6i.6xlarge.tpc2.mem4x",
+        "db.r6i.8xlarge",
+        "db.r6i.8xlarge.tpc2.mem3x",
+        "db.r6i.8xlarge.tpc2.mem4x",
+        "db.r6i.large",
+        "db.r6i.large.tpc1.mem2x",
+        "db.r6i.xlarge",
+        "db.r6i.xlarge.tpc2.mem2x",
+        "db.r6i.xlarge.tpc2.mem4x",
+        "db.t3.2xlarge",
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t3.small",
+        "db.t3.xlarge"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "oracle-se"
+      },
+      "LicenseModel": {
+       "const": "bring-your-own-license"
+      }
+     },
+     "required": [
+      "Engine",
+      "LicenseModel",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.t3.2xlarge",
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t3.small",
+        "db.t3.xlarge"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "mysql"
+      },
+      "LicenseModel": false
+     },
+     "required": [
+      "Engine",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.m6g.12xlarge",
+        "db.m6g.16xlarge",
+        "db.m6g.2xlarge",
+        "db.m6g.4xlarge",
+        "db.m6g.8xlarge",
+        "db.m6g.large",
+        "db.m6g.xlarge",
+        "db.m6gd.12xlarge",
+        "db.m6gd.16xlarge",
+        "db.m6gd.2xlarge",
+        "db.m6gd.4xlarge",
+        "db.m6gd.8xlarge",
+        "db.m6gd.large",
+        "db.m6gd.xlarge",
+        "db.m6i.12xlarge",
+        "db.m6i.16xlarge",
+        "db.m6i.24xlarge",
+        "db.m6i.2xlarge",
+        "db.m6i.32xlarge",
+        "db.m6i.4xlarge",
+        "db.m6i.8xlarge",
+        "db.m6i.large",
+        "db.m6i.xlarge",
+        "db.m6id.12xlarge",
+        "db.m6id.16xlarge",
+        "db.m6id.24xlarge",
+        "db.m6id.2xlarge",
+        "db.m6id.32xlarge",
+        "db.m6id.4xlarge",
+        "db.m6id.8xlarge",
+        "db.m6id.large",
+        "db.m6id.xlarge",
+        "db.m7g.12xlarge",
+        "db.m7g.16xlarge",
+        "db.m7g.2xlarge",
+        "db.m7g.4xlarge",
+        "db.m7g.8xlarge",
+        "db.m7g.large",
+        "db.m7g.xlarge",
+        "db.r6g.12xlarge",
+        "db.r6g.16xlarge",
+        "db.r6g.2xlarge",
+        "db.r6g.4xlarge",
+        "db.r6g.8xlarge",
+        "db.r6g.large",
+        "db.r6g.xlarge",
+        "db.r6gd.12xlarge",
+        "db.r6gd.16xlarge",
+        "db.r6gd.2xlarge",
+        "db.r6gd.4xlarge",
+        "db.r6gd.8xlarge",
+        "db.r6gd.large",
+        "db.r6gd.xlarge",
+        "db.r6i.12xlarge",
+        "db.r6i.16xlarge",
+        "db.r6i.24xlarge",
+        "db.r6i.2xlarge",
+        "db.r6i.32xlarge",
+        "db.r6i.4xlarge",
+        "db.r6i.8xlarge",
+        "db.r6i.large",
+        "db.r6i.xlarge",
+        "db.r6id.12xlarge",
+        "db.r6id.16xlarge",
+        "db.r6id.24xlarge",
+        "db.r6id.2xlarge",
+        "db.r6id.32xlarge",
+        "db.r6id.4xlarge",
+        "db.r6id.8xlarge",
+        "db.r6id.large",
+        "db.r6id.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
+        "db.t3.2xlarge",
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t3.micro",
+        "db.t3.small",
+        "db.t3.xlarge",
+        "db.t4g.2xlarge",
+        "db.t4g.large",
+        "db.t4g.medium",
+        "db.t4g.micro",
+        "db.t4g.small",
+        "db.t4g.xlarge"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "mysql"
+      },
+      "LicenseModel": {
+       "const": "general-public-license"
+      }
+     },
+     "required": [
+      "Engine",
+      "LicenseModel",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.m6g.12xlarge",
+        "db.m6g.16xlarge",
+        "db.m6g.2xlarge",
+        "db.m6g.4xlarge",
+        "db.m6g.8xlarge",
+        "db.m6g.large",
+        "db.m6g.xlarge",
+        "db.m6gd.12xlarge",
+        "db.m6gd.16xlarge",
+        "db.m6gd.2xlarge",
+        "db.m6gd.4xlarge",
+        "db.m6gd.8xlarge",
+        "db.m6gd.large",
+        "db.m6gd.xlarge",
+        "db.m6i.12xlarge",
+        "db.m6i.16xlarge",
+        "db.m6i.24xlarge",
+        "db.m6i.2xlarge",
+        "db.m6i.32xlarge",
+        "db.m6i.4xlarge",
+        "db.m6i.8xlarge",
+        "db.m6i.large",
+        "db.m6i.xlarge",
+        "db.m6id.12xlarge",
+        "db.m6id.16xlarge",
+        "db.m6id.24xlarge",
+        "db.m6id.2xlarge",
+        "db.m6id.32xlarge",
+        "db.m6id.4xlarge",
+        "db.m6id.8xlarge",
+        "db.m6id.large",
+        "db.m6id.xlarge",
+        "db.m7g.12xlarge",
+        "db.m7g.16xlarge",
+        "db.m7g.2xlarge",
+        "db.m7g.4xlarge",
+        "db.m7g.8xlarge",
+        "db.m7g.large",
+        "db.m7g.xlarge",
+        "db.r6g.12xlarge",
+        "db.r6g.16xlarge",
+        "db.r6g.2xlarge",
+        "db.r6g.4xlarge",
+        "db.r6g.8xlarge",
+        "db.r6g.large",
+        "db.r6g.xlarge",
+        "db.r6gd.12xlarge",
+        "db.r6gd.16xlarge",
+        "db.r6gd.2xlarge",
+        "db.r6gd.4xlarge",
+        "db.r6gd.8xlarge",
+        "db.r6gd.large",
+        "db.r6gd.xlarge",
+        "db.r6i.12xlarge",
+        "db.r6i.16xlarge",
+        "db.r6i.24xlarge",
+        "db.r6i.2xlarge",
+        "db.r6i.32xlarge",
+        "db.r6i.4xlarge",
+        "db.r6i.8xlarge",
+        "db.r6i.large",
+        "db.r6i.xlarge",
+        "db.r6id.12xlarge",
+        "db.r6id.16xlarge",
+        "db.r6id.24xlarge",
+        "db.r6id.2xlarge",
+        "db.r6id.32xlarge",
+        "db.r6id.4xlarge",
+        "db.r6id.8xlarge",
+        "db.r6id.large",
+        "db.r6id.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
+        "db.t3.2xlarge",
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t3.micro",
+        "db.t3.small",
+        "db.t3.xlarge",
+        "db.t4g.2xlarge",
+        "db.t4g.large",
+        "db.t4g.medium",
+        "db.t4g.micro",
+        "db.t4g.small",
+        "db.t4g.xlarge"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "aurora-mysql"
+      },
+      "LicenseModel": false
+     },
+     "required": [
+      "Engine",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.r6g.12xlarge",
+        "db.r6g.16xlarge",
+        "db.r6g.2xlarge",
+        "db.r6g.4xlarge",
+        "db.r6g.8xlarge",
+        "db.r6g.large",
+        "db.r6g.xlarge",
+        "db.r6gd.12xlarge",
+        "db.r6gd.16xlarge",
+        "db.r6gd.2xlarge",
+        "db.r6gd.4xlarge",
+        "db.r6gd.8xlarge",
+        "db.r6gd.xlarge",
+        "db.r6i.12xlarge",
+        "db.r6i.16xlarge",
+        "db.r6i.24xlarge",
+        "db.r6i.2xlarge",
+        "db.r6i.32xlarge",
+        "db.r6i.4xlarge",
+        "db.r6i.8xlarge",
+        "db.r6i.large",
+        "db.r6i.xlarge",
+        "db.r6id.24xlarge",
+        "db.r6id.32xlarge",
+        "db.serverless",
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t3.small",
+        "db.t4g.large",
+        "db.t4g.medium"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "aurora-mysql"
+      },
+      "LicenseModel": {
+       "const": "general-public-license"
+      }
+     },
+     "required": [
+      "Engine",
+      "LicenseModel",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.r6g.12xlarge",
+        "db.r6g.16xlarge",
+        "db.r6g.2xlarge",
+        "db.r6g.4xlarge",
+        "db.r6g.8xlarge",
+        "db.r6g.large",
+        "db.r6g.xlarge",
+        "db.r6gd.12xlarge",
+        "db.r6gd.16xlarge",
+        "db.r6gd.2xlarge",
+        "db.r6gd.4xlarge",
+        "db.r6gd.8xlarge",
+        "db.r6gd.xlarge",
+        "db.r6i.12xlarge",
+        "db.r6i.16xlarge",
+        "db.r6i.24xlarge",
+        "db.r6i.2xlarge",
+        "db.r6i.32xlarge",
+        "db.r6i.4xlarge",
+        "db.r6i.8xlarge",
+        "db.r6i.large",
+        "db.r6i.xlarge",
+        "db.r6id.24xlarge",
+        "db.r6id.32xlarge",
+        "db.serverless",
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t3.small",
+        "db.t4g.large",
+        "db.t4g.medium"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "aurora"
+      },
+      "LicenseModel": false
+     },
+     "required": [
+      "Engine",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.r6g.12xlarge",
+        "db.r6g.16xlarge",
+        "db.r6g.2xlarge",
+        "db.r6g.4xlarge",
+        "db.r6g.8xlarge",
+        "db.r6g.large",
+        "db.r6g.xlarge",
+        "db.r6gd.12xlarge",
+        "db.r6gd.16xlarge",
+        "db.r6gd.2xlarge",
+        "db.r6gd.4xlarge",
+        "db.r6gd.8xlarge",
+        "db.r6gd.xlarge",
+        "db.r6i.12xlarge",
+        "db.r6i.16xlarge",
+        "db.r6i.24xlarge",
+        "db.r6i.2xlarge",
+        "db.r6i.32xlarge",
+        "db.r6i.4xlarge",
+        "db.r6i.8xlarge",
+        "db.r6i.large",
+        "db.r6i.xlarge",
+        "db.r6id.24xlarge",
+        "db.r6id.32xlarge",
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t3.small",
+        "db.t4g.large",
+        "db.t4g.medium"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "aurora"
+      },
+      "LicenseModel": {
+       "const": "general-public-license"
+      }
+     },
+     "required": [
+      "Engine",
+      "LicenseModel",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.r6g.12xlarge",
+        "db.r6g.16xlarge",
+        "db.r6g.2xlarge",
+        "db.r6g.4xlarge",
+        "db.r6g.8xlarge",
+        "db.r6g.large",
+        "db.r6g.xlarge",
+        "db.r6gd.12xlarge",
+        "db.r6gd.16xlarge",
+        "db.r6gd.2xlarge",
+        "db.r6gd.4xlarge",
+        "db.r6gd.8xlarge",
+        "db.r6gd.xlarge",
+        "db.r6i.12xlarge",
+        "db.r6i.16xlarge",
+        "db.r6i.24xlarge",
+        "db.r6i.2xlarge",
+        "db.r6i.32xlarge",
+        "db.r6i.4xlarge",
+        "db.r6i.8xlarge",
+        "db.r6i.large",
+        "db.r6i.xlarge",
+        "db.r6id.24xlarge",
+        "db.r6id.32xlarge",
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t3.small",
+        "db.t4g.large",
+        "db.t4g.medium"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "aurora-postgresql"
+      },
+      "LicenseModel": false
+     },
+     "required": [
+      "Engine",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.r6g.12xlarge",
+        "db.r6g.16xlarge",
+        "db.r6g.2xlarge",
+        "db.r6g.4xlarge",
+        "db.r6g.8xlarge",
+        "db.r6g.large",
+        "db.r6g.xlarge",
+        "db.r6gd.12xlarge",
+        "db.r6gd.16xlarge",
+        "db.r6gd.2xlarge",
+        "db.r6gd.4xlarge",
+        "db.r6gd.8xlarge",
+        "db.r6gd.xlarge",
+        "db.r6i.12xlarge",
+        "db.r6i.16xlarge",
+        "db.r6i.24xlarge",
+        "db.r6i.2xlarge",
+        "db.r6i.32xlarge",
+        "db.r6i.4xlarge",
+        "db.r6i.8xlarge",
+        "db.r6i.large",
+        "db.r6i.xlarge",
+        "db.r6id.24xlarge",
+        "db.r6id.32xlarge",
+        "db.serverless",
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t4g.large",
+        "db.t4g.medium"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "aurora-postgresql"
+      },
+      "LicenseModel": {
+       "const": "general-public-license"
+      }
+     },
+     "required": [
+      "Engine",
+      "LicenseModel",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.r6g.12xlarge",
+        "db.r6g.16xlarge",
+        "db.r6g.2xlarge",
+        "db.r6g.4xlarge",
+        "db.r6g.8xlarge",
+        "db.r6g.large",
+        "db.r6g.xlarge",
+        "db.r6gd.12xlarge",
+        "db.r6gd.16xlarge",
+        "db.r6gd.2xlarge",
+        "db.r6gd.4xlarge",
+        "db.r6gd.8xlarge",
+        "db.r6gd.xlarge",
+        "db.r6i.12xlarge",
+        "db.r6i.16xlarge",
+        "db.r6i.24xlarge",
+        "db.r6i.2xlarge",
+        "db.r6i.32xlarge",
+        "db.r6i.4xlarge",
+        "db.r6i.8xlarge",
+        "db.r6i.large",
+        "db.r6i.xlarge",
+        "db.r6id.24xlarge",
+        "db.r6id.32xlarge",
+        "db.serverless",
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t4g.large",
+        "db.t4g.medium"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "mariadb"
+      },
+      "LicenseModel": false
+     },
+     "required": [
+      "Engine",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.m6g.12xlarge",
+        "db.m6g.16xlarge",
+        "db.m6g.2xlarge",
+        "db.m6g.4xlarge",
+        "db.m6g.8xlarge",
+        "db.m6g.large",
+        "db.m6g.xlarge",
+        "db.m6gd.12xlarge",
+        "db.m6gd.16xlarge",
+        "db.m6gd.2xlarge",
+        "db.m6gd.4xlarge",
+        "db.m6gd.8xlarge",
+        "db.m6gd.large",
+        "db.m6gd.xlarge",
+        "db.m6i.12xlarge",
+        "db.m6i.16xlarge",
+        "db.m6i.24xlarge",
+        "db.m6i.2xlarge",
+        "db.m6i.32xlarge",
+        "db.m6i.4xlarge",
+        "db.m6i.8xlarge",
+        "db.m6i.large",
+        "db.m6i.xlarge",
+        "db.m6id.12xlarge",
+        "db.m6id.16xlarge",
+        "db.m6id.24xlarge",
+        "db.m6id.2xlarge",
+        "db.m6id.32xlarge",
+        "db.m6id.4xlarge",
+        "db.m6id.8xlarge",
+        "db.m6id.large",
+        "db.m6id.xlarge",
+        "db.m7g.12xlarge",
+        "db.m7g.16xlarge",
+        "db.m7g.2xlarge",
+        "db.m7g.4xlarge",
+        "db.m7g.8xlarge",
+        "db.m7g.large",
+        "db.m7g.xlarge",
+        "db.r6g.12xlarge",
+        "db.r6g.16xlarge",
+        "db.r6g.2xlarge",
+        "db.r6g.4xlarge",
+        "db.r6g.8xlarge",
+        "db.r6g.large",
+        "db.r6g.xlarge",
+        "db.r6gd.12xlarge",
+        "db.r6gd.16xlarge",
+        "db.r6gd.2xlarge",
+        "db.r6gd.4xlarge",
+        "db.r6gd.8xlarge",
+        "db.r6gd.large",
+        "db.r6gd.xlarge",
+        "db.r6i.12xlarge",
+        "db.r6i.16xlarge",
+        "db.r6i.24xlarge",
+        "db.r6i.2xlarge",
+        "db.r6i.32xlarge",
+        "db.r6i.4xlarge",
+        "db.r6i.8xlarge",
+        "db.r6i.large",
+        "db.r6i.xlarge",
+        "db.r6id.12xlarge",
+        "db.r6id.16xlarge",
+        "db.r6id.24xlarge",
+        "db.r6id.2xlarge",
+        "db.r6id.32xlarge",
+        "db.r6id.4xlarge",
+        "db.r6id.8xlarge",
+        "db.r6id.large",
+        "db.r6id.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
+        "db.t3.2xlarge",
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t3.micro",
+        "db.t3.small",
+        "db.t3.xlarge",
+        "db.t4g.2xlarge",
+        "db.t4g.large",
+        "db.t4g.medium",
+        "db.t4g.micro",
+        "db.t4g.small",
+        "db.t4g.xlarge"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "mariadb"
+      },
+      "LicenseModel": {
+       "const": "general-public-license"
+      }
+     },
+     "required": [
+      "Engine",
+      "LicenseModel",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.m6g.12xlarge",
+        "db.m6g.16xlarge",
+        "db.m6g.2xlarge",
+        "db.m6g.4xlarge",
+        "db.m6g.8xlarge",
+        "db.m6g.large",
+        "db.m6g.xlarge",
+        "db.m6gd.12xlarge",
+        "db.m6gd.16xlarge",
+        "db.m6gd.2xlarge",
+        "db.m6gd.4xlarge",
+        "db.m6gd.8xlarge",
+        "db.m6gd.large",
+        "db.m6gd.xlarge",
+        "db.m6i.12xlarge",
+        "db.m6i.16xlarge",
+        "db.m6i.24xlarge",
+        "db.m6i.2xlarge",
+        "db.m6i.32xlarge",
+        "db.m6i.4xlarge",
+        "db.m6i.8xlarge",
+        "db.m6i.large",
+        "db.m6i.xlarge",
+        "db.m6id.12xlarge",
+        "db.m6id.16xlarge",
+        "db.m6id.24xlarge",
+        "db.m6id.2xlarge",
+        "db.m6id.32xlarge",
+        "db.m6id.4xlarge",
+        "db.m6id.8xlarge",
+        "db.m6id.large",
+        "db.m6id.xlarge",
+        "db.m7g.12xlarge",
+        "db.m7g.16xlarge",
+        "db.m7g.2xlarge",
+        "db.m7g.4xlarge",
+        "db.m7g.8xlarge",
+        "db.m7g.large",
+        "db.m7g.xlarge",
+        "db.r6g.12xlarge",
+        "db.r6g.16xlarge",
+        "db.r6g.2xlarge",
+        "db.r6g.4xlarge",
+        "db.r6g.8xlarge",
+        "db.r6g.large",
+        "db.r6g.xlarge",
+        "db.r6gd.12xlarge",
+        "db.r6gd.16xlarge",
+        "db.r6gd.2xlarge",
+        "db.r6gd.4xlarge",
+        "db.r6gd.8xlarge",
+        "db.r6gd.large",
+        "db.r6gd.xlarge",
+        "db.r6i.12xlarge",
+        "db.r6i.16xlarge",
+        "db.r6i.24xlarge",
+        "db.r6i.2xlarge",
+        "db.r6i.32xlarge",
+        "db.r6i.4xlarge",
+        "db.r6i.8xlarge",
+        "db.r6i.large",
+        "db.r6i.xlarge",
+        "db.r6id.12xlarge",
+        "db.r6id.16xlarge",
+        "db.r6id.24xlarge",
+        "db.r6id.2xlarge",
+        "db.r6id.32xlarge",
+        "db.r6id.4xlarge",
+        "db.r6id.8xlarge",
+        "db.r6id.large",
+        "db.r6id.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
+        "db.t3.2xlarge",
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t3.micro",
+        "db.t3.small",
+        "db.t3.xlarge",
+        "db.t4g.2xlarge",
+        "db.t4g.large",
+        "db.t4g.medium",
+        "db.t4g.micro",
+        "db.t4g.small",
+        "db.t4g.xlarge"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "postgres"
+      },
+      "LicenseModel": false
+     },
+     "required": [
+      "Engine",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.m6g.12xlarge",
+        "db.m6g.16xlarge",
+        "db.m6g.2xlarge",
+        "db.m6g.4xlarge",
+        "db.m6g.8xlarge",
+        "db.m6g.large",
+        "db.m6g.xlarge",
+        "db.m6gd.12xlarge",
+        "db.m6gd.16xlarge",
+        "db.m6gd.2xlarge",
+        "db.m6gd.4xlarge",
+        "db.m6gd.8xlarge",
+        "db.m6gd.large",
+        "db.m6gd.xlarge",
+        "db.m6i.12xlarge",
+        "db.m6i.16xlarge",
+        "db.m6i.24xlarge",
+        "db.m6i.2xlarge",
+        "db.m6i.32xlarge",
+        "db.m6i.4xlarge",
+        "db.m6i.8xlarge",
+        "db.m6i.large",
+        "db.m6i.xlarge",
+        "db.m6id.12xlarge",
+        "db.m6id.16xlarge",
+        "db.m6id.24xlarge",
+        "db.m6id.2xlarge",
+        "db.m6id.32xlarge",
+        "db.m6id.4xlarge",
+        "db.m6id.8xlarge",
+        "db.m6id.large",
+        "db.m6id.xlarge",
+        "db.m7g.12xlarge",
+        "db.m7g.16xlarge",
+        "db.m7g.2xlarge",
+        "db.m7g.4xlarge",
+        "db.m7g.8xlarge",
+        "db.m7g.large",
+        "db.m7g.xlarge",
+        "db.r6g.12xlarge",
+        "db.r6g.16xlarge",
+        "db.r6g.2xlarge",
+        "db.r6g.4xlarge",
+        "db.r6g.8xlarge",
+        "db.r6g.large",
+        "db.r6g.xlarge",
+        "db.r6gd.12xlarge",
+        "db.r6gd.16xlarge",
+        "db.r6gd.2xlarge",
+        "db.r6gd.4xlarge",
+        "db.r6gd.8xlarge",
+        "db.r6gd.large",
+        "db.r6gd.xlarge",
+        "db.r6i.12xlarge",
+        "db.r6i.16xlarge",
+        "db.r6i.24xlarge",
+        "db.r6i.2xlarge",
+        "db.r6i.32xlarge",
+        "db.r6i.4xlarge",
+        "db.r6i.8xlarge",
+        "db.r6i.large",
+        "db.r6i.xlarge",
+        "db.r6id.12xlarge",
+        "db.r6id.16xlarge",
+        "db.r6id.24xlarge",
+        "db.r6id.2xlarge",
+        "db.r6id.32xlarge",
+        "db.r6id.4xlarge",
+        "db.r6id.8xlarge",
+        "db.r6id.large",
+        "db.r6id.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
+        "db.t3.2xlarge",
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t3.micro",
+        "db.t3.small",
+        "db.t3.xlarge",
+        "db.t4g.2xlarge",
+        "db.t4g.large",
+        "db.t4g.medium",
+        "db.t4g.micro",
+        "db.t4g.small",
+        "db.t4g.xlarge"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "postgres"
+      },
+      "LicenseModel": {
+       "const": "general-public-license"
+      }
+     },
+     "required": [
+      "Engine",
+      "LicenseModel",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.m6g.12xlarge",
+        "db.m6g.16xlarge",
+        "db.m6g.2xlarge",
+        "db.m6g.4xlarge",
+        "db.m6g.8xlarge",
+        "db.m6g.large",
+        "db.m6g.xlarge",
+        "db.m6gd.12xlarge",
+        "db.m6gd.16xlarge",
+        "db.m6gd.2xlarge",
+        "db.m6gd.4xlarge",
+        "db.m6gd.8xlarge",
+        "db.m6gd.large",
+        "db.m6gd.xlarge",
+        "db.m6i.12xlarge",
+        "db.m6i.16xlarge",
+        "db.m6i.24xlarge",
+        "db.m6i.2xlarge",
+        "db.m6i.32xlarge",
+        "db.m6i.4xlarge",
+        "db.m6i.8xlarge",
+        "db.m6i.large",
+        "db.m6i.xlarge",
+        "db.m6id.12xlarge",
+        "db.m6id.16xlarge",
+        "db.m6id.24xlarge",
+        "db.m6id.2xlarge",
+        "db.m6id.32xlarge",
+        "db.m6id.4xlarge",
+        "db.m6id.8xlarge",
+        "db.m6id.large",
+        "db.m6id.xlarge",
+        "db.m7g.12xlarge",
+        "db.m7g.16xlarge",
+        "db.m7g.2xlarge",
+        "db.m7g.4xlarge",
+        "db.m7g.8xlarge",
+        "db.m7g.large",
+        "db.m7g.xlarge",
+        "db.r6g.12xlarge",
+        "db.r6g.16xlarge",
+        "db.r6g.2xlarge",
+        "db.r6g.4xlarge",
+        "db.r6g.8xlarge",
+        "db.r6g.large",
+        "db.r6g.xlarge",
+        "db.r6gd.12xlarge",
+        "db.r6gd.16xlarge",
+        "db.r6gd.2xlarge",
+        "db.r6gd.4xlarge",
+        "db.r6gd.8xlarge",
+        "db.r6gd.large",
+        "db.r6gd.xlarge",
+        "db.r6i.12xlarge",
+        "db.r6i.16xlarge",
+        "db.r6i.24xlarge",
+        "db.r6i.2xlarge",
+        "db.r6i.32xlarge",
+        "db.r6i.4xlarge",
+        "db.r6i.8xlarge",
+        "db.r6i.large",
+        "db.r6i.xlarge",
+        "db.r6id.12xlarge",
+        "db.r6id.16xlarge",
+        "db.r6id.24xlarge",
+        "db.r6id.2xlarge",
+        "db.r6id.32xlarge",
+        "db.r6id.4xlarge",
+        "db.r6id.8xlarge",
+        "db.r6id.large",
+        "db.r6id.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
+        "db.t3.2xlarge",
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t3.micro",
+        "db.t3.small",
+        "db.t3.xlarge",
+        "db.t4g.2xlarge",
+        "db.t4g.large",
+        "db.t4g.medium",
+        "db.t4g.micro",
+        "db.t4g.small",
+        "db.t4g.xlarge"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "oracle-se2"
+      },
+      "LicenseModel": {
+       "const": "bring-your-own-license"
+      }
+     },
+     "required": [
+      "Engine",
+      "LicenseModel",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.m6i.12xlarge",
+        "db.m6i.16xlarge",
+        "db.m6i.24xlarge",
+        "db.m6i.2xlarge",
+        "db.m6i.32xlarge",
+        "db.m6i.4xlarge",
+        "db.m6i.8xlarge",
+        "db.m6i.large",
+        "db.m6i.xlarge",
+        "db.r6i.12xlarge",
+        "db.r6i.16xlarge",
+        "db.r6i.24xlarge",
+        "db.r6i.2xlarge",
+        "db.r6i.2xlarge.tpc1.mem2x",
+        "db.r6i.2xlarge.tpc2.mem4x",
+        "db.r6i.2xlarge.tpc2.mem8x",
+        "db.r6i.32xlarge",
+        "db.r6i.4xlarge",
+        "db.r6i.4xlarge.tpc2.mem2x",
+        "db.r6i.4xlarge.tpc2.mem3x",
+        "db.r6i.4xlarge.tpc2.mem4x",
+        "db.r6i.8xlarge",
+        "db.r6i.large",
+        "db.r6i.large.tpc1.mem2x",
+        "db.r6i.xlarge",
+        "db.r6i.xlarge.tpc2.mem2x",
+        "db.r6i.xlarge.tpc2.mem4x",
+        "db.t3.2xlarge",
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t3.small",
+        "db.t3.xlarge"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "oracle-ee"
+      },
+      "LicenseModel": {
+       "const": "bring-your-own-license"
+      }
+     },
+     "required": [
+      "Engine",
+      "LicenseModel",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.m6i.12xlarge",
+        "db.m6i.16xlarge",
+        "db.m6i.24xlarge",
+        "db.m6i.2xlarge",
+        "db.m6i.32xlarge",
+        "db.m6i.4xlarge",
+        "db.m6i.8xlarge",
+        "db.m6i.large",
+        "db.m6i.xlarge",
+        "db.r6i.12xlarge",
+        "db.r6i.12xlarge.tpc2.mem2x",
+        "db.r6i.16xlarge",
+        "db.r6i.24xlarge",
+        "db.r6i.2xlarge",
+        "db.r6i.2xlarge.tpc1.mem2x",
+        "db.r6i.2xlarge.tpc2.mem4x",
+        "db.r6i.2xlarge.tpc2.mem8x",
+        "db.r6i.32xlarge",
+        "db.r6i.4xlarge",
+        "db.r6i.4xlarge.tpc2.mem2x",
+        "db.r6i.4xlarge.tpc2.mem3x",
+        "db.r6i.4xlarge.tpc2.mem4x",
+        "db.r6i.4xlarge.tpc2.mem8x",
+        "db.r6i.6xlarge.tpc2.mem4x",
+        "db.r6i.8xlarge",
+        "db.r6i.8xlarge.tpc2.mem3x",
+        "db.r6i.8xlarge.tpc2.mem4x",
+        "db.r6i.large",
+        "db.r6i.large.tpc1.mem2x",
+        "db.r6i.xlarge",
+        "db.r6i.xlarge.tpc2.mem2x",
+        "db.r6i.xlarge.tpc2.mem4x",
+        "db.t3.2xlarge",
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t3.small",
+        "db.t3.xlarge"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "oracle-se1"
+      },
+      "LicenseModel": {
+       "const": "bring-your-own-license"
+      }
+     },
+     "required": [
+      "Engine",
+      "LicenseModel",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.t3.2xlarge",
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t3.small",
+        "db.t3.xlarge"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "oracle-se"
+      },
+      "LicenseModel": {
+       "const": "bring-your-own-license"
+      }
+     },
+     "required": [
+      "Engine",
+      "LicenseModel",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.t3.2xlarge",
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t3.small",
+        "db.t3.xlarge"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "sqlserver-ee"
+      },
+      "LicenseModel": {
+       "const": "license-included"
+      }
+     },
+     "required": [
+      "Engine",
+      "LicenseModel",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.m6i.12xlarge",
+        "db.m6i.16xlarge",
+        "db.m6i.24xlarge",
+        "db.m6i.2xlarge",
+        "db.m6i.32xlarge",
+        "db.m6i.4xlarge",
+        "db.m6i.8xlarge",
+        "db.m6i.large",
+        "db.m6i.xlarge",
+        "db.r6i.12xlarge",
+        "db.r6i.16xlarge",
+        "db.r6i.24xlarge",
+        "db.r6i.2xlarge",
+        "db.r6i.32xlarge",
+        "db.r6i.4xlarge",
+        "db.r6i.8xlarge",
+        "db.r6i.large",
+        "db.r6i.xlarge",
+        "db.t3.2xlarge",
+        "db.t3.xlarge"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "sqlserver-se"
+      },
+      "LicenseModel": {
+       "const": "license-included"
+      }
+     },
+     "required": [
+      "Engine",
+      "LicenseModel",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.m6i.2xlarge",
+        "db.m6i.4xlarge",
+        "db.m6i.8xlarge",
+        "db.m6i.large",
+        "db.m6i.xlarge",
+        "db.r6i.2xlarge",
+        "db.r6i.4xlarge",
+        "db.r6i.8xlarge",
+        "db.r6i.large",
+        "db.r6i.xlarge",
+        "db.t3.2xlarge",
+        "db.t3.large",
+        "db.t3.xlarge"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "sqlserver-web"
+      },
+      "LicenseModel": {
+       "const": "license-included"
+      }
+     },
+     "required": [
+      "Engine",
+      "LicenseModel",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.m6i.2xlarge",
+        "db.m6i.4xlarge",
+        "db.m6i.large",
+        "db.m6i.xlarge",
+        "db.r6i.2xlarge",
+        "db.r6i.4xlarge",
+        "db.r6i.large",
+        "db.r6i.xlarge",
+        "db.t3.2xlarge",
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t3.small",
+        "db.t3.xlarge"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "sqlserver-ex"
+      },
+      "LicenseModel": {
+       "const": "license-included"
+      }
+     },
+     "required": [
+      "Engine",
+      "LicenseModel",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t3.micro",
+        "db.t3.small",
+        "db.t3.xlarge"
+       ]
+      }
+     }
+    }
+   }
+  ]
+ },
  "ca-central-1": {
   "allOf": [
    {
@@ -35425,6 +38088,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t2.medium",
         "db.t2.small",
@@ -35496,6 +38166,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t2.medium",
         "db.t2.small",
@@ -35564,6 +38241,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.t2.medium",
         "db.t2.small",
         "db.t3.large",
@@ -35634,6 +38318,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.t2.medium",
         "db.t2.small",
         "db.t3.large",
@@ -36653,6 +39344,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t3.large",
         "db.t3.medium",
@@ -36722,6 +39420,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t3.large",
         "db.t3.medium",
@@ -48535,6 +51240,13 @@
         "db.r6i.xlarge",
         "db.r6id.24xlarge",
         "db.r6id.32xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t3.large",
         "db.t3.medium",
@@ -48606,6 +51318,13 @@
         "db.r6i.xlarge",
         "db.r6id.24xlarge",
         "db.r6id.32xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t3.large",
         "db.t3.medium",
@@ -48671,6 +51390,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t2.medium",
         "db.t2.small",
@@ -48742,6 +51468,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t2.medium",
         "db.t2.small",
@@ -48810,6 +51543,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.t2.medium",
         "db.t2.small",
         "db.t3.large",
@@ -48880,6 +51620,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.t2.medium",
         "db.t2.small",
         "db.t3.large",
@@ -52792,6 +55539,143 @@
        "type": "string"
       },
       "Engine": {
+       "const": "aurora-postgresql"
+      },
+      "LicenseModel": false
+     },
+     "required": [
+      "Engine",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.r5.12xlarge",
+        "db.r5.16xlarge",
+        "db.r5.24xlarge",
+        "db.r5.2xlarge",
+        "db.r5.4xlarge",
+        "db.r5.8xlarge",
+        "db.r5.large",
+        "db.r5.xlarge",
+        "db.r6g.12xlarge",
+        "db.r6g.16xlarge",
+        "db.r6g.2xlarge",
+        "db.r6g.4xlarge",
+        "db.r6g.8xlarge",
+        "db.r6g.large",
+        "db.r6g.xlarge",
+        "db.r6gd.12xlarge",
+        "db.r6gd.16xlarge",
+        "db.r6gd.2xlarge",
+        "db.r6gd.4xlarge",
+        "db.r6gd.8xlarge",
+        "db.r6gd.xlarge",
+        "db.r6i.12xlarge",
+        "db.r6i.16xlarge",
+        "db.r6i.24xlarge",
+        "db.r6i.2xlarge",
+        "db.r6i.32xlarge",
+        "db.r6i.4xlarge",
+        "db.r6i.8xlarge",
+        "db.r6i.large",
+        "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
+        "db.serverless",
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t4g.large",
+        "db.t4g.medium"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "aurora-postgresql"
+      },
+      "LicenseModel": {
+       "const": "general-public-license"
+      }
+     },
+     "required": [
+      "Engine",
+      "LicenseModel",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.r5.12xlarge",
+        "db.r5.16xlarge",
+        "db.r5.24xlarge",
+        "db.r5.2xlarge",
+        "db.r5.4xlarge",
+        "db.r5.8xlarge",
+        "db.r5.large",
+        "db.r5.xlarge",
+        "db.r6g.12xlarge",
+        "db.r6g.16xlarge",
+        "db.r6g.2xlarge",
+        "db.r6g.4xlarge",
+        "db.r6g.8xlarge",
+        "db.r6g.large",
+        "db.r6g.xlarge",
+        "db.r6gd.12xlarge",
+        "db.r6gd.16xlarge",
+        "db.r6gd.2xlarge",
+        "db.r6gd.4xlarge",
+        "db.r6gd.8xlarge",
+        "db.r6gd.xlarge",
+        "db.r6i.12xlarge",
+        "db.r6i.16xlarge",
+        "db.r6i.24xlarge",
+        "db.r6i.2xlarge",
+        "db.r6i.32xlarge",
+        "db.r6i.4xlarge",
+        "db.r6i.8xlarge",
+        "db.r6i.large",
+        "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
+        "db.serverless",
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t4g.large",
+        "db.t4g.medium"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
        "const": "postgres"
       },
       "LicenseModel": false
@@ -53326,129 +56210,6 @@
        "type": "string"
       },
       "Engine": {
-       "const": "aurora-postgresql"
-      },
-      "LicenseModel": false
-     },
-     "required": [
-      "Engine",
-      "DBInstanceClass"
-     ]
-    },
-    "then": {
-     "properties": {
-      "DBInstanceClass": {
-       "enum": [
-        "db.r5.12xlarge",
-        "db.r5.16xlarge",
-        "db.r5.24xlarge",
-        "db.r5.2xlarge",
-        "db.r5.4xlarge",
-        "db.r5.8xlarge",
-        "db.r5.large",
-        "db.r5.xlarge",
-        "db.r6g.12xlarge",
-        "db.r6g.16xlarge",
-        "db.r6g.2xlarge",
-        "db.r6g.4xlarge",
-        "db.r6g.8xlarge",
-        "db.r6g.large",
-        "db.r6g.xlarge",
-        "db.r6gd.12xlarge",
-        "db.r6gd.16xlarge",
-        "db.r6gd.2xlarge",
-        "db.r6gd.4xlarge",
-        "db.r6gd.8xlarge",
-        "db.r6gd.xlarge",
-        "db.r6i.12xlarge",
-        "db.r6i.16xlarge",
-        "db.r6i.24xlarge",
-        "db.r6i.2xlarge",
-        "db.r6i.32xlarge",
-        "db.r6i.4xlarge",
-        "db.r6i.8xlarge",
-        "db.r6i.large",
-        "db.r6i.xlarge",
-        "db.serverless",
-        "db.t3.large",
-        "db.t3.medium",
-        "db.t4g.large",
-        "db.t4g.medium"
-       ]
-      }
-     }
-    }
-   },
-   {
-    "if": {
-     "properties": {
-      "DBInstanceClass": {
-       "type": "string"
-      },
-      "Engine": {
-       "const": "aurora-postgresql"
-      },
-      "LicenseModel": {
-       "const": "general-public-license"
-      }
-     },
-     "required": [
-      "Engine",
-      "LicenseModel",
-      "DBInstanceClass"
-     ]
-    },
-    "then": {
-     "properties": {
-      "DBInstanceClass": {
-       "enum": [
-        "db.r5.12xlarge",
-        "db.r5.16xlarge",
-        "db.r5.24xlarge",
-        "db.r5.2xlarge",
-        "db.r5.4xlarge",
-        "db.r5.8xlarge",
-        "db.r5.large",
-        "db.r5.xlarge",
-        "db.r6g.12xlarge",
-        "db.r6g.16xlarge",
-        "db.r6g.2xlarge",
-        "db.r6g.4xlarge",
-        "db.r6g.8xlarge",
-        "db.r6g.large",
-        "db.r6g.xlarge",
-        "db.r6gd.12xlarge",
-        "db.r6gd.16xlarge",
-        "db.r6gd.2xlarge",
-        "db.r6gd.4xlarge",
-        "db.r6gd.8xlarge",
-        "db.r6gd.xlarge",
-        "db.r6i.12xlarge",
-        "db.r6i.16xlarge",
-        "db.r6i.24xlarge",
-        "db.r6i.2xlarge",
-        "db.r6i.32xlarge",
-        "db.r6i.4xlarge",
-        "db.r6i.8xlarge",
-        "db.r6i.large",
-        "db.r6i.xlarge",
-        "db.serverless",
-        "db.t3.large",
-        "db.t3.medium",
-        "db.t4g.large",
-        "db.t4g.medium"
-       ]
-      }
-     }
-    }
-   },
-   {
-    "if": {
-     "properties": {
-      "DBInstanceClass": {
-       "type": "string"
-      },
-      "Engine": {
        "const": "aurora-mysql"
       },
       "LicenseModel": false
@@ -53486,6 +56247,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t3.large",
         "db.t3.medium",
@@ -53544,6 +56312,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t3.large",
         "db.t3.medium",
@@ -53599,6 +56374,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.t3.large",
         "db.t3.medium",
         "db.t3.small",
@@ -53656,6 +56438,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.t3.large",
         "db.t3.medium",
         "db.t3.small",
@@ -54552,6 +57341,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t3.large",
         "db.t3.medium",
@@ -54610,6 +57406,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t3.large",
         "db.t3.medium",
@@ -54665,6 +57468,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.t3.large",
         "db.t3.medium",
         "db.t3.small",
@@ -54722,6 +57532,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.t3.large",
         "db.t3.medium",
         "db.t3.small",
@@ -54776,6 +57593,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t3.large",
         "db.t3.medium",
@@ -54833,6 +57657,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t3.large",
         "db.t3.medium",
@@ -57411,6 +60242,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t3.large",
         "db.t3.medium",
@@ -57475,6 +60313,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t3.large",
         "db.t3.medium",
@@ -58075,6 +60920,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t3.large",
         "db.t3.medium",
@@ -58140,6 +60992,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t3.large",
         "db.t3.medium",
@@ -58202,6 +61061,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.t3.large",
         "db.t3.medium",
         "db.t3.small",
@@ -58266,6 +61132,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.t3.large",
         "db.t3.medium",
         "db.t3.small",
@@ -64545,6 +67418,13 @@
         "db.r6i.xlarge",
         "db.r6id.24xlarge",
         "db.r6id.32xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t3.large",
         "db.t3.medium",
@@ -64616,6 +67496,13 @@
         "db.r6i.xlarge",
         "db.r6id.24xlarge",
         "db.r6id.32xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t3.large",
         "db.t3.medium",
@@ -65247,6 +68134,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t2.medium",
         "db.t2.small",
@@ -65318,6 +68212,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t2.medium",
         "db.t2.small",
@@ -65386,6 +68287,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.t2.medium",
         "db.t2.small",
         "db.t3.large",
@@ -65456,6 +68364,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.t2.medium",
         "db.t2.small",
         "db.t3.large",
@@ -80140,6 +83055,290 @@
        "type": "string"
       },
       "Engine": {
+       "const": "aurora-mysql"
+      },
+      "LicenseModel": false
+     },
+     "required": [
+      "Engine",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.r4.16xlarge",
+        "db.r4.2xlarge",
+        "db.r4.4xlarge",
+        "db.r4.8xlarge",
+        "db.r4.large",
+        "db.r4.xlarge",
+        "db.r5.12xlarge",
+        "db.r5.16xlarge",
+        "db.r5.24xlarge",
+        "db.r5.2xlarge",
+        "db.r5.4xlarge",
+        "db.r5.8xlarge",
+        "db.r5.large",
+        "db.r5.xlarge",
+        "db.r6g.12xlarge",
+        "db.r6g.16xlarge",
+        "db.r6g.2xlarge",
+        "db.r6g.4xlarge",
+        "db.r6g.8xlarge",
+        "db.r6g.large",
+        "db.r6g.xlarge",
+        "db.r6i.12xlarge",
+        "db.r6i.16xlarge",
+        "db.r6i.24xlarge",
+        "db.r6i.2xlarge",
+        "db.r6i.32xlarge",
+        "db.r6i.4xlarge",
+        "db.r6i.8xlarge",
+        "db.r6i.large",
+        "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
+        "db.serverless",
+        "db.t2.medium",
+        "db.t2.small",
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t3.small",
+        "db.t4g.large",
+        "db.t4g.medium"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "aurora-mysql"
+      },
+      "LicenseModel": {
+       "const": "general-public-license"
+      }
+     },
+     "required": [
+      "Engine",
+      "LicenseModel",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.r4.16xlarge",
+        "db.r4.2xlarge",
+        "db.r4.4xlarge",
+        "db.r4.8xlarge",
+        "db.r4.large",
+        "db.r4.xlarge",
+        "db.r5.12xlarge",
+        "db.r5.16xlarge",
+        "db.r5.24xlarge",
+        "db.r5.2xlarge",
+        "db.r5.4xlarge",
+        "db.r5.8xlarge",
+        "db.r5.large",
+        "db.r5.xlarge",
+        "db.r6g.12xlarge",
+        "db.r6g.16xlarge",
+        "db.r6g.2xlarge",
+        "db.r6g.4xlarge",
+        "db.r6g.8xlarge",
+        "db.r6g.large",
+        "db.r6g.xlarge",
+        "db.r6i.12xlarge",
+        "db.r6i.16xlarge",
+        "db.r6i.24xlarge",
+        "db.r6i.2xlarge",
+        "db.r6i.32xlarge",
+        "db.r6i.4xlarge",
+        "db.r6i.8xlarge",
+        "db.r6i.large",
+        "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
+        "db.serverless",
+        "db.t2.medium",
+        "db.t2.small",
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t3.small",
+        "db.t4g.large",
+        "db.t4g.medium"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "aurora"
+      },
+      "LicenseModel": false
+     },
+     "required": [
+      "Engine",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.r4.16xlarge",
+        "db.r4.2xlarge",
+        "db.r4.4xlarge",
+        "db.r4.8xlarge",
+        "db.r4.large",
+        "db.r4.xlarge",
+        "db.r5.12xlarge",
+        "db.r5.16xlarge",
+        "db.r5.24xlarge",
+        "db.r5.2xlarge",
+        "db.r5.4xlarge",
+        "db.r5.8xlarge",
+        "db.r5.large",
+        "db.r5.xlarge",
+        "db.r6g.12xlarge",
+        "db.r6g.16xlarge",
+        "db.r6g.2xlarge",
+        "db.r6g.4xlarge",
+        "db.r6g.8xlarge",
+        "db.r6g.large",
+        "db.r6g.xlarge",
+        "db.r6i.12xlarge",
+        "db.r6i.16xlarge",
+        "db.r6i.24xlarge",
+        "db.r6i.2xlarge",
+        "db.r6i.32xlarge",
+        "db.r6i.4xlarge",
+        "db.r6i.8xlarge",
+        "db.r6i.large",
+        "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
+        "db.t2.medium",
+        "db.t2.small",
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t3.small",
+        "db.t4g.large",
+        "db.t4g.medium"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "aurora"
+      },
+      "LicenseModel": {
+       "const": "general-public-license"
+      }
+     },
+     "required": [
+      "Engine",
+      "LicenseModel",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.r4.16xlarge",
+        "db.r4.2xlarge",
+        "db.r4.4xlarge",
+        "db.r4.8xlarge",
+        "db.r4.large",
+        "db.r4.xlarge",
+        "db.r5.12xlarge",
+        "db.r5.16xlarge",
+        "db.r5.24xlarge",
+        "db.r5.2xlarge",
+        "db.r5.4xlarge",
+        "db.r5.8xlarge",
+        "db.r5.large",
+        "db.r5.xlarge",
+        "db.r6g.12xlarge",
+        "db.r6g.16xlarge",
+        "db.r6g.2xlarge",
+        "db.r6g.4xlarge",
+        "db.r6g.8xlarge",
+        "db.r6g.large",
+        "db.r6g.xlarge",
+        "db.r6i.12xlarge",
+        "db.r6i.16xlarge",
+        "db.r6i.24xlarge",
+        "db.r6i.2xlarge",
+        "db.r6i.32xlarge",
+        "db.r6i.4xlarge",
+        "db.r6i.8xlarge",
+        "db.r6i.large",
+        "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
+        "db.t2.medium",
+        "db.t2.small",
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t3.small",
+        "db.t4g.large",
+        "db.t4g.medium"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
        "const": "mariadb"
       },
       "LicenseModel": false
@@ -80931,262 +84130,6 @@
        "type": "string"
       },
       "Engine": {
-       "const": "aurora-mysql"
-      },
-      "LicenseModel": false
-     },
-     "required": [
-      "Engine",
-      "DBInstanceClass"
-     ]
-    },
-    "then": {
-     "properties": {
-      "DBInstanceClass": {
-       "enum": [
-        "db.r4.16xlarge",
-        "db.r4.2xlarge",
-        "db.r4.4xlarge",
-        "db.r4.8xlarge",
-        "db.r4.large",
-        "db.r4.xlarge",
-        "db.r5.12xlarge",
-        "db.r5.16xlarge",
-        "db.r5.24xlarge",
-        "db.r5.2xlarge",
-        "db.r5.4xlarge",
-        "db.r5.8xlarge",
-        "db.r5.large",
-        "db.r5.xlarge",
-        "db.r6g.12xlarge",
-        "db.r6g.16xlarge",
-        "db.r6g.2xlarge",
-        "db.r6g.4xlarge",
-        "db.r6g.8xlarge",
-        "db.r6g.large",
-        "db.r6g.xlarge",
-        "db.r6i.12xlarge",
-        "db.r6i.16xlarge",
-        "db.r6i.24xlarge",
-        "db.r6i.2xlarge",
-        "db.r6i.32xlarge",
-        "db.r6i.4xlarge",
-        "db.r6i.8xlarge",
-        "db.r6i.large",
-        "db.r6i.xlarge",
-        "db.serverless",
-        "db.t2.medium",
-        "db.t2.small",
-        "db.t3.large",
-        "db.t3.medium",
-        "db.t3.small",
-        "db.t4g.large",
-        "db.t4g.medium"
-       ]
-      }
-     }
-    }
-   },
-   {
-    "if": {
-     "properties": {
-      "DBInstanceClass": {
-       "type": "string"
-      },
-      "Engine": {
-       "const": "aurora-mysql"
-      },
-      "LicenseModel": {
-       "const": "general-public-license"
-      }
-     },
-     "required": [
-      "Engine",
-      "LicenseModel",
-      "DBInstanceClass"
-     ]
-    },
-    "then": {
-     "properties": {
-      "DBInstanceClass": {
-       "enum": [
-        "db.r4.16xlarge",
-        "db.r4.2xlarge",
-        "db.r4.4xlarge",
-        "db.r4.8xlarge",
-        "db.r4.large",
-        "db.r4.xlarge",
-        "db.r5.12xlarge",
-        "db.r5.16xlarge",
-        "db.r5.24xlarge",
-        "db.r5.2xlarge",
-        "db.r5.4xlarge",
-        "db.r5.8xlarge",
-        "db.r5.large",
-        "db.r5.xlarge",
-        "db.r6g.12xlarge",
-        "db.r6g.16xlarge",
-        "db.r6g.2xlarge",
-        "db.r6g.4xlarge",
-        "db.r6g.8xlarge",
-        "db.r6g.large",
-        "db.r6g.xlarge",
-        "db.r6i.12xlarge",
-        "db.r6i.16xlarge",
-        "db.r6i.24xlarge",
-        "db.r6i.2xlarge",
-        "db.r6i.32xlarge",
-        "db.r6i.4xlarge",
-        "db.r6i.8xlarge",
-        "db.r6i.large",
-        "db.r6i.xlarge",
-        "db.serverless",
-        "db.t2.medium",
-        "db.t2.small",
-        "db.t3.large",
-        "db.t3.medium",
-        "db.t3.small",
-        "db.t4g.large",
-        "db.t4g.medium"
-       ]
-      }
-     }
-    }
-   },
-   {
-    "if": {
-     "properties": {
-      "DBInstanceClass": {
-       "type": "string"
-      },
-      "Engine": {
-       "const": "aurora"
-      },
-      "LicenseModel": false
-     },
-     "required": [
-      "Engine",
-      "DBInstanceClass"
-     ]
-    },
-    "then": {
-     "properties": {
-      "DBInstanceClass": {
-       "enum": [
-        "db.r4.16xlarge",
-        "db.r4.2xlarge",
-        "db.r4.4xlarge",
-        "db.r4.8xlarge",
-        "db.r4.large",
-        "db.r4.xlarge",
-        "db.r5.12xlarge",
-        "db.r5.16xlarge",
-        "db.r5.24xlarge",
-        "db.r5.2xlarge",
-        "db.r5.4xlarge",
-        "db.r5.8xlarge",
-        "db.r5.large",
-        "db.r5.xlarge",
-        "db.r6g.12xlarge",
-        "db.r6g.16xlarge",
-        "db.r6g.2xlarge",
-        "db.r6g.4xlarge",
-        "db.r6g.8xlarge",
-        "db.r6g.large",
-        "db.r6g.xlarge",
-        "db.r6i.12xlarge",
-        "db.r6i.16xlarge",
-        "db.r6i.24xlarge",
-        "db.r6i.2xlarge",
-        "db.r6i.32xlarge",
-        "db.r6i.4xlarge",
-        "db.r6i.8xlarge",
-        "db.r6i.large",
-        "db.r6i.xlarge",
-        "db.t2.medium",
-        "db.t2.small",
-        "db.t3.large",
-        "db.t3.medium",
-        "db.t3.small",
-        "db.t4g.large",
-        "db.t4g.medium"
-       ]
-      }
-     }
-    }
-   },
-   {
-    "if": {
-     "properties": {
-      "DBInstanceClass": {
-       "type": "string"
-      },
-      "Engine": {
-       "const": "aurora"
-      },
-      "LicenseModel": {
-       "const": "general-public-license"
-      }
-     },
-     "required": [
-      "Engine",
-      "LicenseModel",
-      "DBInstanceClass"
-     ]
-    },
-    "then": {
-     "properties": {
-      "DBInstanceClass": {
-       "enum": [
-        "db.r4.16xlarge",
-        "db.r4.2xlarge",
-        "db.r4.4xlarge",
-        "db.r4.8xlarge",
-        "db.r4.large",
-        "db.r4.xlarge",
-        "db.r5.12xlarge",
-        "db.r5.16xlarge",
-        "db.r5.24xlarge",
-        "db.r5.2xlarge",
-        "db.r5.4xlarge",
-        "db.r5.8xlarge",
-        "db.r5.large",
-        "db.r5.xlarge",
-        "db.r6g.12xlarge",
-        "db.r6g.16xlarge",
-        "db.r6g.2xlarge",
-        "db.r6g.4xlarge",
-        "db.r6g.8xlarge",
-        "db.r6g.large",
-        "db.r6g.xlarge",
-        "db.r6i.12xlarge",
-        "db.r6i.16xlarge",
-        "db.r6i.24xlarge",
-        "db.r6i.2xlarge",
-        "db.r6i.32xlarge",
-        "db.r6i.4xlarge",
-        "db.r6i.8xlarge",
-        "db.r6i.large",
-        "db.r6i.xlarge",
-        "db.t2.medium",
-        "db.t2.small",
-        "db.t3.large",
-        "db.t3.medium",
-        "db.t3.small",
-        "db.t4g.large",
-        "db.t4g.medium"
-       ]
-      }
-     }
-    }
-   },
-   {
-    "if": {
-     "properties": {
-      "DBInstanceClass": {
-       "type": "string"
-      },
-      "Engine": {
        "const": "aurora-postgresql"
       },
       "LicenseModel": false
@@ -81236,6 +84179,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t3.large",
         "db.t3.medium",
@@ -81305,6 +84255,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t3.large",
         "db.t3.medium",
@@ -90991,11 +93948,23 @@
         "db.r6i.16xlarge",
         "db.r6i.24xlarge",
         "db.r6i.2xlarge",
+        "db.r6i.2xlarge.tpc1.mem2x",
+        "db.r6i.2xlarge.tpc2.mem4x",
+        "db.r6i.2xlarge.tpc2.mem8x",
         "db.r6i.32xlarge",
         "db.r6i.4xlarge",
+        "db.r6i.4xlarge.tpc2.mem2x",
+        "db.r6i.4xlarge.tpc2.mem3x",
+        "db.r6i.4xlarge.tpc2.mem4x",
+        "db.r6i.6xlarge.tpc2.mem4x",
         "db.r6i.8xlarge",
+        "db.r6i.8xlarge.tpc2.mem3x",
+        "db.r6i.8xlarge.tpc2.mem4x",
         "db.r6i.large",
+        "db.r6i.large.tpc1.mem2x",
         "db.r6i.xlarge",
+        "db.r6i.xlarge.tpc2.mem2x",
+        "db.r6i.xlarge.tpc2.mem4x",
         "db.t2.2xlarge",
         "db.t2.large",
         "db.t2.medium",
@@ -92096,14 +95065,6 @@
         "db.m5.8xlarge",
         "db.m5.large",
         "db.m5.xlarge",
-        "db.m5d.12xlarge",
-        "db.m5d.16xlarge",
-        "db.m5d.24xlarge",
-        "db.m5d.2xlarge",
-        "db.m5d.4xlarge",
-        "db.m5d.8xlarge",
-        "db.m5d.large",
-        "db.m5d.xlarge",
         "db.m6g.12xlarge",
         "db.m6g.16xlarge",
         "db.m6g.2xlarge",
@@ -92132,14 +95093,6 @@
         "db.r5.8xlarge",
         "db.r5.large",
         "db.r5.xlarge",
-        "db.r5d.12xlarge",
-        "db.r5d.16xlarge",
-        "db.r5d.24xlarge",
-        "db.r5d.2xlarge",
-        "db.r5d.4xlarge",
-        "db.r5d.8xlarge",
-        "db.r5d.large",
-        "db.r5d.xlarge",
         "db.r6g.12xlarge",
         "db.r6g.16xlarge",
         "db.r6g.2xlarge",
@@ -92208,14 +95161,6 @@
         "db.m5.8xlarge",
         "db.m5.large",
         "db.m5.xlarge",
-        "db.m5d.12xlarge",
-        "db.m5d.16xlarge",
-        "db.m5d.24xlarge",
-        "db.m5d.2xlarge",
-        "db.m5d.4xlarge",
-        "db.m5d.8xlarge",
-        "db.m5d.large",
-        "db.m5d.xlarge",
         "db.m6g.12xlarge",
         "db.m6g.16xlarge",
         "db.m6g.2xlarge",
@@ -92244,14 +95189,6 @@
         "db.r5.8xlarge",
         "db.r5.large",
         "db.r5.xlarge",
-        "db.r5d.12xlarge",
-        "db.r5d.16xlarge",
-        "db.r5d.24xlarge",
-        "db.r5d.2xlarge",
-        "db.r5d.4xlarge",
-        "db.r5d.8xlarge",
-        "db.r5d.large",
-        "db.r5d.xlarge",
         "db.r6g.12xlarge",
         "db.r6g.16xlarge",
         "db.r6g.2xlarge",
@@ -92330,6 +95267,12 @@
         "db.r6g.8xlarge",
         "db.r6g.large",
         "db.r6g.xlarge",
+        "db.r6gd.12xlarge",
+        "db.r6gd.16xlarge",
+        "db.r6gd.2xlarge",
+        "db.r6gd.4xlarge",
+        "db.r6gd.8xlarge",
+        "db.r6gd.xlarge",
         "db.r6i.12xlarge",
         "db.r6i.16xlarge",
         "db.r6i.24xlarge",
@@ -92343,7 +95286,6 @@
         "db.t3.2xlarge",
         "db.t3.large",
         "db.t3.medium",
-        "db.t3.small",
         "db.t3.xlarge",
         "db.t4g.large",
         "db.t4g.medium"
@@ -92396,6 +95338,12 @@
         "db.r6g.8xlarge",
         "db.r6g.large",
         "db.r6g.xlarge",
+        "db.r6gd.12xlarge",
+        "db.r6gd.16xlarge",
+        "db.r6gd.2xlarge",
+        "db.r6gd.4xlarge",
+        "db.r6gd.8xlarge",
+        "db.r6gd.xlarge",
         "db.r6i.12xlarge",
         "db.r6i.16xlarge",
         "db.r6i.24xlarge",
@@ -92409,7 +95357,6 @@
         "db.t3.2xlarge",
         "db.t3.large",
         "db.t3.medium",
-        "db.t3.small",
         "db.t3.xlarge",
         "db.t4g.large",
         "db.t4g.medium"
@@ -92652,605 +95599,6 @@
        "type": "string"
       },
       "Engine": {
-       "const": "postgres"
-      },
-      "LicenseModel": false
-     },
-     "required": [
-      "Engine",
-      "DBInstanceClass"
-     ]
-    },
-    "then": {
-     "properties": {
-      "DBInstanceClass": {
-       "enum": [
-        "db.m5.12xlarge",
-        "db.m5.16xlarge",
-        "db.m5.24xlarge",
-        "db.m5.2xlarge",
-        "db.m5.4xlarge",
-        "db.m5.8xlarge",
-        "db.m5.large",
-        "db.m5.xlarge",
-        "db.m5d.12xlarge",
-        "db.m5d.16xlarge",
-        "db.m5d.24xlarge",
-        "db.m5d.2xlarge",
-        "db.m5d.4xlarge",
-        "db.m5d.8xlarge",
-        "db.m5d.large",
-        "db.m5d.xlarge",
-        "db.m6g.12xlarge",
-        "db.m6g.16xlarge",
-        "db.m6g.2xlarge",
-        "db.m6g.4xlarge",
-        "db.m6g.8xlarge",
-        "db.m6g.large",
-        "db.m6g.xlarge",
-        "db.m6gd.12xlarge",
-        "db.m6gd.16xlarge",
-        "db.m6gd.2xlarge",
-        "db.m6gd.4xlarge",
-        "db.m6gd.8xlarge",
-        "db.m6gd.large",
-        "db.m6gd.xlarge",
-        "db.r4.16xlarge",
-        "db.r4.2xlarge",
-        "db.r4.4xlarge",
-        "db.r4.8xlarge",
-        "db.r4.large",
-        "db.r4.xlarge",
-        "db.r5.12xlarge",
-        "db.r5.16xlarge",
-        "db.r5.24xlarge",
-        "db.r5.2xlarge",
-        "db.r5.4xlarge",
-        "db.r5.8xlarge",
-        "db.r5.large",
-        "db.r5.xlarge",
-        "db.r5d.12xlarge",
-        "db.r5d.16xlarge",
-        "db.r5d.24xlarge",
-        "db.r5d.2xlarge",
-        "db.r5d.4xlarge",
-        "db.r5d.8xlarge",
-        "db.r5d.large",
-        "db.r5d.xlarge",
-        "db.r6g.12xlarge",
-        "db.r6g.16xlarge",
-        "db.r6g.2xlarge",
-        "db.r6g.4xlarge",
-        "db.r6g.8xlarge",
-        "db.r6g.large",
-        "db.r6g.xlarge",
-        "db.r6gd.12xlarge",
-        "db.r6gd.16xlarge",
-        "db.r6gd.2xlarge",
-        "db.r6gd.4xlarge",
-        "db.r6gd.8xlarge",
-        "db.r6gd.large",
-        "db.r6gd.xlarge",
-        "db.t2.2xlarge",
-        "db.t2.large",
-        "db.t2.medium",
-        "db.t2.micro",
-        "db.t2.small",
-        "db.t2.xlarge",
-        "db.t3.2xlarge",
-        "db.t3.large",
-        "db.t3.medium",
-        "db.t3.micro",
-        "db.t3.small",
-        "db.t3.xlarge",
-        "db.t4g.2xlarge",
-        "db.t4g.large",
-        "db.t4g.medium",
-        "db.t4g.micro",
-        "db.t4g.small",
-        "db.t4g.xlarge"
-       ]
-      }
-     }
-    }
-   },
-   {
-    "if": {
-     "properties": {
-      "DBInstanceClass": {
-       "type": "string"
-      },
-      "Engine": {
-       "const": "postgres"
-      },
-      "LicenseModel": {
-       "const": "general-public-license"
-      }
-     },
-     "required": [
-      "Engine",
-      "LicenseModel",
-      "DBInstanceClass"
-     ]
-    },
-    "then": {
-     "properties": {
-      "DBInstanceClass": {
-       "enum": [
-        "db.m5.12xlarge",
-        "db.m5.16xlarge",
-        "db.m5.24xlarge",
-        "db.m5.2xlarge",
-        "db.m5.4xlarge",
-        "db.m5.8xlarge",
-        "db.m5.large",
-        "db.m5.xlarge",
-        "db.m5d.12xlarge",
-        "db.m5d.16xlarge",
-        "db.m5d.24xlarge",
-        "db.m5d.2xlarge",
-        "db.m5d.4xlarge",
-        "db.m5d.8xlarge",
-        "db.m5d.large",
-        "db.m5d.xlarge",
-        "db.m6g.12xlarge",
-        "db.m6g.16xlarge",
-        "db.m6g.2xlarge",
-        "db.m6g.4xlarge",
-        "db.m6g.8xlarge",
-        "db.m6g.large",
-        "db.m6g.xlarge",
-        "db.m6gd.12xlarge",
-        "db.m6gd.16xlarge",
-        "db.m6gd.2xlarge",
-        "db.m6gd.4xlarge",
-        "db.m6gd.8xlarge",
-        "db.m6gd.large",
-        "db.m6gd.xlarge",
-        "db.r4.16xlarge",
-        "db.r4.2xlarge",
-        "db.r4.4xlarge",
-        "db.r4.8xlarge",
-        "db.r4.large",
-        "db.r4.xlarge",
-        "db.r5.12xlarge",
-        "db.r5.16xlarge",
-        "db.r5.24xlarge",
-        "db.r5.2xlarge",
-        "db.r5.4xlarge",
-        "db.r5.8xlarge",
-        "db.r5.large",
-        "db.r5.xlarge",
-        "db.r5d.12xlarge",
-        "db.r5d.16xlarge",
-        "db.r5d.24xlarge",
-        "db.r5d.2xlarge",
-        "db.r5d.4xlarge",
-        "db.r5d.8xlarge",
-        "db.r5d.large",
-        "db.r5d.xlarge",
-        "db.r6g.12xlarge",
-        "db.r6g.16xlarge",
-        "db.r6g.2xlarge",
-        "db.r6g.4xlarge",
-        "db.r6g.8xlarge",
-        "db.r6g.large",
-        "db.r6g.xlarge",
-        "db.r6gd.12xlarge",
-        "db.r6gd.16xlarge",
-        "db.r6gd.2xlarge",
-        "db.r6gd.4xlarge",
-        "db.r6gd.8xlarge",
-        "db.r6gd.large",
-        "db.r6gd.xlarge",
-        "db.t2.2xlarge",
-        "db.t2.large",
-        "db.t2.medium",
-        "db.t2.micro",
-        "db.t2.small",
-        "db.t2.xlarge",
-        "db.t3.2xlarge",
-        "db.t3.large",
-        "db.t3.medium",
-        "db.t3.micro",
-        "db.t3.small",
-        "db.t3.xlarge",
-        "db.t4g.2xlarge",
-        "db.t4g.large",
-        "db.t4g.medium",
-        "db.t4g.micro",
-        "db.t4g.small",
-        "db.t4g.xlarge"
-       ]
-      }
-     }
-    }
-   },
-   {
-    "if": {
-     "properties": {
-      "DBInstanceClass": {
-       "type": "string"
-      },
-      "Engine": {
-       "const": "mysql"
-      },
-      "LicenseModel": false
-     },
-     "required": [
-      "Engine",
-      "DBInstanceClass"
-     ]
-    },
-    "then": {
-     "properties": {
-      "DBInstanceClass": {
-       "enum": [
-        "db.m5.12xlarge",
-        "db.m5.16xlarge",
-        "db.m5.24xlarge",
-        "db.m5.2xlarge",
-        "db.m5.4xlarge",
-        "db.m5.8xlarge",
-        "db.m5.large",
-        "db.m5.xlarge",
-        "db.m6g.12xlarge",
-        "db.m6g.16xlarge",
-        "db.m6g.2xlarge",
-        "db.m6g.4xlarge",
-        "db.m6g.8xlarge",
-        "db.m6g.large",
-        "db.m6g.xlarge",
-        "db.m6gd.12xlarge",
-        "db.m6gd.16xlarge",
-        "db.m6gd.2xlarge",
-        "db.m6gd.4xlarge",
-        "db.m6gd.8xlarge",
-        "db.m6gd.large",
-        "db.m6gd.xlarge",
-        "db.r4.16xlarge",
-        "db.r4.2xlarge",
-        "db.r4.4xlarge",
-        "db.r4.8xlarge",
-        "db.r4.large",
-        "db.r4.xlarge",
-        "db.r5.12xlarge",
-        "db.r5.16xlarge",
-        "db.r5.24xlarge",
-        "db.r5.2xlarge",
-        "db.r5.4xlarge",
-        "db.r5.8xlarge",
-        "db.r5.large",
-        "db.r5.xlarge",
-        "db.r6g.12xlarge",
-        "db.r6g.16xlarge",
-        "db.r6g.2xlarge",
-        "db.r6g.4xlarge",
-        "db.r6g.8xlarge",
-        "db.r6g.large",
-        "db.r6g.xlarge",
-        "db.r6gd.12xlarge",
-        "db.r6gd.16xlarge",
-        "db.r6gd.2xlarge",
-        "db.r6gd.4xlarge",
-        "db.r6gd.8xlarge",
-        "db.r6gd.large",
-        "db.r6gd.xlarge",
-        "db.t2.2xlarge",
-        "db.t2.large",
-        "db.t2.medium",
-        "db.t2.micro",
-        "db.t2.small",
-        "db.t2.xlarge",
-        "db.t3.2xlarge",
-        "db.t3.large",
-        "db.t3.medium",
-        "db.t3.micro",
-        "db.t3.small",
-        "db.t3.xlarge",
-        "db.t4g.2xlarge",
-        "db.t4g.large",
-        "db.t4g.medium",
-        "db.t4g.micro",
-        "db.t4g.small",
-        "db.t4g.xlarge"
-       ]
-      }
-     }
-    }
-   },
-   {
-    "if": {
-     "properties": {
-      "DBInstanceClass": {
-       "type": "string"
-      },
-      "Engine": {
-       "const": "mysql"
-      },
-      "LicenseModel": {
-       "const": "general-public-license"
-      }
-     },
-     "required": [
-      "Engine",
-      "LicenseModel",
-      "DBInstanceClass"
-     ]
-    },
-    "then": {
-     "properties": {
-      "DBInstanceClass": {
-       "enum": [
-        "db.m5.12xlarge",
-        "db.m5.16xlarge",
-        "db.m5.24xlarge",
-        "db.m5.2xlarge",
-        "db.m5.4xlarge",
-        "db.m5.8xlarge",
-        "db.m5.large",
-        "db.m5.xlarge",
-        "db.m6g.12xlarge",
-        "db.m6g.16xlarge",
-        "db.m6g.2xlarge",
-        "db.m6g.4xlarge",
-        "db.m6g.8xlarge",
-        "db.m6g.large",
-        "db.m6g.xlarge",
-        "db.m6gd.12xlarge",
-        "db.m6gd.16xlarge",
-        "db.m6gd.2xlarge",
-        "db.m6gd.4xlarge",
-        "db.m6gd.8xlarge",
-        "db.m6gd.large",
-        "db.m6gd.xlarge",
-        "db.r4.16xlarge",
-        "db.r4.2xlarge",
-        "db.r4.4xlarge",
-        "db.r4.8xlarge",
-        "db.r4.large",
-        "db.r4.xlarge",
-        "db.r5.12xlarge",
-        "db.r5.16xlarge",
-        "db.r5.24xlarge",
-        "db.r5.2xlarge",
-        "db.r5.4xlarge",
-        "db.r5.8xlarge",
-        "db.r5.large",
-        "db.r5.xlarge",
-        "db.r6g.12xlarge",
-        "db.r6g.16xlarge",
-        "db.r6g.2xlarge",
-        "db.r6g.4xlarge",
-        "db.r6g.8xlarge",
-        "db.r6g.large",
-        "db.r6g.xlarge",
-        "db.r6gd.12xlarge",
-        "db.r6gd.16xlarge",
-        "db.r6gd.2xlarge",
-        "db.r6gd.4xlarge",
-        "db.r6gd.8xlarge",
-        "db.r6gd.large",
-        "db.r6gd.xlarge",
-        "db.t2.2xlarge",
-        "db.t2.large",
-        "db.t2.medium",
-        "db.t2.micro",
-        "db.t2.small",
-        "db.t2.xlarge",
-        "db.t3.2xlarge",
-        "db.t3.large",
-        "db.t3.medium",
-        "db.t3.micro",
-        "db.t3.small",
-        "db.t3.xlarge",
-        "db.t4g.2xlarge",
-        "db.t4g.large",
-        "db.t4g.medium",
-        "db.t4g.micro",
-        "db.t4g.small",
-        "db.t4g.xlarge"
-       ]
-      }
-     }
-    }
-   },
-   {
-    "if": {
-     "properties": {
-      "DBInstanceClass": {
-       "type": "string"
-      },
-      "Engine": {
-       "const": "mariadb"
-      },
-      "LicenseModel": false
-     },
-     "required": [
-      "Engine",
-      "DBInstanceClass"
-     ]
-    },
-    "then": {
-     "properties": {
-      "DBInstanceClass": {
-       "enum": [
-        "db.m5.12xlarge",
-        "db.m5.16xlarge",
-        "db.m5.24xlarge",
-        "db.m5.2xlarge",
-        "db.m5.4xlarge",
-        "db.m5.8xlarge",
-        "db.m5.large",
-        "db.m5.xlarge",
-        "db.m6g.12xlarge",
-        "db.m6g.16xlarge",
-        "db.m6g.2xlarge",
-        "db.m6g.4xlarge",
-        "db.m6g.8xlarge",
-        "db.m6g.large",
-        "db.m6g.xlarge",
-        "db.m6gd.12xlarge",
-        "db.m6gd.16xlarge",
-        "db.m6gd.2xlarge",
-        "db.m6gd.4xlarge",
-        "db.m6gd.8xlarge",
-        "db.m6gd.large",
-        "db.m6gd.xlarge",
-        "db.r4.16xlarge",
-        "db.r4.2xlarge",
-        "db.r4.4xlarge",
-        "db.r4.8xlarge",
-        "db.r4.large",
-        "db.r4.xlarge",
-        "db.r5.12xlarge",
-        "db.r5.16xlarge",
-        "db.r5.24xlarge",
-        "db.r5.2xlarge",
-        "db.r5.4xlarge",
-        "db.r5.8xlarge",
-        "db.r5.large",
-        "db.r5.xlarge",
-        "db.r6g.12xlarge",
-        "db.r6g.16xlarge",
-        "db.r6g.2xlarge",
-        "db.r6g.4xlarge",
-        "db.r6g.8xlarge",
-        "db.r6g.large",
-        "db.r6g.xlarge",
-        "db.r6gd.12xlarge",
-        "db.r6gd.16xlarge",
-        "db.r6gd.2xlarge",
-        "db.r6gd.4xlarge",
-        "db.r6gd.8xlarge",
-        "db.r6gd.large",
-        "db.r6gd.xlarge",
-        "db.t2.2xlarge",
-        "db.t2.large",
-        "db.t2.medium",
-        "db.t2.micro",
-        "db.t2.small",
-        "db.t2.xlarge",
-        "db.t3.2xlarge",
-        "db.t3.large",
-        "db.t3.medium",
-        "db.t3.micro",
-        "db.t3.small",
-        "db.t3.xlarge",
-        "db.t4g.2xlarge",
-        "db.t4g.large",
-        "db.t4g.medium",
-        "db.t4g.micro",
-        "db.t4g.small",
-        "db.t4g.xlarge"
-       ]
-      }
-     }
-    }
-   },
-   {
-    "if": {
-     "properties": {
-      "DBInstanceClass": {
-       "type": "string"
-      },
-      "Engine": {
-       "const": "mariadb"
-      },
-      "LicenseModel": {
-       "const": "general-public-license"
-      }
-     },
-     "required": [
-      "Engine",
-      "LicenseModel",
-      "DBInstanceClass"
-     ]
-    },
-    "then": {
-     "properties": {
-      "DBInstanceClass": {
-       "enum": [
-        "db.m5.12xlarge",
-        "db.m5.16xlarge",
-        "db.m5.24xlarge",
-        "db.m5.2xlarge",
-        "db.m5.4xlarge",
-        "db.m5.8xlarge",
-        "db.m5.large",
-        "db.m5.xlarge",
-        "db.m6g.12xlarge",
-        "db.m6g.16xlarge",
-        "db.m6g.2xlarge",
-        "db.m6g.4xlarge",
-        "db.m6g.8xlarge",
-        "db.m6g.large",
-        "db.m6g.xlarge",
-        "db.m6gd.12xlarge",
-        "db.m6gd.16xlarge",
-        "db.m6gd.2xlarge",
-        "db.m6gd.4xlarge",
-        "db.m6gd.8xlarge",
-        "db.m6gd.large",
-        "db.m6gd.xlarge",
-        "db.r4.16xlarge",
-        "db.r4.2xlarge",
-        "db.r4.4xlarge",
-        "db.r4.8xlarge",
-        "db.r4.large",
-        "db.r4.xlarge",
-        "db.r5.12xlarge",
-        "db.r5.16xlarge",
-        "db.r5.24xlarge",
-        "db.r5.2xlarge",
-        "db.r5.4xlarge",
-        "db.r5.8xlarge",
-        "db.r5.large",
-        "db.r5.xlarge",
-        "db.r6g.12xlarge",
-        "db.r6g.16xlarge",
-        "db.r6g.2xlarge",
-        "db.r6g.4xlarge",
-        "db.r6g.8xlarge",
-        "db.r6g.large",
-        "db.r6g.xlarge",
-        "db.r6gd.12xlarge",
-        "db.r6gd.16xlarge",
-        "db.r6gd.2xlarge",
-        "db.r6gd.4xlarge",
-        "db.r6gd.8xlarge",
-        "db.r6gd.large",
-        "db.r6gd.xlarge",
-        "db.t2.2xlarge",
-        "db.t2.large",
-        "db.t2.medium",
-        "db.t2.micro",
-        "db.t2.small",
-        "db.t2.xlarge",
-        "db.t3.2xlarge",
-        "db.t3.large",
-        "db.t3.medium",
-        "db.t3.micro",
-        "db.t3.small",
-        "db.t3.xlarge",
-        "db.t4g.2xlarge",
-        "db.t4g.large",
-        "db.t4g.medium",
-        "db.t4g.micro",
-        "db.t4g.small",
-        "db.t4g.xlarge"
-       ]
-      }
-     }
-    }
-   },
-   {
-    "if": {
-     "properties": {
-      "DBInstanceClass": {
-       "type": "string"
-      },
-      "Engine": {
        "const": "oracle-ee"
       },
       "LicenseModel": {
@@ -93330,11 +95678,23 @@
         "db.r6i.16xlarge",
         "db.r6i.24xlarge",
         "db.r6i.2xlarge",
+        "db.r6i.2xlarge.tpc1.mem2x",
+        "db.r6i.2xlarge.tpc2.mem4x",
+        "db.r6i.2xlarge.tpc2.mem8x",
         "db.r6i.32xlarge",
         "db.r6i.4xlarge",
+        "db.r6i.4xlarge.tpc2.mem2x",
+        "db.r6i.4xlarge.tpc2.mem3x",
+        "db.r6i.4xlarge.tpc2.mem4x",
+        "db.r6i.6xlarge.tpc2.mem4x",
         "db.r6i.8xlarge",
+        "db.r6i.8xlarge.tpc2.mem3x",
+        "db.r6i.8xlarge.tpc2.mem4x",
         "db.r6i.large",
+        "db.r6i.large.tpc1.mem2x",
         "db.r6i.xlarge",
+        "db.r6i.xlarge.tpc2.mem2x",
+        "db.r6i.xlarge.tpc2.mem4x",
         "db.t2.2xlarge",
         "db.t2.large",
         "db.t2.medium",
@@ -93443,6 +95803,573 @@
         "db.x2iedn.2xlarge",
         "db.x2iedn.4xlarge",
         "db.x2iedn.xlarge"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "postgres"
+      },
+      "LicenseModel": false
+     },
+     "required": [
+      "Engine",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.m5.12xlarge",
+        "db.m5.16xlarge",
+        "db.m5.24xlarge",
+        "db.m5.2xlarge",
+        "db.m5.4xlarge",
+        "db.m5.8xlarge",
+        "db.m5.large",
+        "db.m5.xlarge",
+        "db.m6g.12xlarge",
+        "db.m6g.16xlarge",
+        "db.m6g.2xlarge",
+        "db.m6g.4xlarge",
+        "db.m6g.8xlarge",
+        "db.m6g.large",
+        "db.m6g.xlarge",
+        "db.m6gd.12xlarge",
+        "db.m6gd.16xlarge",
+        "db.m6gd.2xlarge",
+        "db.m6gd.4xlarge",
+        "db.m6gd.8xlarge",
+        "db.m6gd.large",
+        "db.m6gd.xlarge",
+        "db.r4.16xlarge",
+        "db.r4.2xlarge",
+        "db.r4.4xlarge",
+        "db.r4.8xlarge",
+        "db.r4.large",
+        "db.r4.xlarge",
+        "db.r5.12xlarge",
+        "db.r5.16xlarge",
+        "db.r5.24xlarge",
+        "db.r5.2xlarge",
+        "db.r5.4xlarge",
+        "db.r5.8xlarge",
+        "db.r5.large",
+        "db.r5.xlarge",
+        "db.r6g.12xlarge",
+        "db.r6g.16xlarge",
+        "db.r6g.2xlarge",
+        "db.r6g.4xlarge",
+        "db.r6g.8xlarge",
+        "db.r6g.large",
+        "db.r6g.xlarge",
+        "db.r6gd.12xlarge",
+        "db.r6gd.16xlarge",
+        "db.r6gd.2xlarge",
+        "db.r6gd.4xlarge",
+        "db.r6gd.8xlarge",
+        "db.r6gd.large",
+        "db.r6gd.xlarge",
+        "db.t2.2xlarge",
+        "db.t2.large",
+        "db.t2.medium",
+        "db.t2.micro",
+        "db.t2.small",
+        "db.t2.xlarge",
+        "db.t3.2xlarge",
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t3.micro",
+        "db.t3.small",
+        "db.t3.xlarge",
+        "db.t4g.2xlarge",
+        "db.t4g.large",
+        "db.t4g.medium",
+        "db.t4g.micro",
+        "db.t4g.small",
+        "db.t4g.xlarge"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "postgres"
+      },
+      "LicenseModel": {
+       "const": "general-public-license"
+      }
+     },
+     "required": [
+      "Engine",
+      "LicenseModel",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.m5.12xlarge",
+        "db.m5.16xlarge",
+        "db.m5.24xlarge",
+        "db.m5.2xlarge",
+        "db.m5.4xlarge",
+        "db.m5.8xlarge",
+        "db.m5.large",
+        "db.m5.xlarge",
+        "db.m6g.12xlarge",
+        "db.m6g.16xlarge",
+        "db.m6g.2xlarge",
+        "db.m6g.4xlarge",
+        "db.m6g.8xlarge",
+        "db.m6g.large",
+        "db.m6g.xlarge",
+        "db.m6gd.12xlarge",
+        "db.m6gd.16xlarge",
+        "db.m6gd.2xlarge",
+        "db.m6gd.4xlarge",
+        "db.m6gd.8xlarge",
+        "db.m6gd.large",
+        "db.m6gd.xlarge",
+        "db.r4.16xlarge",
+        "db.r4.2xlarge",
+        "db.r4.4xlarge",
+        "db.r4.8xlarge",
+        "db.r4.large",
+        "db.r4.xlarge",
+        "db.r5.12xlarge",
+        "db.r5.16xlarge",
+        "db.r5.24xlarge",
+        "db.r5.2xlarge",
+        "db.r5.4xlarge",
+        "db.r5.8xlarge",
+        "db.r5.large",
+        "db.r5.xlarge",
+        "db.r6g.12xlarge",
+        "db.r6g.16xlarge",
+        "db.r6g.2xlarge",
+        "db.r6g.4xlarge",
+        "db.r6g.8xlarge",
+        "db.r6g.large",
+        "db.r6g.xlarge",
+        "db.r6gd.12xlarge",
+        "db.r6gd.16xlarge",
+        "db.r6gd.2xlarge",
+        "db.r6gd.4xlarge",
+        "db.r6gd.8xlarge",
+        "db.r6gd.large",
+        "db.r6gd.xlarge",
+        "db.t2.2xlarge",
+        "db.t2.large",
+        "db.t2.medium",
+        "db.t2.micro",
+        "db.t2.small",
+        "db.t2.xlarge",
+        "db.t3.2xlarge",
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t3.micro",
+        "db.t3.small",
+        "db.t3.xlarge",
+        "db.t4g.2xlarge",
+        "db.t4g.large",
+        "db.t4g.medium",
+        "db.t4g.micro",
+        "db.t4g.small",
+        "db.t4g.xlarge"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "mysql"
+      },
+      "LicenseModel": false
+     },
+     "required": [
+      "Engine",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.m5.12xlarge",
+        "db.m5.16xlarge",
+        "db.m5.24xlarge",
+        "db.m5.2xlarge",
+        "db.m5.4xlarge",
+        "db.m5.8xlarge",
+        "db.m5.large",
+        "db.m5.xlarge",
+        "db.m6g.12xlarge",
+        "db.m6g.16xlarge",
+        "db.m6g.2xlarge",
+        "db.m6g.4xlarge",
+        "db.m6g.8xlarge",
+        "db.m6g.large",
+        "db.m6g.xlarge",
+        "db.m6gd.12xlarge",
+        "db.m6gd.16xlarge",
+        "db.m6gd.2xlarge",
+        "db.m6gd.4xlarge",
+        "db.m6gd.8xlarge",
+        "db.m6gd.large",
+        "db.m6gd.xlarge",
+        "db.r4.16xlarge",
+        "db.r4.2xlarge",
+        "db.r4.4xlarge",
+        "db.r4.8xlarge",
+        "db.r4.large",
+        "db.r4.xlarge",
+        "db.r5.12xlarge",
+        "db.r5.16xlarge",
+        "db.r5.24xlarge",
+        "db.r5.2xlarge",
+        "db.r5.4xlarge",
+        "db.r5.8xlarge",
+        "db.r5.large",
+        "db.r5.xlarge",
+        "db.r6g.12xlarge",
+        "db.r6g.16xlarge",
+        "db.r6g.2xlarge",
+        "db.r6g.4xlarge",
+        "db.r6g.8xlarge",
+        "db.r6g.large",
+        "db.r6g.xlarge",
+        "db.r6gd.12xlarge",
+        "db.r6gd.16xlarge",
+        "db.r6gd.2xlarge",
+        "db.r6gd.4xlarge",
+        "db.r6gd.8xlarge",
+        "db.r6gd.large",
+        "db.r6gd.xlarge",
+        "db.t2.2xlarge",
+        "db.t2.large",
+        "db.t2.medium",
+        "db.t2.micro",
+        "db.t2.small",
+        "db.t2.xlarge",
+        "db.t3.2xlarge",
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t3.micro",
+        "db.t3.small",
+        "db.t3.xlarge",
+        "db.t4g.2xlarge",
+        "db.t4g.large",
+        "db.t4g.medium",
+        "db.t4g.micro",
+        "db.t4g.small",
+        "db.t4g.xlarge"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "mysql"
+      },
+      "LicenseModel": {
+       "const": "general-public-license"
+      }
+     },
+     "required": [
+      "Engine",
+      "LicenseModel",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.m5.12xlarge",
+        "db.m5.16xlarge",
+        "db.m5.24xlarge",
+        "db.m5.2xlarge",
+        "db.m5.4xlarge",
+        "db.m5.8xlarge",
+        "db.m5.large",
+        "db.m5.xlarge",
+        "db.m6g.12xlarge",
+        "db.m6g.16xlarge",
+        "db.m6g.2xlarge",
+        "db.m6g.4xlarge",
+        "db.m6g.8xlarge",
+        "db.m6g.large",
+        "db.m6g.xlarge",
+        "db.m6gd.12xlarge",
+        "db.m6gd.16xlarge",
+        "db.m6gd.2xlarge",
+        "db.m6gd.4xlarge",
+        "db.m6gd.8xlarge",
+        "db.m6gd.large",
+        "db.m6gd.xlarge",
+        "db.r4.16xlarge",
+        "db.r4.2xlarge",
+        "db.r4.4xlarge",
+        "db.r4.8xlarge",
+        "db.r4.large",
+        "db.r4.xlarge",
+        "db.r5.12xlarge",
+        "db.r5.16xlarge",
+        "db.r5.24xlarge",
+        "db.r5.2xlarge",
+        "db.r5.4xlarge",
+        "db.r5.8xlarge",
+        "db.r5.large",
+        "db.r5.xlarge",
+        "db.r6g.12xlarge",
+        "db.r6g.16xlarge",
+        "db.r6g.2xlarge",
+        "db.r6g.4xlarge",
+        "db.r6g.8xlarge",
+        "db.r6g.large",
+        "db.r6g.xlarge",
+        "db.r6gd.12xlarge",
+        "db.r6gd.16xlarge",
+        "db.r6gd.2xlarge",
+        "db.r6gd.4xlarge",
+        "db.r6gd.8xlarge",
+        "db.r6gd.large",
+        "db.r6gd.xlarge",
+        "db.t2.2xlarge",
+        "db.t2.large",
+        "db.t2.medium",
+        "db.t2.micro",
+        "db.t2.small",
+        "db.t2.xlarge",
+        "db.t3.2xlarge",
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t3.micro",
+        "db.t3.small",
+        "db.t3.xlarge",
+        "db.t4g.2xlarge",
+        "db.t4g.large",
+        "db.t4g.medium",
+        "db.t4g.micro",
+        "db.t4g.small",
+        "db.t4g.xlarge"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "mariadb"
+      },
+      "LicenseModel": false
+     },
+     "required": [
+      "Engine",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.m5.12xlarge",
+        "db.m5.16xlarge",
+        "db.m5.24xlarge",
+        "db.m5.2xlarge",
+        "db.m5.4xlarge",
+        "db.m5.8xlarge",
+        "db.m5.large",
+        "db.m5.xlarge",
+        "db.m6g.12xlarge",
+        "db.m6g.16xlarge",
+        "db.m6g.2xlarge",
+        "db.m6g.4xlarge",
+        "db.m6g.8xlarge",
+        "db.m6g.large",
+        "db.m6g.xlarge",
+        "db.m6gd.12xlarge",
+        "db.m6gd.16xlarge",
+        "db.m6gd.2xlarge",
+        "db.m6gd.4xlarge",
+        "db.m6gd.8xlarge",
+        "db.m6gd.large",
+        "db.m6gd.xlarge",
+        "db.r4.16xlarge",
+        "db.r4.2xlarge",
+        "db.r4.4xlarge",
+        "db.r4.8xlarge",
+        "db.r4.large",
+        "db.r4.xlarge",
+        "db.r5.12xlarge",
+        "db.r5.16xlarge",
+        "db.r5.24xlarge",
+        "db.r5.2xlarge",
+        "db.r5.4xlarge",
+        "db.r5.8xlarge",
+        "db.r5.large",
+        "db.r5.xlarge",
+        "db.r6g.12xlarge",
+        "db.r6g.16xlarge",
+        "db.r6g.2xlarge",
+        "db.r6g.4xlarge",
+        "db.r6g.8xlarge",
+        "db.r6g.large",
+        "db.r6g.xlarge",
+        "db.r6gd.12xlarge",
+        "db.r6gd.16xlarge",
+        "db.r6gd.2xlarge",
+        "db.r6gd.4xlarge",
+        "db.r6gd.8xlarge",
+        "db.r6gd.large",
+        "db.r6gd.xlarge",
+        "db.t2.2xlarge",
+        "db.t2.large",
+        "db.t2.medium",
+        "db.t2.micro",
+        "db.t2.small",
+        "db.t2.xlarge",
+        "db.t3.2xlarge",
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t3.micro",
+        "db.t3.small",
+        "db.t3.xlarge",
+        "db.t4g.2xlarge",
+        "db.t4g.large",
+        "db.t4g.medium",
+        "db.t4g.micro",
+        "db.t4g.small",
+        "db.t4g.xlarge"
+       ]
+      }
+     }
+    }
+   },
+   {
+    "if": {
+     "properties": {
+      "DBInstanceClass": {
+       "type": "string"
+      },
+      "Engine": {
+       "const": "mariadb"
+      },
+      "LicenseModel": {
+       "const": "general-public-license"
+      }
+     },
+     "required": [
+      "Engine",
+      "LicenseModel",
+      "DBInstanceClass"
+     ]
+    },
+    "then": {
+     "properties": {
+      "DBInstanceClass": {
+       "enum": [
+        "db.m5.12xlarge",
+        "db.m5.16xlarge",
+        "db.m5.24xlarge",
+        "db.m5.2xlarge",
+        "db.m5.4xlarge",
+        "db.m5.8xlarge",
+        "db.m5.large",
+        "db.m5.xlarge",
+        "db.m6g.12xlarge",
+        "db.m6g.16xlarge",
+        "db.m6g.2xlarge",
+        "db.m6g.4xlarge",
+        "db.m6g.8xlarge",
+        "db.m6g.large",
+        "db.m6g.xlarge",
+        "db.m6gd.12xlarge",
+        "db.m6gd.16xlarge",
+        "db.m6gd.2xlarge",
+        "db.m6gd.4xlarge",
+        "db.m6gd.8xlarge",
+        "db.m6gd.large",
+        "db.m6gd.xlarge",
+        "db.r4.16xlarge",
+        "db.r4.2xlarge",
+        "db.r4.4xlarge",
+        "db.r4.8xlarge",
+        "db.r4.large",
+        "db.r4.xlarge",
+        "db.r5.12xlarge",
+        "db.r5.16xlarge",
+        "db.r5.24xlarge",
+        "db.r5.2xlarge",
+        "db.r5.4xlarge",
+        "db.r5.8xlarge",
+        "db.r5.large",
+        "db.r5.xlarge",
+        "db.r6g.12xlarge",
+        "db.r6g.16xlarge",
+        "db.r6g.2xlarge",
+        "db.r6g.4xlarge",
+        "db.r6g.8xlarge",
+        "db.r6g.large",
+        "db.r6g.xlarge",
+        "db.r6gd.12xlarge",
+        "db.r6gd.16xlarge",
+        "db.r6gd.2xlarge",
+        "db.r6gd.4xlarge",
+        "db.r6gd.8xlarge",
+        "db.r6gd.large",
+        "db.r6gd.xlarge",
+        "db.t2.2xlarge",
+        "db.t2.large",
+        "db.t2.medium",
+        "db.t2.micro",
+        "db.t2.small",
+        "db.t2.xlarge",
+        "db.t3.2xlarge",
+        "db.t3.large",
+        "db.t3.medium",
+        "db.t3.micro",
+        "db.t3.small",
+        "db.t3.xlarge",
+        "db.t4g.2xlarge",
+        "db.t4g.large",
+        "db.t4g.medium",
+        "db.t4g.micro",
+        "db.t4g.small",
+        "db.t4g.xlarge"
        ]
       }
      }
@@ -93788,11 +96715,23 @@
         "db.r6i.16xlarge",
         "db.r6i.24xlarge",
         "db.r6i.2xlarge",
+        "db.r6i.2xlarge.tpc1.mem2x",
+        "db.r6i.2xlarge.tpc2.mem4x",
+        "db.r6i.2xlarge.tpc2.mem8x",
         "db.r6i.32xlarge",
         "db.r6i.4xlarge",
+        "db.r6i.4xlarge.tpc2.mem2x",
+        "db.r6i.4xlarge.tpc2.mem3x",
+        "db.r6i.4xlarge.tpc2.mem4x",
+        "db.r6i.6xlarge.tpc2.mem4x",
         "db.r6i.8xlarge",
+        "db.r6i.8xlarge.tpc2.mem3x",
+        "db.r6i.8xlarge.tpc2.mem4x",
         "db.r6i.large",
+        "db.r6i.large.tpc1.mem2x",
         "db.r6i.xlarge",
+        "db.r6i.xlarge.tpc2.mem2x",
+        "db.r6i.xlarge.tpc2.mem4x",
         "db.t2.2xlarge",
         "db.t2.large",
         "db.t2.medium",
@@ -94184,14 +97123,6 @@
         "db.m5.8xlarge",
         "db.m5.large",
         "db.m5.xlarge",
-        "db.m5d.12xlarge",
-        "db.m5d.16xlarge",
-        "db.m5d.24xlarge",
-        "db.m5d.2xlarge",
-        "db.m5d.4xlarge",
-        "db.m5d.8xlarge",
-        "db.m5d.large",
-        "db.m5d.xlarge",
         "db.m6g.12xlarge",
         "db.m6g.16xlarge",
         "db.m6g.2xlarge",
@@ -94225,14 +97156,6 @@
         "db.r5.8xlarge",
         "db.r5.large",
         "db.r5.xlarge",
-        "db.r5d.12xlarge",
-        "db.r5d.16xlarge",
-        "db.r5d.24xlarge",
-        "db.r5d.2xlarge",
-        "db.r5d.4xlarge",
-        "db.r5d.8xlarge",
-        "db.r5d.large",
-        "db.r5d.xlarge",
         "db.r6g.12xlarge",
         "db.r6g.16xlarge",
         "db.r6g.2xlarge",
@@ -94319,14 +97242,6 @@
         "db.m5.8xlarge",
         "db.m5.large",
         "db.m5.xlarge",
-        "db.m5d.12xlarge",
-        "db.m5d.16xlarge",
-        "db.m5d.24xlarge",
-        "db.m5d.2xlarge",
-        "db.m5d.4xlarge",
-        "db.m5d.8xlarge",
-        "db.m5d.large",
-        "db.m5d.xlarge",
         "db.m6g.12xlarge",
         "db.m6g.16xlarge",
         "db.m6g.2xlarge",
@@ -94360,14 +97275,6 @@
         "db.r5.8xlarge",
         "db.r5.large",
         "db.r5.xlarge",
-        "db.r5d.12xlarge",
-        "db.r5d.16xlarge",
-        "db.r5d.24xlarge",
-        "db.r5d.2xlarge",
-        "db.r5d.4xlarge",
-        "db.r5d.8xlarge",
-        "db.r5d.large",
-        "db.r5d.xlarge",
         "db.r6g.12xlarge",
         "db.r6g.16xlarge",
         "db.r6g.2xlarge",
@@ -94838,11 +97745,23 @@
         "db.r6i.16xlarge",
         "db.r6i.24xlarge",
         "db.r6i.2xlarge",
+        "db.r6i.2xlarge.tpc1.mem2x",
+        "db.r6i.2xlarge.tpc2.mem4x",
+        "db.r6i.2xlarge.tpc2.mem8x",
         "db.r6i.32xlarge",
         "db.r6i.4xlarge",
+        "db.r6i.4xlarge.tpc2.mem2x",
+        "db.r6i.4xlarge.tpc2.mem3x",
+        "db.r6i.4xlarge.tpc2.mem4x",
+        "db.r6i.6xlarge.tpc2.mem4x",
         "db.r6i.8xlarge",
+        "db.r6i.8xlarge.tpc2.mem3x",
+        "db.r6i.8xlarge.tpc2.mem4x",
         "db.r6i.large",
+        "db.r6i.large.tpc1.mem2x",
         "db.r6i.xlarge",
+        "db.r6i.xlarge.tpc2.mem2x",
+        "db.r6i.xlarge.tpc2.mem4x",
         "db.t2.2xlarge",
         "db.t2.large",
         "db.t2.medium",
@@ -94915,6 +97834,12 @@
         "db.r6g.8xlarge",
         "db.r6g.large",
         "db.r6g.xlarge",
+        "db.r6gd.12xlarge",
+        "db.r6gd.16xlarge",
+        "db.r6gd.2xlarge",
+        "db.r6gd.4xlarge",
+        "db.r6gd.8xlarge",
+        "db.r6gd.xlarge",
         "db.r6i.12xlarge",
         "db.r6i.16xlarge",
         "db.r6i.24xlarge",
@@ -94924,6 +97849,8 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r6id.24xlarge",
+        "db.r6id.32xlarge",
         "db.serverless",
         "db.t3.2xlarge",
         "db.t3.large",
@@ -94981,6 +97908,12 @@
         "db.r6g.8xlarge",
         "db.r6g.large",
         "db.r6g.xlarge",
+        "db.r6gd.12xlarge",
+        "db.r6gd.16xlarge",
+        "db.r6gd.2xlarge",
+        "db.r6gd.4xlarge",
+        "db.r6gd.8xlarge",
+        "db.r6gd.xlarge",
         "db.r6i.12xlarge",
         "db.r6i.16xlarge",
         "db.r6i.24xlarge",
@@ -94990,6 +97923,8 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r6id.24xlarge",
+        "db.r6id.32xlarge",
         "db.serverless",
         "db.t3.2xlarge",
         "db.t3.large",
@@ -95788,14 +98723,6 @@
         "db.m5.8xlarge",
         "db.m5.large",
         "db.m5.xlarge",
-        "db.m5d.12xlarge",
-        "db.m5d.16xlarge",
-        "db.m5d.24xlarge",
-        "db.m5d.2xlarge",
-        "db.m5d.4xlarge",
-        "db.m5d.8xlarge",
-        "db.m5d.large",
-        "db.m5d.xlarge",
         "db.m6g.12xlarge",
         "db.m6g.16xlarge",
         "db.m6g.2xlarge",
@@ -95829,14 +98756,6 @@
         "db.r5.8xlarge",
         "db.r5.large",
         "db.r5.xlarge",
-        "db.r5d.12xlarge",
-        "db.r5d.16xlarge",
-        "db.r5d.24xlarge",
-        "db.r5d.2xlarge",
-        "db.r5d.4xlarge",
-        "db.r5d.8xlarge",
-        "db.r5d.large",
-        "db.r5d.xlarge",
         "db.r6g.12xlarge",
         "db.r6g.16xlarge",
         "db.r6g.2xlarge",
@@ -95923,14 +98842,6 @@
         "db.m5.8xlarge",
         "db.m5.large",
         "db.m5.xlarge",
-        "db.m5d.12xlarge",
-        "db.m5d.16xlarge",
-        "db.m5d.24xlarge",
-        "db.m5d.2xlarge",
-        "db.m5d.4xlarge",
-        "db.m5d.8xlarge",
-        "db.m5d.large",
-        "db.m5d.xlarge",
         "db.m6g.12xlarge",
         "db.m6g.16xlarge",
         "db.m6g.2xlarge",
@@ -95964,14 +98875,6 @@
         "db.r5.8xlarge",
         "db.r5.large",
         "db.r5.xlarge",
-        "db.r5d.12xlarge",
-        "db.r5d.16xlarge",
-        "db.r5d.24xlarge",
-        "db.r5d.2xlarge",
-        "db.r5d.4xlarge",
-        "db.r5d.8xlarge",
-        "db.r5d.large",
-        "db.r5d.xlarge",
         "db.r6g.12xlarge",
         "db.r6g.16xlarge",
         "db.r6g.2xlarge",
@@ -99324,6 +102227,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t3.large",
         "db.t3.medium",
@@ -99393,6 +102303,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t3.large",
         "db.t3.medium",
@@ -99773,6 +102690,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t2.medium",
         "db.t2.small",
@@ -99844,6 +102768,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.serverless",
         "db.t2.medium",
         "db.t2.small",
@@ -99912,6 +102843,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.t2.medium",
         "db.t2.small",
         "db.t3.large",
@@ -99982,6 +102920,13 @@
         "db.r6i.8xlarge",
         "db.r6i.large",
         "db.r6i.xlarge",
+        "db.r7g.12xlarge",
+        "db.r7g.16xlarge",
+        "db.r7g.2xlarge",
+        "db.r7g.4xlarge",
+        "db.r7g.8xlarge",
+        "db.r7g.large",
+        "db.r7g.xlarge",
         "db.t2.medium",
         "db.t2.small",
         "db.t3.large",

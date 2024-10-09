@@ -26,51 +26,6 @@
    "type": "object"
   }
  },
- "handlers": {
-  "create": {
-   "permissions": [
-    "iam:CreateServiceLinkedRole",
-    "rds:AddTagsToResource",
-    "rds:CreateDBParameterGroup",
-    "rds:DescribeDBParameterGroups",
-    "rds:DescribeDBParameters",
-    "rds:DescribeEngineDefaultParameters",
-    "rds:ListTagsForResource",
-    "rds:ModifyDBParameterGroup",
-    "rds:RemoveTagsFromResource"
-   ]
-  },
-  "delete": {
-   "permissions": [
-    "rds:DeleteDBParameterGroup"
-   ]
-  },
-  "list": {
-   "permissions": [
-    "rds:DescribeDBParameterGroups"
-   ]
-  },
-  "read": {
-   "permissions": [
-    "rds:DescribeDBParameterGroups",
-    "rds:DescribeDBParameters",
-    "rds:DescribeEngineDefaultParameters",
-    "rds:ListTagsForResource"
-   ]
-  },
-  "update": {
-   "permissions": [
-    "rds:AddTagsToResource",
-    "rds:DescribeDBParameterGroups",
-    "rds:DescribeDBParameters",
-    "rds:DescribeEngineDefaultParameters",
-    "rds:ListTagsForResource",
-    "rds:ModifyDBParameterGroup",
-    "rds:ResetDBParameterGroup",
-    "rds:RemoveTagsFromResource"
-   ]
-  }
- },
  "primaryIdentifier": [
   "/properties/DBParameterGroupName"
  ],
@@ -110,5 +65,12 @@
   "Description"
  ],
  "sourceUrl": "https://github.com/aws-cloudformation/aws-cloudformation-resource-providers-rds",
+ "tagging": {
+  "cloudFormationSystemTags": true,
+  "tagOnCreate": true,
+  "tagProperty": "/properties/Tags",
+  "tagUpdatable": true,
+  "taggable": true
+ },
  "typeName": "AWS::RDS::DBParameterGroup"
 }

@@ -386,6 +386,22 @@
    },
    "type": "object"
   },
+  "SourceMonitoringConfig": {
+   "additionalProperties": false,
+   "properties": {
+    "ThumbnailState": {
+     "enum": [
+      "ENABLED",
+      "DISABLED"
+     ],
+     "type": "string"
+    }
+   },
+   "required": [
+    "ThumbnailState"
+   ],
+   "type": "object"
+  },
   "VpcInterface": {
    "additionalProperties": false,
    "properties": {
@@ -438,42 +454,6 @@
    "type": "object"
   }
  },
- "handlers": {
-  "create": {
-   "permissions": [
-    "mediaconnect:CreateFlow",
-    "iam:PassRole"
-   ]
-  },
-  "delete": {
-   "permissions": [
-    "mediaconnect:DescribeFlow",
-    "mediaconnect:DeleteFlow"
-   ]
-  },
-  "list": {
-   "permissions": [
-    "mediaconnect:ListFlows"
-   ]
-  },
-  "read": {
-   "permissions": [
-    "mediaconnect:DescribeFlow"
-   ]
-  },
-  "update": {
-   "permissions": [
-    "mediaconnect:DescribeFlow",
-    "mediaconnect:UpdateFlow",
-    "mediaconnect:UpdateFlowSource",
-    "mediaconnect:UpdateFlowMediaStream",
-    "mediaconnect:AddFlowMediaStreams",
-    "mediaconnect:RemoveFlowMediaStream",
-    "mediaconnect:AddFlowVpcInterfaces",
-    "mediaconnect:RemoveFlowVpcInterface"
-   ]
-  }
- },
  "primaryIdentifier": [
   "/properties/FlowArn"
  ],
@@ -507,6 +487,9 @@
   },
   "SourceFailoverConfig": {
    "$ref": "#/definitions/FailoverConfig"
+  },
+  "SourceMonitoringConfig": {
+   "$ref": "#/definitions/SourceMonitoringConfig"
   },
   "VpcInterfaces": {
    "items": {

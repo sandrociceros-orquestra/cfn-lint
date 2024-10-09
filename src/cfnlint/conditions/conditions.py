@@ -19,6 +19,7 @@ from sympy.logic.inference import satisfiable
 from cfnlint.conditions._condition import ConditionNamed
 from cfnlint.conditions._equals import Equal, EqualParameter
 from cfnlint.conditions._errors import UnknownSatisfisfaction
+from cfnlint.conditions._rule import Rule
 from cfnlint.conditions._utils import get_hash
 
 LOGGER = logging.getLogger(__name__)
@@ -32,8 +33,10 @@ class Conditions:
     def __init__(self, cfn) -> None:
         self._conditions: dict[str, ConditionNamed] = {}
         self._parameters: dict[str, list[str]] = {}
+        self._rules: list[Rule] = []
         self._init_conditions(cfn=cfn)
         self._init_parameters(cfn=cfn)
+        self._init_rules(cfn=cfn)
         self._cnf, self._solver_params = self._build_cnf(list(self._conditions.keys()))
 
     def _init_conditions(self, cfn):
@@ -74,6 +77,29 @@ class Conditions:
                 if isinstance(allowed_value, (str, int, float, bool)):
                     self._parameters[param_hash].append(get_hash(str(allowed_value)))
 
+    def _init_rules(self, cfn: Any) -> None:
+        rules = cfn.template.get("Rules")
+        conditions = cfn.template.get("Conditions", {})
+        if not isinstance(rules, dict) or not isinstance(conditions, dict):
+            return
+        for k, v in rules.items():
+            if not isinstance(v, dict):
+                continue
+            try:
+                self._rules.append(Rule(v, conditions))
+            except ValueError as e:
+                LOGGER.debug("Captured error while building rule %s: %s", k, str(e))
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                if LOGGER.getEffectiveLevel() == logging.DEBUG:
+                    error_message = traceback.format_exc()
+                else:
+                    error_message = str(e)
+                LOGGER.debug(
+                    "Captured unknown error while building rule %s: %s",
+                    k,
+                    error_message,
+                )
+
     def get(self, name: str, default: Any = None) -> ConditionNamed:
         """Return the conditions"""
         return self._conditions.get(name, default)
@@ -84,13 +110,12 @@ class Conditions:
         cnf = EncodedCNF()
 
         # build parameters and equals into solver
-        equal_vars: dict[str, Symbol] = {}
+        equal_vars: dict[str, Symbol | BooleanFalse | BooleanTrue] = {}
 
         equals: dict[str, Equal] = {}
-        for condition_name in condition_names:
-            c_equals = self._conditions[condition_name].equals
+
+        def _build_equal_vars(c_equals: list[Equal]):
             for c_equal in c_equals:
-                # check to see if equals already matches another one
                 if c_equal.hash in equal_vars:
                     continue
 
@@ -112,6 +137,12 @@ class Conditions:
                                     ~(equal_vars[c_equal.hash] & equal_vars[e_hash])
                                 )
                 equals[c_equal.hash] = c_equal
+
+        for rule in self._rules:
+            _build_equal_vars(rule.equals)
+
+        for condition_name in condition_names:
+            _build_equal_vars(self._conditions[condition_name].equals)
 
         # Determine if a set of conditions can never be all false
         allowed_values = self._parameters.copy()
@@ -154,6 +185,9 @@ class Conditions:
                     # Not(True & True) = False allowing this not to happen
                     if prop is not None:
                         cnf.add_prop(Not(prop))
+
+        for rule in self._rules:
+            cnf.add_prop(rule.build_cnf(equal_vars))
 
         return (cnf, equal_vars)
 
@@ -362,7 +396,13 @@ class Conditions:
             UnknownSatisfisfaction: If we don't know how to satisfy a condition
         """
         if not conditions:
-            return True
+            if self._rules:
+                satisfied = satisfiable(self._cnf, all_models=False)
+                if satisfied is False:
+                    return satisfied
+                return True
+            else:
+                return True
 
         cnf = self._cnf.copy()
         at_least_one_param_found = False
@@ -406,7 +446,13 @@ class Conditions:
                     )
 
         if at_least_one_param_found is False:
-            return True
+            if self._rules:
+                satisfied = satisfiable(self._cnf, all_models=False)
+                if satisfied is False:
+                    return satisfied
+                return True
+            else:
+                return True
 
         satisfied = satisfiable(cnf, all_models=False)
         if satisfied is False:

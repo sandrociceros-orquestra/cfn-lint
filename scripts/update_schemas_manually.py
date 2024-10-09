@@ -79,28 +79,12 @@ patches.extend(
                 ),
                 Patch(
                     values={
-                        "dependentExcluded": {
-                            "InstanceId": [
-                                "LaunchConfigurationName",
-                                "LaunchTemplate",
-                                "MixedInstancesPolicy",
-                            ],
-                            "LaunchConfigurationName": [
-                                "InstanceId",
-                                "LaunchTemplate",
-                                "MixedInstancesPolicy",
-                            ],
-                            "LaunchTemplate": [
-                                "InstanceId",
-                                "LaunchConfigurationName",
-                                "MixedInstancesPolicy",
-                            ],
-                            "MixedInstancesPolicy": [
-                                "InstanceId",
-                                "LaunchConfigurationName",
-                                "LaunchTemplate",
-                            ],
-                        },
+                        "requiredXor": [
+                            "InstanceId",
+                            "LaunchConfigurationName",
+                            "LaunchTemplate",
+                            "MixedInstancesPolicy",
+                        ]
                     },
                     path="/",
                 ),
@@ -633,6 +617,12 @@ patches.extend(
                             {
                                 "if": {
                                     "type": "object",
+                                    "properties": {
+                                        "LocalSecondaryIndexes": {
+                                            "type": "array",
+                                            "minItems": 1,
+                                        }
+                                    },
                                     "required": ["LocalSecondaryIndexes"],
                                 },
                                 "then": {
@@ -650,6 +640,14 @@ patches.extend(
                         ]
                     },
                     path="/",
+                ),
+                Patch(
+                    values={"enum": ["KMS"]},
+                    path="/definitions/SSESpecification/properties/SSEType",
+                ),
+                Patch(
+                    values={"dependentRequired": {"KMSMasterKeyId": ["SSEType"]}},
+                    path="/definitions/SSESpecification",
                 ),
             ],
         ),
@@ -679,6 +677,10 @@ patches.extend(
                         ]
                     },
                     path="/",
+                ),
+                Patch(
+                    values={"enum": ["AES256", "KMS"]},
+                    path="/definitions/SSESpecification/properties/SSEType",
                 ),
             ],
         ),
@@ -711,6 +713,19 @@ patches.extend(
                     },
                     path="/",
                 ),
+                Patch(
+                    values={
+                        "dependentExcluded": {
+                            "AssociateCarrierIpAddress": ["NetworkInterfaceId"],
+                            "AssociatePublicIpAddress": ["NetworkInterfaceId"],
+                            "NetworkInterfaceId": [
+                                "AssociateCarrierIpAddress",
+                                "AssociatePublicIpAddress",
+                            ],
+                        }
+                    },
+                    path="/definitions/NetworkInterface",
+                ),
             ],
         ),
         ResourcePatch(
@@ -724,6 +739,19 @@ patches.extend(
                     values={"pattern": "^ephemeral([0-9]|[1][0-9]|[2][0-3])$"},
                     path="/definitions/BlockDeviceMapping/properties/VirtualName",
                 ),
+                Patch(
+                    values={
+                        "dependentExcluded": {
+                            "AssociateCarrierIpAddress": ["NetworkInterfaceId"],
+                            "AssociatePublicIpAddress": ["NetworkInterfaceId"],
+                            "NetworkInterfaceId": [
+                                "AssociateCarrierIpAddress",
+                                "AssociatePublicIpAddress",
+                            ],
+                        }
+                    },
+                    path="/definitions/NetworkInterface",
+                ),
             ],
         ),
         ResourcePatch(
@@ -732,6 +760,20 @@ patches.extend(
                 Patch(
                     values={
                         "requiredXor": ["Ipv6CidrBlock", "CidrBlock"],
+                    },
+                    path="/",
+                ),
+            ],
+        ),
+        ResourcePatch(
+            resource_type="AWS::EC2::NetworkInterface",
+            patches=[
+                Patch(
+                    values={
+                        "dependentExcluded": {
+                            "Ipv6AddressCount": ["Ipv6Addresses"],
+                            "Ipv6Addresses": ["Ipv6AddressCount"],
+                        },
                     },
                     path="/",
                 ),
@@ -842,7 +884,7 @@ patches.extend(
                     path="/definitions/BlockDeviceMapping/properties/VirtualName",
                 ),
                 Patch(
-                    path="/",
+                    path="/definitions/SpotFleetRequestConfigData",
                     values={
                         "requiredXor": ["LaunchSpecifications", "LaunchTemplateConfigs"]
                     },
@@ -856,7 +898,10 @@ patches.extend(
                     path="/",
                     values={
                         "requiredXor": ["CidrBlock", "Ipv4IpamPoolId"],
-                        "dependentRequired": {"Ipv4IpamPoolId": ["Ipv4NetmaskLength"]},
+                        "dependentRequired": {
+                            "Ipv4IpamPoolId": ["Ipv4NetmaskLength"],
+                            "Ipv4NetmaskLength": ["Ipv4IpamPoolId"],
+                        },
                     },
                 ),
             ],
@@ -935,7 +980,7 @@ patches.extend(
             resource_type="AWS::Events::Rule",
             patches=[
                 Patch(
-                    values={"requiredXor": ["EventPattern", "ScheduleExpression"]},
+                    values={"requiredOr": ["EventPattern", "ScheduleExpression"]},
                     path="/",
                 ),
                 Patch(
@@ -1581,6 +1626,25 @@ patches.extend(
                 Patch(
                     values={"maxLength": 200, "minLength": 0},
                     path="/properties/RegularExpressionList/items",
+                ),
+            ],
+        ),
+        ResourcePatch(
+            resource_type="AWS::EC2::Subnet",
+            patches=[
+                Patch(
+                    values={
+                        "requiredXor": ["CidrBlock", "Ipv4IpamPoolId"],
+                        "dependentExcluded": {
+                            "AvailabilityZone": ["AvailabilityZoneId"],
+                            "AvailabilityZoneId": ["AvailabilityZone"],
+                        },
+                        "dependentRequired": {
+                            "Ipv4IpamPoolId": ["Ipv4NetmaskLength"],
+                            "Ipv4NetmaskLength": ["Ipv4IpamPoolId"],
+                        },
+                    },
+                    path="/",
                 ),
             ],
         ),

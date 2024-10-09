@@ -169,36 +169,25 @@
     }
    },
    "type": "object"
-  }
- },
- "handlers": {
-  "create": {
-   "permissions": [
-    "lambda:CreateEventSourceMapping",
-    "lambda:GetEventSourceMapping"
-   ]
   },
-  "delete": {
-   "permissions": [
-    "lambda:DeleteEventSourceMapping",
-    "lambda:GetEventSourceMapping"
-   ]
-  },
-  "list": {
-   "permissions": [
-    "lambda:ListEventSourceMappings"
-   ]
-  },
-  "read": {
-   "permissions": [
-    "lambda:GetEventSourceMapping"
-   ]
-  },
-  "update": {
-   "permissions": [
-    "lambda:UpdateEventSourceMapping",
-    "lambda:GetEventSourceMapping"
-   ]
+  "Tag": {
+   "additionalProperties": false,
+   "properties": {
+    "Key": {
+     "maxLength": 128,
+     "minLength": 1,
+     "type": "string"
+    },
+    "Value": {
+     "maxLength": 256,
+     "minLength": 0,
+     "type": "string"
+    }
+   },
+   "required": [
+    "Key"
+   ],
+   "type": "object"
   }
  },
  "primaryIdentifier": [
@@ -231,6 +220,12 @@
    "pattern": "arn:(aws[a-zA-Z0-9-]*):([a-zA-Z0-9\\-])+:([a-z]{2}(-gov)?(-iso([a-z])?)?-[a-z]+-\\d{1})?:(\\d{12})?:(.*)",
    "type": "string"
   },
+  "EventSourceMappingArn": {
+   "maxLength": 120,
+   "minLength": 85,
+   "pattern": "arn:(aws[a-zA-Z-]*)?:lambda:[a-z]{2}((-gov)|(-iso([a-z]?)))?-[a-z]+-\\d{1}:\\d{12}:event-source-mapping:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}",
+   "type": "string"
+  },
   "FilterCriteria": {
    "$ref": "#/definitions/FilterCriteria"
   },
@@ -256,6 +251,12 @@
    "maxLength": 36,
    "minLength": 36,
    "pattern": "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}",
+   "type": "string"
+  },
+  "KmsKeyArn": {
+   "maxLength": 2048,
+   "minLength": 12,
+   "pattern": "(arn:(aws[a-zA-Z-]*)?:[a-z0-9-.]+:.*)|()",
    "type": "string"
   },
   "MaximumBatchingWindowInSeconds": {
@@ -322,6 +323,14 @@
   "StartingPositionTimestamp": {
    "type": "number"
   },
+  "Tags": {
+   "insertionOrder": false,
+   "items": {
+    "$ref": "#/definitions/Tag"
+   },
+   "type": "array",
+   "uniqueItems": true
+  },
   "Topics": {
    "items": {
     "maxLength": 249,
@@ -344,16 +353,18 @@
   "/properties/StartingPositionTimestamp": "StartingPositionTimestamp * 1000"
  },
  "readOnlyProperties": [
-  "/properties/Id"
+  "/properties/Id",
+  "/properties/EventSourceMappingArn"
  ],
  "required": [
   "FunctionName"
  ],
  "tagging": {
-  "cloudFormationSystemTags": false,
-  "tagOnCreate": false,
-  "tagUpdatable": false,
-  "taggable": false
+  "cloudFormationSystemTags": true,
+  "tagOnCreate": true,
+  "tagProperty": "/properties/Tags",
+  "tagUpdatable": true,
+  "taggable": true
  },
  "typeName": "AWS::Lambda::EventSourceMapping"
 }

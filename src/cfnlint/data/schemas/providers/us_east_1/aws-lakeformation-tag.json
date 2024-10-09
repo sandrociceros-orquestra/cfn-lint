@@ -27,36 +27,9 @@
    "items": {
     "$ref": "#/definitions/LFTagValue"
    },
-   "maxItems": 50,
+   "maxItems": 1000,
    "minItems": 1,
    "type": "array"
-  }
- },
- "handlers": {
-  "create": {
-   "permissions": [
-    "lakeformation:CreateLFTag"
-   ]
-  },
-  "delete": {
-   "permissions": [
-    "lakeformation:DeleteLFTag"
-   ]
-  },
-  "list": {
-   "permissions": [
-    "lakeformation:ListLFTags"
-   ]
-  },
-  "read": {
-   "permissions": [
-    "lakeformation:GetLFTag"
-   ]
-  },
-  "update": {
-   "permissions": [
-    "lakeformation:UpdateLFTag"
-   ]
   }
  },
  "primaryIdentifier": [

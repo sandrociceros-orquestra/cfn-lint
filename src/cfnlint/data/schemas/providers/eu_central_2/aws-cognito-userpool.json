@@ -28,6 +28,15 @@
    },
    "type": "object"
   },
+  "AdvancedSecurityAdditionalFlows": {
+   "additionalProperties": false,
+   "properties": {
+    "CustomAuthMode": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
   "CustomEmailSender": {
    "additionalProperties": false,
    "properties": {
@@ -166,6 +175,9 @@
     "MinimumLength": {
      "type": "integer"
     },
+    "PasswordHistorySize": {
+     "type": "integer"
+    },
     "RequireLowercase": {
      "type": "boolean"
     },
@@ -289,6 +301,9 @@
   "UserPoolAddOns": {
    "additionalProperties": false,
    "properties": {
+    "AdvancedSecurityAdditionalFlows": {
+     "$ref": "#/definitions/AdvancedSecurityAdditionalFlows"
+    },
     "AdvancedSecurityMode": {
      "type": "string"
     }
@@ -327,48 +342,6 @@
     }
    },
    "type": "object"
-  }
- },
- "handlers": {
-  "create": {
-   "permissions": [
-    "cognito-idp:CreateUserPool",
-    "iam:PassRole",
-    "cognito-idp:SetUserPoolMfaConfig",
-    "cognito-idp:DescribeUserPool",
-    "kms:CreateGrant",
-    "iam:CreateServiceLinkedRole"
-   ],
-   "timeoutInMinutes": 2
-  },
-  "delete": {
-   "permissions": [
-    "cognito-idp:DeleteUserPool"
-   ],
-   "timeoutInMinutes": 2
-  },
-  "list": {
-   "permissions": [
-    "cognito-idp:ListUserPools"
-   ]
-  },
-  "read": {
-   "permissions": [
-    "cognito-idp:DescribeUserPool"
-   ]
-  },
-  "update": {
-   "permissions": [
-    "cognito-idp:UpdateUserPool",
-    "cognito-idp:ListTagsForResource",
-    "cognito-idp:UntagResource",
-    "cognito-idp:TagResource",
-    "cognito-idp:SetUserPoolMfaConfig",
-    "cognito-idp:AddCustomAttributes",
-    "cognito-idp:DescribeUserPool",
-    "iam:PassRole"
-   ],
-   "timeoutInMinutes": 2
   }
  },
  "primaryIdentifier": [

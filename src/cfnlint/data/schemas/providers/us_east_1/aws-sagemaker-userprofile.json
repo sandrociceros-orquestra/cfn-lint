@@ -10,6 +10,15 @@
   "/properties/Tags"
  ],
  "definitions": {
+  "AppLifecycleManagement": {
+   "additionalProperties": false,
+   "properties": {
+    "IdleSettings": {
+     "$ref": "#/definitions/IdleSettings"
+    }
+   },
+   "type": "object"
+  },
   "AppType": {
    "enum": [
     "JupyterServer",
@@ -162,6 +171,29 @@
    ],
    "type": "object"
   },
+  "IdleSettings": {
+   "additionalProperties": false,
+   "properties": {
+    "IdleTimeoutInMinutes": {
+     "$ref": "#/definitions/IdleTimeoutInMinutes"
+    },
+    "LifecycleManagement": {
+     "$ref": "#/definitions/LifecycleManagement"
+    },
+    "MaxIdleTimeoutInMinutes": {
+     "$ref": "#/definitions/MaxIdleTimeoutInMinutes"
+    },
+    "MinIdleTimeoutInMinutes": {
+     "$ref": "#/definitions/MinIdleTimeoutInMinutes"
+    }
+   },
+   "type": "object"
+  },
+  "IdleTimeoutInMinutes": {
+   "maximum": 525600,
+   "minimum": 60,
+   "type": "integer"
+  },
   "JupyterLabAppSettings": {
    "additionalProperties": false,
    "properties": {
@@ -243,6 +275,23 @@
    },
    "type": "object"
   },
+  "LifecycleManagement": {
+   "enum": [
+    "ENABLED",
+    "DISABLED"
+   ],
+   "type": "string"
+  },
+  "MaxIdleTimeoutInMinutes": {
+   "maximum": 525600,
+   "minimum": 60,
+   "type": "integer"
+  },
+  "MinIdleTimeoutInMinutes": {
+   "maximum": 525600,
+   "minimum": 60,
+   "type": "integer"
+  },
   "MlTools": {
    "enum": [
     "DataWrangler",
@@ -257,7 +306,8 @@
     "JumpStart",
     "InferenceRecommender",
     "Endpoints",
-    "Projects"
+    "Projects",
+    "InferenceOptimization"
    ],
    "type": "string"
   },
@@ -518,42 +568,6 @@
     }
    },
    "type": "object"
-  }
- },
- "handlers": {
-  "create": {
-   "permissions": [
-    "sagemaker:CreateUserProfile",
-    "sagemaker:DescribeUserProfile",
-    "sagemaker:DescribeImage",
-    "sagemaker:DescribeImageVersion",
-    "iam:PassRole"
-   ]
-  },
-  "delete": {
-   "permissions": [
-    "sagemaker:DeleteUserProfile",
-    "sagemaker:DescribeUserProfile"
-   ]
-  },
-  "list": {
-   "permissions": [
-    "sagemaker:ListUserProfiles"
-   ]
-  },
-  "read": {
-   "permissions": [
-    "sagemaker:DescribeUserProfile"
-   ]
-  },
-  "update": {
-   "permissions": [
-    "sagemaker:UpdateUserProfile",
-    "sagemaker:DescribeUserProfile",
-    "sagemaker:DescribeImage",
-    "sagemaker:DescribeImageVersion",
-    "iam:PassRole"
-   ]
   }
  },
  "primaryIdentifier": [

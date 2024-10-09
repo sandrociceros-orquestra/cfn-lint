@@ -29,43 +29,6 @@
    "type": "object"
   }
  },
- "handlers": {
-  "create": {
-   "permissions": [
-    "memorydb:CreateParameterGroup",
-    "memorydb:DescribeParameterGroups",
-    "memorydb:TagResource",
-    "memorydb:ListTags"
-   ]
-  },
-  "delete": {
-   "permissions": [
-    "memorydb:DeleteParameterGroup"
-   ]
-  },
-  "list": {
-   "permissions": [
-    "memorydb:DescribeParameterGroups"
-   ]
-  },
-  "read": {
-   "permissions": [
-    "memorydb:DescribeParameterGroups",
-    "memorydb:ListTags"
-   ]
-  },
-  "update": {
-   "permissions": [
-    "memorydb:UpdateParameterGroup",
-    "memorydb:DescribeParameterGroups",
-    "memorydb:DescribeParameters",
-    "memorydb:DescribeClusters",
-    "memorydb:ListTags",
-    "memorydb:TagResource",
-    "memorydb:UntagResource"
-   ]
-  }
- },
  "primaryIdentifier": [
   "/properties/ParameterGroupName"
  ],
@@ -107,7 +70,13 @@
   "Family"
  ],
  "sourceUrl": "https://github.com/aws-cloudformation/aws-cloudformation-resource-providers-memorydb",
- "taggable": true,
+ "tagging": {
+  "cloudFormationSystemTags": true,
+  "tagOnCreate": true,
+  "tagProperty": "/properties/Tags",
+  "tagUpdatable": true,
+  "taggable": true
+ },
  "typeName": "AWS::MemoryDB::ParameterGroup",
  "writeOnlyProperties": [
   "/properties/Parameters"

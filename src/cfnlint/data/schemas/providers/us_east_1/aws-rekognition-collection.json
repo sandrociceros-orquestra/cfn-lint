@@ -36,40 +36,6 @@
    "type": "object"
   }
  },
- "handlers": {
-  "create": {
-   "permissions": [
-    "rekognition:CreateCollection",
-    "rekognition:DescribeCollection",
-    "rekognition:ListTagsForResource",
-    "rekognition:TagResource"
-   ]
-  },
-  "delete": {
-   "permissions": [
-    "rekognition:DeleteCollection"
-   ]
-  },
-  "list": {
-   "permissions": [
-    "rekognition:ListCollections"
-   ]
-  },
-  "read": {
-   "permissions": [
-    "rekognition:DescribeCollection",
-    "rekognition:ListTagsForResource"
-   ]
-  },
-  "update": {
-   "permissions": [
-    "rekognition:TagResource",
-    "rekognition:UntagResource",
-    "rekognition:DescribeCollection",
-    "rekognition:ListTagsForResource"
-   ]
-  }
- },
  "primaryIdentifier": [
   "/properties/CollectionId"
  ],
@@ -98,6 +64,12 @@
   "CollectionId"
  ],
  "sourceUrl": "https://docs.aws.amazon.com/rekognition/latest/dg/collections.html",
- "taggable": true,
+ "tagging": {
+  "cloudFormationSystemTags": true,
+  "tagOnCreate": true,
+  "tagProperty": "/properties/Tags",
+  "tagUpdatable": true,
+  "taggable": true
+ },
  "typeName": "AWS::Rekognition::Collection"
 }

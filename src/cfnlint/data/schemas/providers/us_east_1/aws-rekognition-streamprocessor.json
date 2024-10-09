@@ -217,41 +217,6 @@
    "type": "object"
   }
  },
- "handlers": {
-  "create": {
-   "permissions": [
-    "rekognition:CreateStreamProcessor",
-    "iam:PassRole",
-    "rekognition:DescribeStreamProcessor",
-    "rekognition:ListTagsForResource",
-    "rekognition:TagResource"
-   ]
-  },
-  "delete": {
-   "permissions": [
-    "rekognition:DeleteStreamProcessor"
-   ]
-  },
-  "list": {
-   "permissions": [
-    "rekognition:ListStreamProcessors"
-   ]
-  },
-  "read": {
-   "permissions": [
-    "rekognition:DescribeStreamProcessor",
-    "rekognition:ListTagsForResource"
-   ]
-  },
-  "update": {
-   "permissions": [
-    "rekognition:TagResource",
-    "rekognition:UntagResource",
-    "rekognition:ListTagsForResource",
-    "rekognition:DescribeStreamProcessor"
-   ]
-  }
- },
  "oneOf": [
   {
    "required": [
@@ -355,6 +320,12 @@
   "KinesisVideoStream"
  ],
  "sourceUrl": "https://github.com/aws-cloudformation/aws-cloudformation-rpdk.git",
- "taggable": true,
+ "tagging": {
+  "cloudFormationSystemTags": false,
+  "tagOnCreate": true,
+  "tagProperty": "/properties/Tags",
+  "tagUpdatable": true,
+  "taggable": true
+ },
  "typeName": "AWS::Rekognition::StreamProcessor"
 }

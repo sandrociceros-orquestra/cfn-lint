@@ -753,46 +753,6 @@
    "type": "object"
   }
  },
- "handlers": {
-  "create": {
-   "permissions": [
-    "iam:PassRole",
-    "kinesisanalytics:CreateApplication",
-    "kinesisanalytics:DescribeApplication",
-    "kinesisanalytics:ListTagsForResource",
-    "kinesisanalytics:UpdateApplicationMaintenanceConfiguration"
-   ]
-  },
-  "delete": {
-   "permissions": [
-    "kinesisanalytics:DescribeApplication",
-    "kinesisanalytics:DeleteApplication"
-   ]
-  },
-  "list": {
-   "permissions": [
-    "kinesisanalytics:ListApplications"
-   ]
-  },
-  "read": {
-   "permissions": [
-    "kinesisanalytics:DescribeApplication",
-    "kinesisanalytics:ListTagsForResource"
-   ]
-  },
-  "update": {
-   "permissions": [
-    "kinesisanalytics:UpdateApplication",
-    "kinesisanalytics:DescribeApplication",
-    "kinesisanalytics:TagResource",
-    "kinesisanalytics:UntagResource",
-    "kinesisanalytics:AddApplicationVpcConfiguration",
-    "kinesisanalytics:DeleteApplicationVpcConfiguration",
-    "kinesisanalytics:UpdateApplicationMaintenanceConfiguration",
-    "kinesisanalytics:ListTagsForResource"
-   ]
-  }
- },
  "primaryIdentifier": [
   "/properties/ApplicationName"
  ],
@@ -832,6 +792,7 @@
     "FLINK-1_15",
     "FLINK-1_18",
     "FLINK-1_19",
+    "FLINK-1_20",
     "FLINK-1_6",
     "FLINK-1_8",
     "SQL-1_0",

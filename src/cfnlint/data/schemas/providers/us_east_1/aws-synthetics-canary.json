@@ -50,10 +50,6 @@
      "type": "string"
     },
     "S3Bucket": {
-     "relationshipRef": {
-      "propertyPath": "/properties/BucketName",
-      "typeName": "AWS::S3::Bucket"
-     },
      "type": "string"
     },
     "S3Key": {
@@ -73,6 +69,12 @@
     "Handler"
    ],
    "type": "object"
+  },
+  "ResourceToTag": {
+   "enum": [
+    "lambda-function"
+   ],
+   "type": "string"
   },
   "RunConfig": {
    "additionalProperties": false,
@@ -151,20 +153,6 @@
     "SecurityGroupIds": {
      "format": "AWS::EC2::SecurityGroup.Ids",
      "items": {
-      "anyOf": [
-       {
-        "relationshipRef": {
-         "propertyPath": "/properties/GroupId",
-         "typeName": "AWS::EC2::SecurityGroup"
-        }
-       },
-       {
-        "relationshipRef": {
-         "propertyPath": "/properties/DefaultSecurityGroup",
-         "typeName": "AWS::EC2::VPC"
-        }
-       }
-      ],
       "format": "AWS::EC2::SecurityGroup.GroupId",
       "type": "string"
      },
@@ -172,20 +160,12 @@
     },
     "SubnetIds": {
      "items": {
-      "relationshipRef": {
-       "propertyPath": "/properties/SubnetId",
-       "typeName": "AWS::EC2::Subnet"
-      },
       "type": "string"
      },
      "type": "array"
     },
     "VpcId": {
      "format": "AWS::EC2::VPC.Id",
-     "relationshipRef": {
-      "propertyPath": "/properties/VpcId",
-      "typeName": "AWS::EC2::VPC"
-     },
      "type": "string"
     }
    },
@@ -217,78 +197,6 @@
  "deprecatedProperties": [
   "/properties/DeleteLambdaResourcesOnCanaryDeletion"
  ],
- "handlers": {
-  "create": {
-   "permissions": [
-    "synthetics:CreateCanary",
-    "synthetics:StartCanary",
-    "synthetics:GetCanary",
-    "synthetics:TagResource",
-    "s3:CreateBucket",
-    "s3:GetObject",
-    "s3:GetObjectVersion",
-    "s3:PutBucketEncryption",
-    "s3:PutEncryptionConfiguration",
-    "s3:GetBucketLocation",
-    "lambda:CreateFunction",
-    "lambda:AddPermission",
-    "lambda:PublishVersion",
-    "lambda:UpdateFunctionConfiguration",
-    "lambda:GetFunctionConfiguration",
-    "lambda:GetLayerVersionByArn",
-    "lambda:GetLayerVersion",
-    "lambda:PublishLayerVersion",
-    "ec2:DescribeVpcs",
-    "ec2:DescribeSubnets",
-    "ec2:DescribeSecurityGroups",
-    "iam:PassRole"
-   ]
-  },
-  "delete": {
-   "permissions": [
-    "synthetics:DeleteCanary",
-    "synthetics:GetCanary"
-   ]
-  },
-  "list": {
-   "permissions": [
-    "synthetics:DescribeCanaries"
-   ]
-  },
-  "read": {
-   "permissions": [
-    "synthetics:GetCanary",
-    "synthetics:DescribeCanaries",
-    "synthetics:ListTagsForResource",
-    "iam:ListRoles",
-    "s3:ListAllMyBuckets",
-    "s3:GetBucketLocation"
-   ]
-  },
-  "update": {
-   "permissions": [
-    "synthetics:UpdateCanary",
-    "synthetics:StartCanary",
-    "synthetics:StopCanary",
-    "synthetics:GetCanary",
-    "synthetics:TagResource",
-    "synthetics:UntagResource",
-    "s3:GetObject",
-    "s3:GetObjectVersion",
-    "s3:PutBucketEncryption",
-    "s3:PutEncryptionConfiguration",
-    "s3:GetBucketLocation",
-    "lambda:AddPermission",
-    "lambda:PublishVersion",
-    "lambda:UpdateFunctionConfiguration",
-    "lambda:GetFunctionConfiguration",
-    "lambda:GetLayerVersionByArn",
-    "lambda:GetLayerVersion",
-    "lambda:PublishLayerVersion",
-    "iam:PassRole"
-   ]
-  }
- },
  "primaryIdentifier": [
   "/properties/Name"
  ],
@@ -316,8 +224,15 @@
    "type": "string"
   },
   "Name": {
-   "pattern": "^[0-9a-z_\\-]{1,21}$",
+   "pattern": "^[0-9a-z_\\-]{1,255}$",
    "type": "string"
+  },
+  "ResourcesToReplicateTags": {
+   "items": {
+    "$ref": "#/definitions/ResourceToTag"
+   },
+   "type": "array",
+   "uniqueItems": true
   },
   "RunConfig": {
    "$ref": "#/definitions/RunConfig"
@@ -376,6 +291,7 @@
   "/properties/Code/Script",
   "/properties/DeleteLambdaResourcesOnCanaryDeletion",
   "/properties/StartCanaryAfterCreation",
+  "/properties/ResourcesToReplicateTags",
   "/properties/RunConfig/EnvironmentVariables",
   "/properties/VisualReference"
  ]

@@ -104,13 +104,14 @@ def anyOf(
         )
     )
     all_errors = []
+    other_errors = []
     for index, subschema in enumerate(anyOf):
         errs = []
-        # warning and informational errors need to be returned but shouldn't
-        # be part of if the anyOf is valid
+        # warning and informational shouldn't count towards if anyOf is
+        # valid.  Save W, I errors and return if errors exist
         for err in validator.descend(instance, subschema, schema_path=index):
             if err.rule is not None and not err.rule.id.startswith("E"):
-                yield err
+                other_errors.append(err)
                 continue
             errs.append(err)
         if not errs:
@@ -119,7 +120,7 @@ def anyOf(
     else:
         yield ValidationError(
             f"{instance!r} is not valid under any of the given schemas",
-            context=all_errors,
+            context=all_errors + other_errors,
         )
 
 
@@ -538,6 +539,17 @@ def required(
     for property in required:
         if property not in instance:
             yield ValidationError(f"{property!r} is a required property")
+
+
+def requiredOr(
+    validator: Validator, required: Any, instance: Any, schema: dict[str, Any]
+) -> ValidationResult:
+    if not validator.is_type(instance, "object"):
+        return
+    matches = set(required).intersection(instance.keys())
+    if not matches:
+        yield ValidationError(f"One of {required!r} is a required property")
+        return
 
 
 def requiredXor(
