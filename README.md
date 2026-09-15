@@ -2,11 +2,12 @@
 
 <img alt="[cfn-lint logo]" src="https://github.com/aws-cloudformation/cfn-python-lint/blob/main/logo.png?raw=true" width="150" align="right">
 
-[![Testing](https://github.com/aws-cloudformation/cfn-python-lint/actions/workflows/test.yaml/badge.svg?branch=main)](https://github.com/aws-cloudformation/cfn-python-lint/actions/workflows/test.yaml)
+[![Testing](https://github.com/aws-cloudformation/cfn-lint/actions/workflows/ci-branch.yaml/badge.svg)](https://github.com/aws-cloudformation/cfn-lint/actions/workflows/ci-branch.yaml)
 [![PyPI version](https://badge.fury.io/py/cfn-lint.svg)](https://badge.fury.io/py/cfn-lint)
 [![PyPI downloads](https://pepy.tech/badge/cfn-lint/week)](https://pypistats.org/packages/cfn-lint)
 [![PyPI downloads](https://pepy.tech/badge/cfn-lint/month)](https://pypistats.org/packages/cfn-lint)
 [![codecov](https://codecov.io/gh/aws-cloudformation/cfn-lint/branch/main/graph/badge.svg)](https://codecov.io/gh/aws-cloudformation/cfn-python-lint)
+[![inspect.software](https://raw.githubusercontent.com/inspect-software/badges/main/v1/a/aws-cloudformation/cfn-lint.svg)](https://inspect.software/software/aws-cloudformation/cfn-lint)
 [![Discord Shield](https://img.shields.io/discord/981586120448020580?logo=discord)](https://discord.gg/KENDm6DHCv)
 
 Validate AWS CloudFormation yaml/json templates against the [AWS CloudFormation resource provider schemas](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/resource-type-schemas.html) and additional checks. Includes checking valid values for resource properties and best practices.
@@ -40,7 +41,7 @@ _To get information about the [SAM Transformation](https://docs.aws.amazon.com/A
 
 ## Install
 
-Python 3.8+ is supported.
+Python 3.10 to 3.14 are supported.
 
 ### Pip
 
@@ -187,8 +188,12 @@ Optional parameters:
 | -h, --help                 |                      |                                                | Get description of cfn-lint                                                                                                                                                                                                                           |
 | -z, --custom-rules         |                      | filename                                       | Text file containing user-defined custom rules. See [here](#Custom-Rules) for more information                                                                                                                                                        |
 | -t, --template             |                      | filename                                       | Alternative way to specify Template file path to the file that needs to be tested by cfn-lint                                                                                                                                                         |
+| --deployment-files         | deployment_files     |                                                | Specify deployment files that are used to configure the template runner. This will specify templates and parameters and you don't specify parameters or parameter files with this parameter.  Examples of a deployment include: [GitSync](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/git-sync.html)
+| --parameters               | parameters           |                                                | Specify a list of parameters using the format `Key=Value`                                                                                                                                                                                             |
+| --parameter-files          | parameter_files      |                                                | A list of parameter files that would be used when using the aws cli                                                                                                                                                                                   |
 | -f, --format               | format               | quiet, parseable, json, junit, pretty, sarif   | Output format                                                                                                                                                                                                                                         |
 | -l, --list-rules           |                      |                                                | List all the rules                                                                                                                                                                                                                                    |
+| -L, --list-templates       |                      |                                                | List all the templates would have linted                                                                                                                                                                                                              |
 | -r, --regions              | regions              | [REGIONS [REGIONS ...]], ALL_REGIONS           | Test the template against many regions. [Supported regions](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/resource-type-schemas.html)                                                                                                |
 | -b, --ignore-bad-template  | ignore_bad_template  |                                                | Ignores bad template errors                                                                                                                                                                                                                           |
 | --ignore-templates         |                      | IGNORE_TEMPLATES [IGNORE_TEMPLATES ...]        | Ignore templates from being scanned                                                                                                                                                                                                                   |
@@ -202,6 +207,7 @@ Optional parameters:
 | -D, --debug                |                      |                                                | Specify to enable debug logging. Debug logging outputs detailed information about rules processing, useful for debugging rules.                                                                                                                       |
 | -I, --info                 |                      |                                                | Specify to enable logging. Outputs additional information about the template processing.                                                                                                                                                              |
 | -u, --update-specs         |                      |                                                | Update the [CloudFormation resource provider schemas](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/resource-type-schemas.html). You may need sudo to run this. You will need internet access when running this command              |
+| -p, --patch-specs          |                      |                                                | Patch the CloudFormation Specs in place                                                                                                                                                                                                               |
 | -o, --override-spec        |                      | filename                                       | Spec-style file containing custom definitions. Can be used to override CloudFormation specifications. More info [here](#customize-specifications)                                                                                                     |
 | -g, --build-graph          |                      |                                                | Creates a file in the same directory as the template that models the template's resources in [DOT format](<https://en.wikipedia.org/wiki/DOT_(graph_description_language)>)                                                                           |
 | -s, --registry-schemas     |                      |                                                | one or more directories of [CloudFormation Registry](https://aws.amazon.com/blogs/aws/cloudformation-update-cli-third-party-resource-support-registry/) [Resource Schemas](https://github.com/aws-cloudformation/aws-cloudformation-resource-schema/) |
@@ -342,7 +348,7 @@ If you'd like cfn-lint to be run automatically when making changes to files in y
 ```yaml
 repos:
   - repo: https://github.com/aws-cloudformation/cfn-lint
-    rev: v1.10.0 # The version of cfn-lint to use
+    rev: v1.56.3 # The version of cfn-lint to use
     hooks:
       - id: cfn-lint
         files: path/to/cfn/dir/.*\.(json|yml|yaml)$
@@ -353,7 +359,7 @@ If you are using a `.cfnlintrc` and specifying the `templates` or `ignore_templa
 ```yaml
 repos:
   - repo: https://github.com/aws-cloudformation/cfn-lint
-    rev: v1.10.0 # The version of cfn-lint to use
+    rev: v1.56.3 # The version of cfn-lint to use
     hooks:
       - id: cfn-lint-rc
 ```

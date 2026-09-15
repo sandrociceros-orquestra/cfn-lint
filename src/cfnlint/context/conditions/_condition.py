@@ -8,7 +8,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from sympy import And, Not, Or
+from sympy import And, Not, Or, Symbol
 from sympy.logic.boolalg import BooleanFunction
 
 from cfnlint.conditions._utils import get_hash
@@ -20,19 +20,18 @@ from cfnlint.helpers import FUNCTION_CONDITIONS, is_function
 class Condition:
     instance: Any = field(init=True)
     status: bool | None = field(init=True, default=None)
-    hash: str = field(init=False)
+    hash: str = field(init=True, default="")
 
     fn_equals: Equal | None = field(init=True, default=None)
     condition: list["Condition"] | "Condition" | None = field(init=True, default=None)
     cnf: BooleanFunction = field(init=True, default_factory=BooleanFunction)
 
-    def __post_init__(self):
-        object.__setattr__(self, "hash", get_hash(self.instance))
-
     @classmethod
     def create_from_instance(
         cls, instance: Any, all_conditions: dict[str, Any]
     ) -> "Condition":
+        instance_hash = get_hash(instance)
+
         fn_k, fn_v = is_function(instance)
         if fn_k is None:
             raise ValueError("Condition value must be an object of length 1")
@@ -41,7 +40,12 @@ class Condition:
                 raise ValueError(f"{fn_v!r} value should be an array")
             if fn_k == "Fn::Equals":
                 equal = Equal.create_from_instance(fn_v)
-                return cls(instance=instance, fn_equals=equal, cnf=equal.cnf)
+                return cls(
+                    instance=instance,
+                    fn_equals=equal,
+                    cnf=equal.cnf,
+                    hash=instance_hash,
+                )
 
             condition = []
             for v in fn_v:
@@ -59,19 +63,31 @@ class Condition:
                     )
                 cnf = Not(condition[0].cnf)
 
-            return cls(instance=instance, condition=condition, cnf=cnf)
+            return cls(
+                instance=instance, condition=condition, cnf=cnf, hash=instance_hash
+            )
 
         if fn_k == "Condition":
             if not isinstance(fn_v, str):
                 raise ValueError(f"Condition value {fn_v!r} must be a string")
+            # Build the sub-condition for is_region/equals traversal
             sub_condition = all_conditions.get(fn_v)
             try:
-                c = Condition.create_from_instance(sub_condition, all_conditions)
+                sub_all_conditions = all_conditions.copy()
+                del sub_all_conditions[fn_v]
+                c = Condition.create_from_instance(sub_condition, sub_all_conditions)
             except Exception:
                 c = Condition.create_from_instance(
                     {"Fn::Equals": [None, None]}, all_conditions
                 )
-            return cls(instance=instance, condition=c, cnf=c.cnf)
+            # Use a Symbol for the condition name instead of the expanded CNF
+            # The equivalence constraint is added in Conditions.create_from_instance
+            return cls(
+                instance=instance,
+                condition=c,
+                cnf=Symbol(fn_v),
+                hash=instance_hash,
+            )
 
         raise ValueError(f"Unknown key {fn_k!r} in condition")
 
@@ -86,6 +102,7 @@ class Condition:
             instance=self.instance,
             status=status,
             cnf=self.cnf,
+            hash=self.hash,  # Pass the hash along
         )
 
     @property

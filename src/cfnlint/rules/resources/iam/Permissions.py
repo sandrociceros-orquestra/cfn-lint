@@ -7,6 +7,8 @@ from __future__ import annotations
 
 from typing import Any
 
+import regex as re
+
 from cfnlint.data import AdditionalSpecs
 from cfnlint.helpers import ensure_list, load_resource
 from cfnlint.jsonschema import ValidationError, ValidationResult, Validator
@@ -21,29 +23,38 @@ class Permissions(CfnLintKeyword):
     description = "Check for valid IAM Permissions"
     source_url = "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_action.html"
     tags = ["properties", "iam", "permissions"]
-    experimental = True
 
     def __init__(self):
         """Init"""
         super().__init__(
             ["AWS::IAM::Policy/Properties/PolicyDocument/Statement/Action"]
         )
-        self.service_map = self.load_service_map()
+        self._service_map = load_resource(AdditionalSpecs, "Policies.json")
+        self._resource_action_limitations = {
+            "AWS::S3::BucketPolicy": ["s3"],
+            "AWS::SQS::QueuePolicy": ["sqs"],
+            "AWS::SNS::TopicPolicy": ["sns"],
+        }
 
     def validate(
         self, validator: Validator, _, instance: Any, schema: dict[str, Any]
     ) -> ValidationResult:
+        # Escape validation when using SAM transforms as a result of
+        # https://github.com/aws/serverless-application-model/issues/3633
+        if validator.cfn.has_serverless_transform():
+            return
+
         actions = ensure_list(instance)
 
         for action in actions:
+            if not validator.is_type(action, "string"):
+                continue
             if action == "*":
                 continue
             if ":" not in action:
                 yield ValidationError(
-                    (
-                        f"{action!r} is not a valid action."
-                        "Must be of the form service:action or '*'"
-                    ),
+                    f"{action!r} is not a valid action. "
+                    "Must be of the form service:action or '*'",
                     rule=self,
                 )
                 return
@@ -51,57 +62,44 @@ class Permissions(CfnLintKeyword):
             service = service.lower()
             permission = permission.lower()
 
-            if service in self.service_map:
-                enums = self.service_map[service]
-                if permission == "*":
-                    pass
-                elif permission.endswith("*"):
-                    wilcarded_permission = permission.split("*")[0]
-                    if not any(wilcarded_permission in action for action in enums):
+            if len(validator.context.path.cfn_path) >= 2:
+                if (
+                    validator.context.path.cfn_path[1]
+                    in self._resource_action_limitations
+                ):
+                    if (
+                        service
+                        not in self._resource_action_limitations[
+                            validator.context.path.cfn_path[1]
+                        ]
+                    ):
                         yield ValidationError(
-                            f"{permission!r} is not one of {enums!r}",
+                            f"{service!r} is not one of "
+                            f"{self._resource_action_limitations[validator.context.path.cfn_path[1]]!r}",
                             rule=self,
                         )
 
-                elif permission.startswith("*"):
-                    wilcarded_permission = permission.split("*")[1]
-                    if not any(
-                        wilcarded_permission in action
-                        for action in self.service_map[service]
-                    ):
+            if service in self._service_map:
+                enums = list(self._service_map[service].get("Actions", []).keys())
+                if permission == "*":
+                    pass
+
+                if any(x in permission for x in ["*", "?"]):
+                    permission_regex = (
+                        f"^{permission.replace('*', '.*').replace('?', '.')}$"
+                    )
+                    if not any(re.match(permission_regex, action) for action in enums):
                         yield ValidationError(
                             f"{permission!r} is not one of {enums!r}",
                             rule=self,
                         )
-                elif permission not in self.service_map[service]:
+                elif permission not in enums:
                     yield ValidationError(
                         f"{permission!r} is not one of {enums!r}",
                         rule=self,
                     )
             else:
                 yield ValidationError(
-                    f"{service!r} is not one of {list(self.service_map.keys())!r}",
+                    f"{service!r} is not one of {list(self._service_map.keys())!r}",
                     rule=self,
                 )
-
-    def load_service_map(self):
-        """
-        Convert policies.json into a simpler version for more efficient key lookup.
-        """
-        service_map = load_resource(AdditionalSpecs, "Policies.json")["serviceMap"]
-
-        policy_service_map = {}
-
-        for _, properties in service_map.items():
-            # The services and actions are case insensitive
-            service = properties["StringPrefix"].lower()
-            actions = [x.lower() for x in properties["Actions"]]
-
-            # Some services have the same name for different
-            # generations; like elasticloadbalancing.
-            if service in policy_service_map:
-                policy_service_map[service] += actions
-            else:
-                policy_service_map[service] = actions
-
-        return policy_service_map

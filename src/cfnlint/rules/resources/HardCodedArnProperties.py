@@ -47,6 +47,7 @@ class HardCodedArnProperties(CloudFormationLintRule):
                 "type": "boolean",
             },
         }
+
         self.configure()
 
     def _match_values(self, cfnelem, path):
@@ -84,9 +85,7 @@ class HardCodedArnProperties(CloudFormationLintRule):
     def match(self, cfn: Template) -> RuleMatches:
         matches: RuleMatches = []
 
-        transforms = cfn.transform_pre["Transform"]
-        transforms = transforms if isinstance(transforms, list) else [transforms]
-        if "AWS::Serverless-2016-10-31" in cfn.transform_pre["Transform"]:
+        if cfn.has_serverless_transform():
             return matches
 
         # Get a list of paths to every leaf node string containing at least one ${parameter}
@@ -100,7 +99,7 @@ class HardCodedArnProperties(CloudFormationLintRule):
             # !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
             # is valid even with aws as the account #.  This handles empty string
             if self.config["partition"] and not re.match(
-                r"^\$\{\w+}|\$\{AWS::Partition}|$", candidate[0]
+                r"^\$\{\w+}|\$\{AWS::Partition}|\*|$", candidate[0]
             ):
                 # or not re.match(r'^(\$\{\w+}|\$\{AWS::Region}|)$',candidate[1])
                 # or not re.match(r'^\$\{\w+}|\$\{AWS::AccountId}|aws|$', candidate[2]):
@@ -110,7 +109,7 @@ class HardCodedArnProperties(CloudFormationLintRule):
                 )
                 matches.append(RuleMatch(path, message.format(path[1])))
             if self.config["region"] and not re.match(
-                r"^(\$\{\w+}|\$\{AWS::Region}|)$", candidate[1]
+                r"^(\$\{\w+}|\$\{AWS::Region}|\*|)$", candidate[1]
             ):
                 # or  or not re.match(r'^\$\{\w+}|\$\{AWS::AccountId}|aws|$', candidate[2]):
                 message = (
@@ -118,13 +117,17 @@ class HardCodedArnProperties(CloudFormationLintRule):
                     " incorrectly placed Pseudo Parameters"
                 )
                 matches.append(RuleMatch(path, message.format(path[1])))
+
+            # Lambda is added for authorizer's Uniform Resource Identifier (URI)
+            # https://github.com/aws-cloudformation/cfn-lint/issues/3716
             if self.config["accountId"] and not re.match(
-                r"^\$\{\w+}|\$\{AWS::AccountId}|aws|$", candidate[2]
+                r"^\$\{\w+}|\$\{AWS::AccountId}|aws|lambda|\*|$", candidate[2]
             ):
-                message = (
-                    "ARN in Resource {0} contains hardcoded AccountId in ARN or"
-                    " incorrectly placed Pseudo Parameters"
-                )
-                matches.append(RuleMatch(path, message.format(path[1])))
+                if candidate[2] not in ["cloudfront"]:
+                    message = (
+                        "ARN in Resource {0} contains hardcoded AccountId in ARN or"
+                        " incorrectly placed Pseudo Parameters"
+                    )
+                    matches.append(RuleMatch(path, message.format(path[1])))
 
         return matches

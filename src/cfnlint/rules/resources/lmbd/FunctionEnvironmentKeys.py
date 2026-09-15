@@ -14,7 +14,6 @@ from cfnlint.rules.jsonschema import CfnLintJsonSchema, SchemaDetails
 
 
 class FunctionEnvironmentKeys(CfnLintJsonSchema):
-
     id = "E3663"
     shortdesc = "Validate Lambda environment variable names aren't reserved"
     description = (
@@ -31,7 +30,8 @@ class FunctionEnvironmentKeys(CfnLintJsonSchema):
         """Init"""
         super().__init__(
             keywords=[
-                "Resources/AWS::Lambda::Function/Properties/Environment/Variables"
+                "Resources/AWS::Lambda::Function/Properties/Environment/Variables",
+                "Resources/AWS::Serverless::Function/Properties/Environment/Variables",
             ],
             schema_details=SchemaDetails(
                 cfnlint.data.schemas.extensions.aws_lambda_function,

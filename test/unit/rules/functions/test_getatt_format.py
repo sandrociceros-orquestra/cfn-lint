@@ -12,6 +12,7 @@ from cfnlint.rules.functions.GetAttFormat import GetAttFormat
 @pytest.fixture(scope="module")
 def rule():
     rule = GetAttFormat()
+    rule._exceptions = ["AWS::EC2::SecurityGroup.Id"]
     yield rule
 
 
@@ -27,6 +28,8 @@ def template():
             "MyProvisionedProduct": {
                 "Type": "AWS::ServiceCatalog::CloudFormationProvisionedProduct"
             },
+            "MyServerlessApplication": {"Type": "AWS::Serverless::Application"},
+            "MySSMParameter": {"Type": "AWS::SSM::Parameter"},
         },
     }
 
@@ -59,9 +62,21 @@ def template():
             [],
         ),
         (
+            "Valid GetAtt to a serverless application output",
+            ["MyServerlessApplication", "Outputs.TopicArn"],
+            {"format": "AWS::SNS::Topic.TopicArn"},
+            [],
+        ),
+        (
             "Valid GetAtt because of exception",
             ["MyBucket", "Arn"],
-            {"format": "AWS::EC2::SecurityGroup.GroupId"},
+            {"format": "AWS::EC2::SecurityGroup.Id"},
+            [],
+        ),
+        (
+            "Valid GetAtt because of exception with attribute",
+            ["MySSMParameter", "Value"],
+            {"format": "AWS::EC2::Image.Id"},
             [],
         ),
         (
@@ -70,10 +85,21 @@ def template():
             {"format": "AWS::EC2::VPC.Id"},
             [
                 ValidationError(
-                    (
-                        "{'Fn::GetAtt': ['MyBucket', 'Arn']} that "
-                        "does not match 'AWS::EC2::VPC.Id'"
-                    ),
+                    "{'Fn::GetAtt': ['MyBucket', 'Arn']} "
+                    "does not match destination format of 'AWS::EC2::VPC.Id'",
+                    rule=GetAttFormat(),
+                )
+            ],
+        ),
+        (
+            "Invalid GetAtt with a getatt and no format",
+            ["MyBucket", "WebsiteURL"],
+            {"format": "AWS::EC2::VPC.Id"},
+            [
+                ValidationError(
+                    "{'Fn::GetAtt': ['MyBucket', 'WebsiteURL']} "
+                    "with formats ['uri'] does not match "
+                    "destination format of 'AWS::EC2::VPC.Id'",
                     rule=GetAttFormat(),
                 )
             ],

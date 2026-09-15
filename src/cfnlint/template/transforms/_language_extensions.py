@@ -10,7 +10,6 @@ import json
 import logging
 import random
 import string
-import sys
 from copy import deepcopy
 from typing import Any, Iterator, Mapping, MutableMapping, Tuple
 
@@ -18,7 +17,7 @@ import regex as re
 
 from cfnlint.conditions._utils import get_hash
 from cfnlint.decode.node import str_node
-from cfnlint.helpers import FUNCTION_FOR_EACH
+from cfnlint.helpers import FUNCTION_FOR_EACH, REGEX_SUB_PARAMETERS
 from cfnlint.template.transforms._types import TransformResult
 
 LOGGER = logging.getLogger("cfnlint")
@@ -27,6 +26,8 @@ LOGGER = logging.getLogger("cfnlint")
 _N = 7
 
 _SCALAR_TYPES = (str, int, float, bool)
+
+_ACCOUNT_ID = None
 
 
 class _ResolveError(Exception):
@@ -124,7 +125,7 @@ class _Transform:
                     # only translate the foreach if its valid
                     foreach = _ForEach(k, v, self._collections)
                     # get the values will flatten the foreach
-                    for collection_value in foreach.items(cfn):
+                    for collection_value in foreach.items(cfn, params):
                         flattened = self._walk(
                             v[2], {**params, **{v[0]: collection_value}}, cfn
                         )
@@ -140,6 +141,9 @@ class _Transform:
                 elif k == "Fn::ToJsonString":
                     # extra special handing for this as {} could be a valid value
                     return obj
+                elif k == "Fn::GetAtt":
+                    if isinstance(v, (list, str)):
+                        obj[k] = self._walk(v, params, cfn)
                 elif k == "Fn::Sub":
                     if isinstance(v, str):
                         only_string, obj[k] = self._replace_string_params(v, params)
@@ -160,7 +164,15 @@ class _Transform:
                         map_value = mapping.value(cfn, params, True, False)
                         # if we can resolve it we will return it
                         if isinstance(map_value, tuple([list]) + _SCALAR_TYPES):
-                            return map_value
+                            # Return an independent copy of the resolved value.
+                            # ``mapping.value`` hands back the object stored in
+                            # the ``Mappings`` section, so returning it directly
+                            # makes every location that resolves to the same
+                            # mapping entry share one object. That shared
+                            # identity looks like a YAML alias to W1101 (false
+                            # positive, issue #4697) and lets a later mutation of
+                            # one location bleed into the mapping definition.
+                            return deepcopy(map_value)
                     except Exception as e:  # pylint: disable=broad-exception-caught
                         # We couldn't resolve the FindInMap so we are going to
                         # leave it as it is
@@ -171,13 +183,23 @@ class _Transform:
                 elif k == "Ref":
                     if isinstance(v, str):
                         if v in params:
-                            return params[v]
+                            # Copy so two Refs to the same parameter do not
+                            # share one object (see the Fn::FindInMap note
+                            # above / issue #4697).
+                            return deepcopy(params[v])
                     elif isinstance(v, dict):
                         r = self._walk(v, params, cfn)
                         if isinstance(r, str):
                             if r in params:
-                                return params[r]
+                                return deepcopy(params[r])
                         obj[k] = r
+                elif k == "Fn::If":
+                    if isinstance(v, list) and len(v) == 3:
+                        # CloudFormation does not resolve the condition name
+                        # (index 0) inside Fn::ForEach, so we leave it as-is
+                        # and only walk the true/false branches.
+                        obj[k][1] = self._walk(v[1], params, cfn)
+                        obj[k][2] = self._walk(v[2], params, cfn)
                 else:
                     sub_value = self._walk(v, params, cfn)
                     # a sub object may be none or we have returned
@@ -198,30 +220,31 @@ class _Transform:
         s: str,
         params: Mapping[str, Any],
     ) -> Tuple[bool, str]:
-        pattern = r"(\$|&){[a-zA-Z0-9\.:]+}"
-        if not re.search(pattern, s):
+        _ampersand_pattern = re.compile(r"&{\s*[^!\s].*?\s*}")
+
+        def _has_variables(value: str) -> bool:
+            return bool(
+                REGEX_SUB_PARAMETERS.search(value) or _ampersand_pattern.search(value)
+            )
+
+        if not _has_variables(s):
             return (True, s)
 
         new_s = deepcopy(s)
         for k, v in params.items():
             if isinstance(v, dict):
-                if sys.version_info.major == 3 and sys.version_info.minor > 8:
-                    v = (
-                        hashlib.md5(
-                            json.dumps(v).encode("utf-8"), usedforsecurity=False
-                        )
-                        .digest()
-                        .hex()[0:4]
-                    )
-                else:
-                    v = hashlib.md5(json.dumps(v).encode("utf-8")).digest().hex()[0:4]
+                v = (
+                    hashlib.md5(json.dumps(v).encode("utf-8"), usedforsecurity=False)
+                    .digest()
+                    .hex()[0:4]
+                )
             new_s = re.sub(rf"\$\{{{k}\}}", v, new_s)
             new_s = re.sub(rf"\&\{{{k}\}}", re.sub("[^0-9a-zA-Z]+", "", v), new_s)
 
         if isinstance(s, str_node):
             new_s = str_node(new_s, s.start_mark, s.end_mark)
 
-        return (not (bool(re.search(pattern, new_s))), new_s)
+        return (not _has_variables(new_s), new_s)
 
 
 class _ForEachValue:
@@ -245,6 +268,8 @@ class _ForEachValue:
                     return _ForEachValueRef(_hash, v)
                 if k == "Fn::FindInMap":
                     return _ForEachValueFnFindInMap(_hash, v)
+                if k == "Fn::If":
+                    return _ForEachValueFnIf(_hash, v)
 
         raise _TypeError(f"Unsupported value {obj!r}", obj)
 
@@ -339,7 +364,7 @@ class _ForEachValueFnFindInMap(_ForEachValue):
             ):
                 for k, v in cfn.template.get("Mappings", {}).items():
                     if isinstance(v, dict):
-                        if t_map[1].value(cfn) in v:
+                        if t_map[1].value(cfn, params) in v:
                             t_map[0] = _ForEachValue.create(k)
                             mapping = v
                             break
@@ -367,29 +392,47 @@ class _ForEachValueFnFindInMap(_ForEachValue):
                 t_map[1].value(cfn, params, only_params)
             except _ResolveError:
                 try:
-                    t_map[2].value(cfn)
+                    t_map_2_value = t_map[2].value(cfn, params, only_params)
+                    max_length = -1
                     for k, v in mapping.items():
                         if isinstance(v, dict):
-                            if t_map[2].value(cfn, params, only_params) in v:
+                            if t_map_2_value in v:
+                                if (
+                                    isinstance(v[t_map_2_value], list)
+                                    and len(v[t_map_2_value]) <= max_length
+                                ):
+                                    continue
+                                if isinstance(t_map[1], _ForEachValueRef):
+                                    if t_map[1]._ref._value == "AWS::AccountId":
+                                        global _ACCOUNT_ID
+                                        _ACCOUNT_ID = k
                                 t_map[1] = _ForEachValue.create(k)
+                                if isinstance(v[t_map_2_value], list):
+                                    max_length = len(v[t_map_2_value])
                 except _ResolveError:
                     pass
 
         if mapping:
             try:
-                return mapping.get(t_map[1].value(cfn, params, only_params), {}).get(
+                value = mapping.get(t_map[1].value(cfn, params, only_params), {}).get(
                     t_map[2].value(cfn, params, only_params)
                 )
+                if value is None:
+                    raise _ResolveError("Can't resolve Fn::FindInMap", self._obj)
+                return value
             except _ResolveError as e:
                 if len(self._map) == 4 and default_on_resolver_failure:
                     return self._map[3].value(cfn, params, only_params)
                 # no default value and map 1 exists
                 try:
-                    for _, v in mapping.get(
-                        t_map[1].value(cfn, params, only_params), {}
-                    ).items():
-                        if isinstance(v, list):
-                            return v
+                    if isinstance(
+                        t_map[2], (_ForEachValueRef, _ForEachValueFnFindInMap)
+                    ):
+                        for _, v in mapping.get(
+                            t_map[1].value(cfn, params, only_params), {}
+                        ).items():
+                            if isinstance(v, list):
+                                return v
                 except _ResolveError:
                     pass
                 raise _ResolveError("Can't resolve Fn::FindInMap", self._obj) from e
@@ -399,11 +442,32 @@ class _ForEachValueFnFindInMap(_ForEachValue):
         raise _ResolveError("Can't resolve Fn::FindInMap", self._obj)
 
 
+class _ForEachValueFnIf(_ForEachValue):
+    def __init__(self, _hash: str, obj: Any) -> None:
+        super().__init__(_hash)
+        if not isinstance(obj, (list)):
+            raise _TypeError("Fn::If should be a list of 3 elements", obj)
+
+        if len(obj) != 3:
+            raise _TypeError("Fn::If should be a list of 3 elements", obj)
+        self._condition = _ForEachValue.create(obj[0])
+        self._obj = obj
+
+    # pylint: disable=too-many-return-statements
+    def value(
+        self,
+        cfn: Any,
+        params: Mapping[str, Any] | None = None,
+        only_params: bool = False,
+    ) -> Any:
+        raise _ResolveError("Can't resolve Fn::If", self._obj)
+
+
 class _ForEachValueRef(_ForEachValue):
     def __init__(self, _hash: str, obj: Any) -> None:
         super().__init__(_hash)
         if not isinstance(obj, (str, dict)):
-            raise _TypeError("Fn::FindInMap should be a list", obj)
+            raise _TypeError("Fn::Ref should be a list", obj)
 
         self._ref = _ForEachValue.create(obj)
         self._obj = obj
@@ -417,7 +481,7 @@ class _ForEachValueRef(_ForEachValue):
     ) -> Any:
         if params is None:
             params = {}
-        v = self._ref.value(cfn)
+        v = self._ref.value(cfn, params)
 
         if not isinstance(v, str):
             raise _ResolveError("Can't resolve Fn::Ref", self._obj)
@@ -439,7 +503,9 @@ class _ForEachValueRef(_ForEachValue):
             return region
 
         if v == "AWS::AccountId":
-            return account_id
+            if _ACCOUNT_ID is None:
+                raise _ResolveError("Can't resolve Fn::Ref", self._obj)
+            return _ACCOUNT_ID
 
         if v == "AWS::NotificationARNs":
             return [f"arn:{partition}:sns:{region}:{account_id}:notification"]
@@ -506,7 +572,10 @@ class _ForEachCollection:
         raise _TypeError("Collection must be a list or an object", obj)
 
     def values(
-        self, cfn: Any, collection_cache: MutableMapping[str, Any]
+        self,
+        cfn: Any,
+        collection_cache: MutableMapping[str, Any],
+        params: MutableMapping[str, Any],
     ) -> Iterator[str | dict[Any, Any]]:
         if self._collection:
             for item in self._collection:
@@ -519,18 +588,16 @@ class _ForEachCollection:
             return
         if self._fn:
             try:
-                values = self._fn.value(cfn, {}, False)
-                if values:
+                values = self._fn.value(cfn, params, False)
+                if values is not None:
                     if isinstance(values, list):
                         for value in values:
                             if isinstance(value, (str, dict)):
                                 yield value
                             else:
                                 raise _ValueError(
-                                    (
-                                        "Fn::ForEach collection value "
-                                        f"must be a {_SCALAR_TYPES!r}"
-                                    ),
+                                    "Fn::ForEach collection value "
+                                    f"must be a {_SCALAR_TYPES!r}",
                                     self._obj,
                                 )
                         return
@@ -577,6 +644,8 @@ class _ForEach:
         self._collection = _ForEachCollection(value[1])
         self._output = _ForEachOutput(value[2])
 
-    def items(self, cfn: Any) -> Iterator[str | dict[str, str]]:
-        items = self._collection.values(cfn, self._collection_cache)
+    def items(
+        self, cfn: Any, params: MutableMapping[str, Any]
+    ) -> Iterator[str | dict[str, str]]:
+        items = self._collection.values(cfn, self._collection_cache, params)
         yield from iter(items)

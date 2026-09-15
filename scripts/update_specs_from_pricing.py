@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT-0
 Updates our dynamic patches from the pricing API
 This script requires Boto3 and Credentials to call the Pricing API
 """
+
 import json
 import logging
 
@@ -17,46 +18,53 @@ LOGGER = logging.getLogger("cfnlint")
 
 region_map = {
     "Any": "all",
-    "AWS GovCloud (US-East)": "us-gov-east-1",
-    "AWS GovCloud (US-West)": "us-gov-west-1",
     "Africa (Cape Town)": "af-south-1",
     "Asia Pacific (Hong Kong)": "ap-east-1",
+    "Asia Pacific (Hyderabad)": "ap-south-2",
     "Asia Pacific (Jakarta)": "ap-southeast-3",
+    "Asia Pacific (Malaysia)": "ap-southeast-5",
     "Asia Pacific (Melbourne)": "ap-southeast-4",
     "Asia Pacific (Mumbai)": "ap-south-1",
-    "Asia Pacific (Hyderabad)": "ap-south-2",
-    "Asia Pacific (Osaka)": "ap-northeast-3",
+    "Asia Pacific (New Zealand)": "ap-southeast-6",
     "Asia Pacific (Osaka-Local)": "ap-northeast-3",
+    "Asia Pacific (Osaka)": "ap-northeast-3",
     "Asia Pacific (Seoul)": "ap-northeast-2",
     "Asia Pacific (Singapore)": "ap-southeast-1",
     "Asia Pacific (Sydney)": "ap-southeast-2",
+    "Asia Pacific (Taipei)": "ap-east-2",
+    "Asia Pacific (Thailand)": "ap-southeast-7",
     "Asia Pacific (Tokyo)": "ap-northeast-1",
+    "AWS GovCloud (US-East)": "us-gov-east-1",
+    "AWS GovCloud (US-West)": "us-gov-west-1",
     "Canada (Central)": "ca-central-1",
     "Canada West (Calgary)": "ca-west-1",
     "China (Beijing)": "cn-north-1",
     "China (Ningxia)": "cn-northwest-1",
     "EU (Frankfurt)": "eu-central-1",
-    "Europe (Zurich)": "eu-central-2",
     "EU (Ireland)": "eu-west-1",
     "EU (London)": "eu-west-2",
     "EU (Milan)": "eu-south-1",
     "EU (Paris)": "eu-west-3",
-    "Europe (Spain)": "eu-south-2",
     "EU (Stockholm)": "eu-north-1",
+    "Europe (Spain)": "eu-south-2",
+    "Europe (Zurich)": "eu-central-2",
     "Israel (Tel Aviv)": "il-central-1",
+    "Mexico (Central)": "mx-central-1",
     "Middle East (Bahrain)": "me-south-1",
     "Middle East (UAE)": "me-central-1",
     "South America (Sao Paulo)": "sa-east-1",
     "US East (N. Virginia)": "us-east-1",
     "US East (Ohio)": "us-east-2",
+    "US West (Los Angeles)": "us-west-2",
     "US West (N. California)": "us-west-1",
     "US West (Oregon)": "us-west-2",
-    "US West (Los Angeles)": "us-west-2",
 }
 
 session = boto3.session.Session()
 config = Config(retries={"max_attempts": 10})
 client = session.client("pricing", region_name="us-east-1", config=config)
+
+_UNSUPPORTED_REGIONS = set()
 
 
 def configure_logging():
@@ -92,13 +100,15 @@ def get_dax_pricing():
             product = products.get("product", {})
             if product:
                 if product.get("productFamily") in ["DAX"]:
-                    if not results.get(
-                        region_map[product.get("attributes").get("location")]
-                    ):
-                        results[
-                            region_map[product.get("attributes").get("location")]
-                        ] = set()
-                    results[region_map[product.get("attributes").get("location")]].add(
+                    location = region_map.get(product.get("attributes").get("location"))
+                    if not location:
+                        _UNSUPPORTED_REGIONS.add(
+                            product.get("attributes").get("location")
+                        )
+                        continue
+                    if not results.get(location):
+                        results[location] = set()
+                    results[location].add(
                         product.get("attributes").get("usagetype").split(":")[1]
                     )
     return results
@@ -113,18 +123,18 @@ def get_mq_pricing():
             product = products.get("product", {})
             if product:
                 if product.get("productFamily") in ["Broker Instances"]:
-                    if not results.get(
-                        region_map[product.get("attributes").get("location")]
-                    ):
-                        results[
-                            region_map[product.get("attributes").get("location")]
-                        ] = set()
+                    location = region_map.get(product.get("attributes").get("location"))
+                    if not location:
+                        _UNSUPPORTED_REGIONS.add(
+                            product.get("attributes").get("location")
+                        )
+                        continue
+                    if not results.get(location):
+                        results[location] = set()
                     usage_type = (
                         product.get("attributes").get("usagetype").split(":")[1]
                     )
-                    results[region_map[product.get("attributes").get("location")]].add(
-                        remap.get(usage_type, usage_type)
-                    )
+                    results[location].add(remap.get(usage_type, usage_type))
     return results
 
 
@@ -168,21 +178,20 @@ def get_rds_pricing():
                     if product.get("attributes").get("locationType") == "AWS Outposts":
                         continue
                     # Get overall instance types
-                    if not results.get(
-                        region_map[product.get("attributes").get("location")]
-                    ):
-                        results[
-                            region_map[product.get("attributes").get("location")]
-                        ] = set(["db.serverless"])
-                    results[region_map[product.get("attributes").get("location")]].add(
-                        product.get("attributes").get("instanceType")
-                    )
+                    location = region_map.get(product.get("attributes").get("location"))
+                    if not location:
+                        _UNSUPPORTED_REGIONS.add(
+                            product.get("attributes").get("location")
+                        )
+                        continue
+                    if not results.get(location):
+                        results[location] = set(["db.serverless"])
+                    instance_type = product.get("attributes").get("instanceType")
+                    if instance_type:
+                        results[location].add(instance_type)
                     # Rds Instance Size spec
                     product_names = product_map.get(
                         product.get("attributes").get("engineCode"), []
-                    )
-                    product_region = region_map.get(
-                        product.get("attributes").get("location")
                     )
                     license_name = license_map.get(
                         product.get("attributes").get("licenseModel")
@@ -200,20 +209,18 @@ def get_rds_pricing():
 
                     instance_type = product.get("attributes").get("instanceType")
                     for product_name in product_names:
-                        if not rds_details.get(product_region):
-                            rds_details[product_region] = {}
-                        if not rds_details.get(product_region).get(deployment_option):
-                            rds_details[product_region][deployment_option] = {}
+                        if not rds_details.get(location):
+                            rds_details[location] = {}
+                        if not rds_details.get(location).get(deployment_option):
+                            rds_details[location][deployment_option] = {}
                         if (
-                            not rds_details.get(product_region)
+                            not rds_details.get(location)
                             .get(deployment_option)
                             .get(license_name)
                         ):
-                            rds_details[product_region][deployment_option][
-                                license_name
-                            ] = {}
+                            rds_details[location][deployment_option][license_name] = {}
                         if (
-                            not rds_details.get(product_region)
+                            not rds_details.get(location)
                             .get(deployment_option)
                             .get(license_name)
                             .get(product_name)
@@ -223,27 +230,25 @@ def get_rds_pricing():
                                 and product_name
                                 in ["aurora-mysql", "aurora-postgresql"]
                             ):
-                                rds_details[product_region][deployment_option][
-                                    license_name
-                                ][product_name] = set(["db.serverless"])
+                                rds_details[location][deployment_option][license_name][
+                                    product_name
+                                ] = set(["db.serverless"])
                             else:
-                                rds_details[product_region][deployment_option][
-                                    license_name
-                                ][product_name] = set()
-                        rds_details[product_region][deployment_option][license_name][
+                                rds_details[location][deployment_option][license_name][
+                                    product_name
+                                ] = set()
+                        rds_details[location][deployment_option][license_name][
                             product_name
                         ].add(instance_type)
     specs = {}
     cluster_specs = {}
     for product_region, product_values in rds_details.items():
-        if product_region not in specs:
-            specs[product_region] = {"allOf": []}
-        if product_region not in cluster_specs:
-            cluster_specs[product_region] = {"allOf": []}
         for deployment_option, deployment_values in product_values.items():
             if deployment_option in ["Single-AZ", "Multi-AZ"]:
                 for license_name, license_values in deployment_values.items():
                     for product_name, instance_types in license_values.items():
+                        if product_region not in specs:
+                            specs[product_region] = {"allOf": []}
                         if license_name == "general-public-license":
                             specs[product_region]["allOf"].append(
                                 {
@@ -296,6 +301,8 @@ def get_rds_pricing():
             else:
                 for license_name, license_values in deployment_values.items():
                     for product_name, instance_types in license_values.items():
+                        if product_region not in cluster_specs:
+                            cluster_specs[product_region] = {"allOf": []}
                         cluster_specs[product_region]["allOf"].append(
                             {
                                 "if": {
@@ -335,6 +342,42 @@ def get_rds_pricing():
         f.write("\n")
 
 
+def get_sagemaker_pricing():
+    results = {}
+    for page in get_paginator("AmazonSageMaker"):
+        for price_item in page.get("PriceList", []):
+            products = json.loads(price_item)
+            product = products.get("product", {})
+            if not product:
+                continue
+            if product.get("productFamily") != "ML Instance":
+                continue
+            attrs = product.get("attributes", {})
+            if attrs.get("locationType") != "AWS Region":
+                continue
+            location = region_map.get(attrs.get("location"))
+            if not location:
+                _UNSUPPORTED_REGIONS.add(attrs.get("location"))
+                continue
+            instance_name = attrs.get("instanceName", "")
+            if not instance_name:
+                continue
+            usagetype = attrs.get("usagetype", "")
+            if ":" not in usagetype:
+                continue
+            prefix = usagetype.split(":")[0]
+            if "-" in prefix:
+                prefix = prefix.split("-", 1)[-1]
+
+            if location not in results:
+                results[location] = {}
+            if prefix not in results[location]:
+                results[location][prefix] = set()
+            results[location][prefix].add(instance_name)
+
+    return results
+
+
 def get_results(service, product_families, default=None):
     if default is None:
         default = set()
@@ -348,28 +391,24 @@ def get_results(service, product_families, default=None):
                     product.get("productFamily") in product_families
                     and product.get("attributes").get("locationType") == "AWS Region"
                 ):
-                    if product.get("attributes").get("location") not in region_map:
-                        LOGGER.warning(
-                            'Region "%s" not found',
-                            product.get("attributes").get("location"),
+                    location = region_map.get(product.get("attributes").get("location"))
+                    if not location:
+                        _UNSUPPORTED_REGIONS.add(
+                            product.get("attributes").get("location")
                         )
                         continue
-                    if not results.get(
-                        region_map[product.get("attributes").get("location")]
-                    ):
-                        results[
-                            region_map[product.get("attributes").get("location")]
-                        ] = default
-                    results[region_map[product.get("attributes").get("location")]].add(
-                        product.get("attributes").get("instanceType")
-                    )
+                    if not results.get(location):
+                        results[location] = set(default)
+                    instance_type = product.get("attributes").get("instanceType")
+                    if instance_type:
+                        results[location].add(instance_type)
     return results
 
 
 def write_output(resource, filename, obj):
     filename = f"src/cfnlint/data/schemas/extensions/{resource}/{filename}.json"
     output = {
-        "_description": "Automatically updated using update_specs_from_pricing",
+        "description": "Automatically updated using update_specs_from_pricing",
     }
     for region, values in obj.items():
         output[region] = {"enum": sorted(list(values))}
@@ -413,10 +452,22 @@ def main():
         "cachenodetype_enum",
         get_results("AmazonElastiCache", ["Cache Instance"]),
     )
+    _opensearch_results = get_results(
+        "AmazonES", ["Amazon OpenSearch Service Instance"]
+    )
+    _elasticsearch_results = {
+        region: {t.replace(".search", ".elasticsearch") for t in types}
+        for region, types in _opensearch_results.items()
+    }
     write_output(
         "aws_elasticsearch_domain",
         "elasticsearchclusterconfig_instancetype_enum",
-        get_results("AmazonES", ["Elastic Search Instance"]),
+        _elasticsearch_results,
+    )
+    write_output(
+        "aws_opensearchservice_domain",
+        "clusterconfig_instancetype_enum",
+        _opensearch_results,
     )
     write_output(
         "aws_emr_cluster",
@@ -438,6 +489,50 @@ def main():
         "instancetype_enum",
         get_results("AmazonAppStream", ["Streaming Instance"]),
     )
+
+    _sagemaker_results = get_sagemaker_pricing()
+    _sagemaker_processing = {
+        region: prefixes.get("Processing", set())
+        for region, prefixes in _sagemaker_results.items()
+        if prefixes.get("Processing")
+    }
+    _sagemaker_transform = {
+        region: prefixes.get("Tsform", set())
+        for region, prefixes in _sagemaker_results.items()
+        if prefixes.get("Tsform")
+    }
+    _sagemaker_hosting = {
+        region: prefixes.get("Host", set()) | prefixes.get("AsyncInf", set())
+        for region, prefixes in _sagemaker_results.items()
+        if prefixes.get("Host") or prefixes.get("AsyncInf")
+    }
+    _sagemaker_cluster = {
+        region: prefixes.get("Cluster", set())
+        for region, prefixes in _sagemaker_results.items()
+        if prefixes.get("Cluster")
+    }
+    write_output(
+        "aws_sagemaker_cluster",
+        "instancetype_enum",
+        _sagemaker_cluster,
+    )
+    write_output(
+        "aws_sagemaker_processing",
+        "instancetype_enum",
+        _sagemaker_processing,
+    )
+    write_output(
+        "aws_sagemaker_transform",
+        "instancetype_enum",
+        _sagemaker_transform,
+    )
+    write_output(
+        "aws_sagemaker_hosting",
+        "instancetype_enum",
+        _sagemaker_hosting,
+    )
+    for region in _UNSUPPORTED_REGIONS:
+        LOGGER.warning(f"Region {region!r} is not supported")
 
 
 if __name__ == "__main__":

@@ -294,10 +294,8 @@ def test_validator(name, schema, instance, expected, validator):
             {"foooooa": 2},
             [
                 ValidationError(
-                    (
-                        "Additional properties are not allowed ('foooooa' "
-                        "was unexpected. Did you mean 'foooooo'?)"
-                    ),
+                    "Additional properties are not allowed ('foooooa' "
+                    "was unexpected. Did you mean 'foooooo'?)",
                 )
             ],
         ),
@@ -451,8 +449,24 @@ def test_validator(name, schema, instance, expected, validator):
             ],
         ),
         (
-            "items list",
-            {"items": [{"type": "string"}]},
+            "items with prefixItems",
+            {"items": {"const": "2"}, "prefixItems": [{"const": "1"}]},
+            ["1", "1"],
+            [
+                ValidationError(
+                    "'2' was expected",
+                )
+            ],
+        ),
+        (
+            "items with prefixItems and a validation error",
+            {"items": {"const": "2"}, "prefixItems": [{"const": "1"}]},
+            ["1", "2"],
+            [],
+        ),
+        (
+            "prefixItems ",
+            {"prefixItems": [{"type": "string"}]},
             [[]],
             [
                 ValidationError(
@@ -532,7 +546,7 @@ def test_validator(name, schema, instance, expected, validator):
             [],
             [
                 ValidationError(
-                    "[] is too short (2)",
+                    "expected minimum item count: 2, found: 0",
                 )
             ],
         ),
@@ -552,11 +566,37 @@ def test_validator(name, schema, instance, expected, validator):
             "maxItems",
             {"maxItems": 0},
             ["foo"],
-            [
-                ValidationError(
-                    "['foo'] is too long (0)",
-                )
-            ],
+            [ValidationError("expected maximum item count: 0, found: 1")],
+        ),
+        (
+            "valid maxUniqueItems",
+            {"maxUniqueItems": 2},
+            ["foo", "bar"],
+            [],
+        ),
+        (
+            "valid maxUniqueItems with duplicates under limit",
+            {"maxUniqueItems": 2},
+            ["foo", "foo", "bar", "bar"],
+            [],
+        ),
+        (
+            "valid maxUniqueItems with wrong type",
+            {"maxUniqueItems": 2},
+            {},
+            [],
+        ),
+        (
+            "maxUniqueItems exceeded",
+            {"maxUniqueItems": 1},
+            ["foo", "bar"],
+            [ValidationError("expected maximum unique item count: 1, found: 2")],
+        ),
+        (
+            "maxUniqueItems with duplicates over limit",
+            {"maxUniqueItems": 1},
+            ["foo", "bar", "foo"],
+            [ValidationError("expected maximum unique item count: 1, found: 2")],
         ),
         (
             "valid minLength",
@@ -576,7 +616,7 @@ def test_validator(name, schema, instance, expected, validator):
             "",
             [
                 ValidationError(
-                    "'' is shorter than 2",
+                    "expected minimum length: 2, found: 0",
                 )
             ],
         ),
@@ -598,7 +638,7 @@ def test_validator(name, schema, instance, expected, validator):
             "foo",
             [
                 ValidationError(
-                    "'foo' is longer than 0",
+                    "expected maximum length: 0, found: 3",
                 )
             ],
         ),
@@ -631,6 +671,34 @@ def test_validator(name, schema, instance, expected, validator):
             [],
         ),
         (
+            "pattern with float converts to string and matches",
+            {"pattern": "^17\\.6$"},
+            17.6,
+            [],
+        ),
+        (
+            "pattern with float converts to string and does not match",
+            {"pattern": "^18\\.0$"},
+            17.6,
+            [
+                ValidationError(
+                    "'17.6' does not match '^18\\\\.0$'",
+                )
+            ],
+        ),
+        (
+            "pattern with int converts to string and matches",
+            {"pattern": "^17$"},
+            17,
+            [],
+        ),
+        (
+            "pattern with bool converts to string",
+            {"pattern": "^true$"},
+            True,
+            [],
+        ),
+        (
             "pattern",
             {"pattern": "^a*$"},
             "bbb",
@@ -647,6 +715,12 @@ def test_validator(name, schema, instance, expected, validator):
             [],
         ),
         (
+            "valid contains with min and max",
+            {"contains": {"type": "string"}, "minContains": 2, "maxContains": 2},
+            ["foo", "bar", 2],
+            [],
+        ),
+        (
             "valid contains with wrong type",
             {"contains": {"type": "string"}},
             {},
@@ -659,6 +733,41 @@ def test_validator(name, schema, instance, expected, validator):
             [
                 ValidationError(
                     "[] does not contain items matching the given schema",
+                )
+            ],
+        ),
+        (
+            "invalid contains with min",
+            {"contains": {"type": "string"}, "minContains": 2},
+            ["foo", 2],
+            [
+                ValidationError(
+                    "Too few items match the given schema "
+                    "(expected at least 2 but only 1 matched)",
+                    validator="minContains",
+                    validator_value=2,
+                )
+            ],
+        ),
+        (
+            "invalid contains with min and empty match",
+            {"contains": {"type": "string"}, "minContains": 2},
+            [2],
+            [
+                ValidationError(
+                    "[2] does not contain items matching the given schema",
+                )
+            ],
+        ),
+        (
+            "invalid contains with  max",
+            {"contains": {"type": "string"}, "maxContains": 2},
+            ["foo", "bar", "foobar", 2],
+            [
+                ValidationError(
+                    "Too many items match the given schema (expected at most 2)",
+                    validator="maxContains",
+                    validator_value=2,
                 )
             ],
         ),
@@ -768,7 +877,7 @@ def test_validator(name, schema, instance, expected, validator):
             {},
             [
                 ValidationError(
-                    "{} does not have enough properties",
+                    "expected minimum property count: 1, found: 0",
                 )
             ],
         ),
@@ -790,7 +899,7 @@ def test_validator(name, schema, instance, expected, validator):
             {"foo": {}, "bar": {}},
             [
                 ValidationError(
-                    "{'foo': {}, 'bar': {}} has too many properties",
+                    "expected maximum property count: 1, found: 2",
                 )
             ],
         ),
@@ -943,7 +1052,29 @@ def test_validator(name, schema, instance, expected, validator):
             [1, 2, "1"],
             [
                 ValidationError(
-                    "[1, 2, '1'] has non-unique elements",
+                    "array items are not unique",
+                )
+            ],
+        ),
+        (
+            "valid requiredOr",
+            {"requiredOr": ["foo", "bar"]},
+            {"foo": {}},
+            [],
+        ),
+        (
+            "valid requiredOr with wrong type",
+            {"requiredOr": ["foo", "bar"]},
+            [],
+            [],
+        ),
+        (
+            "invalid requiredOr with empty object",
+            {"requiredOr": ["foo", "bar"]},
+            {},
+            [
+                ValidationError(
+                    "One of ['foo', 'bar'] is a required property",
                 )
             ],
         ),
@@ -1013,8 +1144,7 @@ def test_validator(name, schema, instance, expected, validator):
             ],
             [
                 ValidationError(
-                    "[{'Name': 'foo'}, {'Name': 'foo'}] has non-unique "
-                    "elements for keys ['Name']",
+                    "array items are not unique for keys ['Name']",
                 )
             ],
         ),
@@ -1086,6 +1216,32 @@ def test_validator(name, schema, instance, expected, validator):
             [1],
             [
                 ValidationError("1 is not of type 'string'"),
+            ],
+        ),
+        (
+            "valid enum case insensitive",
+            {"enumCaseInsensitive": ["A"]},
+            "a",
+            [],
+        ),
+        (
+            "valid enum case insensitive with non string",
+            {"enumCaseInsensitive": ["a", 1]},
+            "A",
+            [],
+        ),
+        (
+            "valid enum case insensitive with non string value",
+            {"enumCaseInsensitive": ["A", 1]},
+            1,
+            [],
+        ),
+        (
+            "valid enum case insensitive with non string value",
+            {"enumCaseInsensitive": ["A"]},
+            "b",
+            [
+                ValidationError("'b' is not one of ['a'] (case-insensitive)"),
             ],
         ),
     ],

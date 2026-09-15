@@ -21,12 +21,10 @@ class NoEcho(CloudFormationLintRule):
     tags = ["functions", "dynamic reference", "ref"]
 
     def validate(self, validator: Validator, _, instance: Any, schema: Any):
-        value = instance.get("Ref")
-
-        if not validator.is_type(value, "string"):
+        if not validator.is_type(instance, "string"):
             return
 
-        parameter = validator.context.parameters.get(value)
+        parameter = validator.context.parameters.get(instance)
         if not parameter:
             return
 
@@ -37,7 +35,8 @@ class NoEcho(CloudFormationLintRule):
                     and validator.context.path.path[2] == "Metadata"
                 ):
                     yield ValidationError(
-                        f"Don't use 'NoEcho' parameter {value!r} in resource metadata",
+                        f"Don't use 'NoEcho' parameter {instance!r} "
+                        "in resource metadata",
                         rule=self,
                         path=deque(["Ref"]),
                     )
@@ -45,10 +44,8 @@ class NoEcho(CloudFormationLintRule):
             if len(validator.context.path.path) > 0:
                 if validator.context.path.path[0] in ["Metadata", "Outputs"]:
                     yield ValidationError(
-                        (
-                            f"Don't use 'NoEcho' parameter {value!r} "
-                            f"in {validator.context.path.path[0]!r}"
-                        ),
+                        f"Don't use 'NoEcho' parameter {instance!r} "
+                        f"in {validator.context.path.path[0]!r}",
                         rule=self,
                         path=deque(["Ref"]),
                     )

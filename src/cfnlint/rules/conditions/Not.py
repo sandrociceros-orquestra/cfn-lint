@@ -5,10 +5,8 @@ SPDX-License-Identifier: MIT-0
 
 from __future__ import annotations
 
-from typing import Any
-
-from cfnlint.jsonschema import Validator
-from cfnlint.rules.functions._BaseFn import BaseFn
+import cfnlint.data.schemas.other.functions
+from cfnlint.rules.functions._BaseFn import BaseFn, SchemaDetails
 
 
 class Not(BaseFn):
@@ -21,24 +19,14 @@ class Not(BaseFn):
     tags = ["functions", "not"]
 
     def __init__(self) -> None:
-        super().__init__("Fn::Not", ("boolean",))
+        super().__init__(
+            "Fn::Not",
+            ("boolean",),
+            schema_details=SchemaDetails(
+                cfnlint.data.schemas.other.functions, "not.json"
+            ),
+        )
         self.fn_not = self.validate
 
-    def schema(self, validator: Validator, instance: Any) -> dict[str, Any]:
-        return {
-            "type": "array",
-            "maxItems": 1,
-            "minItems": 1,
-            "fn_items": {
-                "functions": [
-                    "Condition",
-                    "Fn::Equals",
-                    "Fn::Not",
-                    "Fn::And",
-                    "Fn::Or",
-                ],
-                "schema": {
-                    "type": ["boolean"],
-                },
-            },
-        }
+    # if validator.context.path.path and validator.context.path.path[0] == "Rules":
+    #        functions = list(FUNCTION_RULES)

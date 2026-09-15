@@ -6,8 +6,8 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: index.handler
-      Runtime: nodejs20.x
-      CodeUri: 's3://testBucket/mySourceCode.zip'
+      Runtime: nodejs22.x
+      CodeUri: 's3://test-bucket/mySourceCode.zip'
   ExampleLayer:
     Type: AWS::Serverless::LayerVersion
     Properties:

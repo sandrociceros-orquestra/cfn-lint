@@ -47,6 +47,7 @@ def context(cfn):
             {
                 "E1051": _TestRule(),
                 "E1027": _TestRule(),
+                "W1051": _TestRule(),
             },
             [],
         ),
@@ -57,6 +58,7 @@ def context(cfn):
             {
                 "E1051": None,
                 "E1027": None,
+                "W1051": None,
             },
             [],
         ),
@@ -67,6 +69,7 @@ def context(cfn):
             {
                 "E1051": _TestRule(),
                 "E1027": _TestRule(),
+                "W1051": _TestRule(),
             },
             [],
         ),
@@ -77,6 +80,7 @@ def context(cfn):
             {
                 "E1051": None,
                 "E1027": None,
+                "W1051": None,
             },
             [],
         ),
@@ -87,6 +91,18 @@ def context(cfn):
             {
                 "E1051": _TestRule(),
                 "E1027": _TestRule(),
+                "W1051": _TestRule(),
+            },
+            [],
+        ),
+        (
+            "Valid SSM Parameter name with only a hyphen",
+            "{{resolve:ssm:-:1}}",
+            {"type": "test"},
+            {
+                "E1051": _TestRule(),
+                "E1027": _TestRule(),
+                "W1051": _TestRule(),
             },
             [],
         ),
@@ -97,6 +113,7 @@ def context(cfn):
             {
                 "E1051": _TestRule(),
                 "E1027": _TestRule(),
+                "W1051": _TestRule(),
             },
             [],
         ),
@@ -107,10 +124,11 @@ def context(cfn):
             {
                 "E1051": _TestRule(),
                 "E1027": _TestRule(),
+                "W1051": _TestRule(),
             },
             [
                 ValidationError(
-                    "['resolve', 'ssm'] is too short (3)",
+                    "expected minimum item count: 3, found: 2",
                     validator="minItems",
                     rule=DynamicReference(),
                 )
@@ -123,6 +141,7 @@ def context(cfn):
             {
                 "E1051": _TestRule(),
                 "E1027": _TestRule(),
+                "W1051": _TestRule(),
             },
             [
                 ValidationError(
@@ -139,6 +158,7 @@ def context(cfn):
             {
                 "E1051": _TestRule(),
                 "E1027": _TestRule(),
+                "W1051": _TestRule(),
             },
             [],
         ),
@@ -149,6 +169,7 @@ def context(cfn):
             {
                 "E1051": None,
                 "E1027": None,
+                "W1051": None,
             },
             [],
         ),
@@ -159,6 +180,7 @@ def context(cfn):
             {
                 "E1051": _TestRule(),
                 "E1027": _TestRule(),
+                "W1051": _TestRule(),
             },
             [],
         ),
@@ -169,6 +191,7 @@ def context(cfn):
             {
                 "E1051": _TestRule(),
                 "E1027": _TestRule(),
+                "W1051": _TestRule(),
             },
             [],
         ),
@@ -179,13 +202,11 @@ def context(cfn):
             {
                 "E1051": _TestRule(),
                 "E1027": _TestRule(),
+                "W1051": _TestRule(),
             },
             [
                 ValidationError(
-                    "['resolve', 'secretsmanager', 'arn', 'aws', "
-                    "'secretsmanager', 'us-east-1', '012345678901', "
-                    "'secret', 'my-secret', 'SecretString', "
-                    "'', '', '', ''] is too long (13)",
+                    "expected maximum item count: 13, found: 14",
                     validator="maxItems",
                     rule=DynamicReference(),
                 )

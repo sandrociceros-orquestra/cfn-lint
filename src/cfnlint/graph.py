@@ -7,8 +7,10 @@ SPDX-License-Identifier: MIT-0
 
 from __future__ import annotations
 
+import json
 import logging
 import warnings
+from copy import deepcopy
 from typing import Any
 
 import networkx
@@ -53,6 +55,9 @@ class GraphSettings:
 
         return value
 
+    def _pydot_list_convert(self, value: list[str | int]) -> str:
+        return json.dumps(json.dumps(value))
+
     def subgraph_view(self, graph) -> networkx.MultiDiGraph:
         view = networkx.MultiDiGraph(name="template")
         resources: list[str] = [
@@ -69,9 +74,9 @@ class GraphSettings:
 
         for edge_1, edge_2, edge_data in graph.edges(data=True):
             if edge_1 in resources and edge_2 in resources:
-                edge_data["source_paths"] = [
-                    self._pydot_string_convert(p) for p in edge_data["source_paths"]
-                ]
+                edge_data["source_paths"] = self._pydot_list_convert(
+                    edge_data["source_paths"]
+                )
                 view.add_edge(
                     edge_1,
                     edge_2,
@@ -304,7 +309,8 @@ class Graph:
     # pylint: disable=import-outside-toplevel,unused-variable
     def to_dot(self, path):
         """Export the graph to a file with DOT format"""
-        view = self.settings.subgraph_view(self.graph)
+        graph = deepcopy(self.graph)
+        view = self.settings.subgraph_view(graph)
         try:
             networkx.drawing.nx_agraph.write_dot(view, path)
         except ImportError:
@@ -314,5 +320,27 @@ class Graph:
                     warnings.simplefilter("ignore", category=DeprecationWarning)
 
                     networkx.drawing.nx_pydot.write_dot(view, path)
+            except ImportError as e:
+                raise e
+
+    def to_dot_string(self) -> str:
+        """Export the graph to a DOT format string"""
+        from io import StringIO
+
+        graph = deepcopy(self.graph)
+        view = self.settings.subgraph_view(graph)
+        try:
+            buf = StringIO()
+            networkx.drawing.nx_agraph.write_dot(view, buf)
+            return buf.getvalue()
+        except ImportError:
+            try:
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", category=PendingDeprecationWarning)
+                    warnings.simplefilter("ignore", category=DeprecationWarning)
+
+                    buf = StringIO()
+                    networkx.drawing.nx_pydot.write_dot(view, buf)
+                    return buf.getvalue()
             except ImportError as e:
                 raise e

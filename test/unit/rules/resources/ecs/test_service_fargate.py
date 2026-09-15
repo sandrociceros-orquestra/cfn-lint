@@ -104,10 +104,20 @@ _service = {
             deque(["Resources", "Service", "Properties"]),
             [
                 ValidationError(
-                    ("'RequiresCompatibilities' is a required property"),
+                    "'RequiresCompatibilities' is a required property",
                     validator="required",
                     rule=ServiceFargate(),
                     path_override=deque(["Resources", "TaskDefinition", "Properties"]),
+                    schema_path=deque(
+                        [
+                            "cfnGather",
+                            "schema",
+                            "then",
+                            "properties",
+                            "taskDef",
+                            "required",
+                        ]
+                    ),
                 )
             ],
         ),
@@ -184,10 +194,20 @@ _service = {
             deque(["Resources", "Service", "Properties"]),
             [
                 ValidationError(
-                    ("'RequiresCompatibilities' is a required property"),
+                    "'RequiresCompatibilities' is a required property",
                     validator="required",
                     rule=ServiceFargate(),
                     path_override=deque(["Resources", "TaskDefinition", "Properties"]),
+                    schema_path=deque(
+                        [
+                            "cfnGather",
+                            "schema",
+                            "then",
+                            "properties",
+                            "taskDef",
+                            "required",
+                        ]
+                    ),
                 )
             ],
         ),
@@ -262,7 +282,7 @@ _service = {
             deque(["Resources", "Service", "Properties"]),
             [
                 ValidationError(
-                    ("['EC2', 'EXTERNAL'] does not contain items matching 'FARGATE'"),
+                    "['EC2', 'EXTERNAL'] does not contain items matching 'FARGATE'",
                     validator="contains",
                     rule=ServiceFargate(),
                     path_override=deque(
@@ -271,6 +291,19 @@ _service = {
                             "TaskDefinition",
                             "Properties",
                             "RequiresCompatibilities",
+                        ]
+                    ),
+                    schema_path=deque(
+                        [
+                            "cfnGather",
+                            "schema",
+                            "then",
+                            "properties",
+                            "taskDef",
+                            "properties",
+                            "RequiresCompatibilities",
+                            "then",
+                            "contains",
                         ]
                     ),
                 )
@@ -310,6 +343,112 @@ _service = {
                         ],
                     ),
                     "Service": dict(_service),
+                },
+            },
+            deque(["Resources", "Service", "Properties"]),
+            [],
+        ),
+        (
+            {
+                "Resources": {
+                    "TaskDefinition": jsonpatch.apply_patch(
+                        dict(_task_definition),
+                        [
+                            {
+                                "op": "add",
+                                "path": "/Properties/NetworkMode",
+                                "value": "awsvpc",
+                            },
+                            {
+                                "op": "remove",
+                                "path": "/Properties/RequiresCompatibilities",
+                            },
+                        ],
+                    ),
+                    "Service": dict(_service),
+                },
+            },
+            deque(["Resources", "Service", "Properties"]),
+            [],
+        ),
+        (
+            {
+                "Parameters": {"MyNetworkMode": {"Type": "String"}},
+                "Resources": {
+                    "TaskDefinition": jsonpatch.apply_patch(
+                        dict(_task_definition),
+                        [
+                            {
+                                "op": "add",
+                                "path": "/Properties/NetworkMode",
+                                "value": {"Ref": "MyNetworkMode"},
+                            },
+                            {
+                                "op": "remove",
+                                "path": "/Properties/RequiresCompatibilities",
+                            },
+                        ],
+                    ),
+                    "Service": dict(_service),
+                },
+            },
+            deque(["Resources", "Service", "Properties"]),
+            [],
+        ),
+        (
+            {
+                "Resources": {
+                    "TaskDefinition": jsonpatch.apply_patch(
+                        dict(_task_definition),
+                        [
+                            {
+                                "op": "add",
+                                "path": "/Properties/NetworkMode",
+                                "value": "host",
+                            },
+                            {
+                                "op": "remove",
+                                "path": "/Properties/RequiresCompatibilities",
+                            },
+                        ],
+                    ),
+                    "Service": dict(_service),
+                },
+            },
+            deque(["Resources", "Service", "Properties"]),
+            [
+                ValidationError(
+                    "'RequiresCompatibilities' is a required property",
+                    validator="required",
+                    rule=ServiceFargate(),
+                    path_override=deque(["Resources", "TaskDefinition", "Properties"]),
+                    schema_path=deque(
+                        [
+                            "cfnGather",
+                            "schema",
+                            "then",
+                            "properties",
+                            "taskDef",
+                            "required",
+                        ]
+                    ),
+                )
+            ],
+        ),
+        # Hardcoded TaskDefinition ARN — no error
+        (
+            {
+                "Resources": {
+                    "Service": jsonpatch.apply_patch(
+                        dict(_service),
+                        [
+                            {
+                                "op": "replace",
+                                "path": "/Properties/TaskDefinition",
+                                "value": "arn:aws:ecs:us-east-1:0:task/t:1",
+                            },
+                        ],
+                    ),
                 },
             },
             deque(["Resources", "Service", "Properties"]),

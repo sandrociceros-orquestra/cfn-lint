@@ -10,7 +10,6 @@ import pytest
 from cfnlint.context import create_context_for_template
 from cfnlint.context.context import Transforms
 from cfnlint.jsonschema import CfnTemplateValidator, ValidationError
-from cfnlint.jsonschema._keywords_cfn import FnItems
 from cfnlint.rules.functions.Ref import Ref
 from cfnlint.template import Template
 
@@ -72,22 +71,22 @@ def context(cfn):
             {},
             [
                 ValidationError(
+                    "['foo'] is not one of ['MyParameter', 'MyArrayParameter', "
+                    "'MyVolume', 'MyInstance', 'AWS::AccountId', "
+                    "'AWS::NoValue', 'AWS::NotificationARNs', "
+                    "'AWS::Partition', 'AWS::Region', "
+                    "'AWS::StackId', 'AWS::StackName', 'AWS::URLSuffix']",
+                    path=deque(["Ref"]),
+                    schema_path=deque(
+                        ["else", "cfnContext", "schema", "dynamicValidation", "enum"]
+                    ),
+                    validator="ref",
+                ),
+                ValidationError(
                     "['foo'] is not of type 'string'",
                     path=deque(["Ref"]),
                     validator="ref",
-                    schema_path=deque(["type"]),
-                ),
-                ValidationError(
-                    (
-                        "['foo'] is not one of ['MyParameter', 'MyArrayParameter', "
-                        "'MyVolume', 'MyInstance', 'AWS::AccountId', "
-                        "'AWS::NoValue', 'AWS::NotificationARNs', "
-                        "'AWS::Partition', 'AWS::Region', "
-                        "'AWS::StackId', 'AWS::StackName', 'AWS::URLSuffix']"
-                    ),
-                    path=deque(["Ref"]),
-                    schema_path=deque(["enum"]),
-                    validator="ref",
+                    schema_path=deque(["else", "cfnContext", "schema", "type"]),
                 ),
             ],
         ),
@@ -105,15 +104,15 @@ def context(cfn):
             {},
             [
                 ValidationError(
-                    (
-                        "'Foo' is not one of ['MyParameter', 'MyArrayParameter', "
-                        "'MyVolume', 'MyInstance', 'AWS::AccountId', "
-                        "'AWS::NoValue', 'AWS::NotificationARNs', "
-                        "'AWS::Partition', 'AWS::Region', "
-                        "'AWS::StackId', 'AWS::StackName', 'AWS::URLSuffix']"
-                    ),
+                    "'Foo' is not one of ['MyParameter', 'MyArrayParameter', "
+                    "'MyVolume', 'MyInstance', 'AWS::AccountId', "
+                    "'AWS::NoValue', 'AWS::NotificationARNs', "
+                    "'AWS::Partition', 'AWS::Region', "
+                    "'AWS::StackId', 'AWS::StackName', 'AWS::URLSuffix']",
                     path=deque(["Ref"]),
-                    schema_path=deque(["enum"]),
+                    schema_path=deque(
+                        ["else", "cfnContext", "schema", "dynamicValidation", "enum"]
+                    ),
                     validator="ref",
                 ),
             ],
@@ -135,9 +134,88 @@ def context(cfn):
                     "{'Ref': 'MyArrayParameter'} is not of type 'string'",
                     path=deque(["Ref"]),
                     validator="ref",
-                    schema_path=deque(["ref"]),
+                    schema_path=deque(["then", "cfnContext", "schema", "ref"]),
                 ),
             ],
+        ),
+        (
+            "Pseudo parameter (string) is not an object",
+            {"Ref": "AWS::Region"},
+            {"type": "object"},
+            {},
+            [
+                ValidationError(
+                    "{'Ref': 'AWS::Region'} is not of type 'object'",
+                ),
+            ],
+        ),
+        (
+            "Pseudo parameter (list) does not satisfy a scalar schema",
+            {"Ref": "AWS::NotificationARNs"},
+            {"type": "string"},
+            {},
+            [
+                ValidationError(
+                    "{'Ref': 'AWS::NotificationARNs'} is not of type 'string'",
+                ),
+            ],
+        ),
+        (
+            "Pseudo parameter (string) satisfies a string schema",
+            {"Ref": "AWS::Region"},
+            {"type": "string"},
+            {},
+            [],
+        ),
+        (
+            "Pseudo parameter (list) satisfies an array schema",
+            {"Ref": "AWS::NotificationARNs"},
+            {"type": "array"},
+            {},
+            [],
+        ),
+        (
+            "Pseudo parameter with no schema type is not validated",
+            {"Ref": "AWS::Region"},
+            {},
+            {},
+            [],
+        ),
+        (
+            "Pseudo parameter (string) satisfies a string/array schema",
+            {"Ref": "AWS::Region"},
+            {"type": ["string", "array"]},
+            {},
+            [],
+        ),
+        (
+            "Resource ref (string) is not an object",
+            {"Ref": "MyVolume"},
+            {"type": "object"},
+            {},
+            [
+                ValidationError(
+                    "{'Ref': 'MyVolume'} is not of type 'object'",
+                ),
+            ],
+        ),
+        (
+            "Resource ref (string) does not satisfy an array schema",
+            {"Ref": "MyVolume"},
+            {"type": "array"},
+            {},
+            [
+                ValidationError(
+                    "{'Ref': 'MyVolume'} is not of type 'array'",
+                ),
+            ],
+        ),
+        (
+            "Resource ref (string) satisfies a string schema",
+            {"Ref": "MyInstance"},
+            {"type": "string"},
+            {},
+            [],
         ),
     ],
 )
@@ -145,7 +223,6 @@ def test_validate(name, instance, schema, context_evolve, expected, rule, contex
     context = context.evolve(**context_evolve)
     validator = CfnTemplateValidator({}).extend(
         validators={
-            "fn_items": FnItems().validate,
             "ref": Ref().ref,
         }
     )(context=context, cfn=cfn)

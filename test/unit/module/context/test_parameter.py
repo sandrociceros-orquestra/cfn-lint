@@ -12,7 +12,7 @@ from cfnlint.context.context import Parameter, _init_parameters
 
 
 @pytest.mark.parametrize(
-    "name,instance,expected_type,expected_ref",
+    "name,instance,expected_type,expected_ref_value",
     [
         ("Valid string parameter", {"Type": "string"}, "string", []),
         (
@@ -89,14 +89,15 @@ from cfnlint.context.context import Parameter, _init_parameters
         ),
     ],
 )
-def test_parameter(name, instance, expected_type, expected_ref):
+def test_parameter(name, instance, expected_type, expected_ref_value):
     context = Context(["us-east-1"])
     parameter = Parameter(instance)
 
     assert expected_type == parameter.type
-    assert expected_ref == list(
-        parameter.ref(context)
-    ), f"{name!r} test got {list(parameter.ref(context))}"
+    assert expected_ref_value == list(parameter.ref_value(context)), (
+        f"{name!r} test got {list(parameter.ref_value(context))}"
+    )
+    assert {} == parameter.ref()
 
 
 @pytest.mark.parametrize(
@@ -135,3 +136,17 @@ def test_errors(name, instance):
 def test_parameters():
     with pytest.raises(ValueError):
         _init_parameters([])
+
+
+def test_ref_value_allowed_values_sets_resolved_from_parameters():
+    """Test that resolving AllowedValues sets is_resolved_from_parameters"""
+    context = Context(
+        ["us-east-1"],
+        parameters={
+            "Runtime": Parameter({"Type": "String", "AllowedValues": ["a", "b"]})
+        },
+    )
+    results = list(context.ref_value("Runtime"))
+    assert len(results) == 2
+    for _, ctx in results:
+        assert ctx.is_resolved_from_parameters is True

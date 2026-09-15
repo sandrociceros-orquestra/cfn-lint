@@ -86,10 +86,8 @@ def rule():
             {"MyMapping": {"Key": {"Value": {}}}},
             [
                 ValidationError(
-                    (
-                        "{} is not of type 'string', 'boolean', "
-                        "'integer', 'number', 'array'"
-                    ),
+                    "{} is not of type 'string', 'boolean', "
+                    "'integer', 'number', 'array'",
                     validator="type",
                     schema_path=deque(
                         [
@@ -125,7 +123,7 @@ def rule():
             {"a" * 256: {"Key": {"Value": "Foo"}}},
             [
                 ValidationError(
-                    f"{'a'*256!r} is longer than 255",
+                    "expected maximum length: 255, found: 256",
                     validator="maxLength",
                     schema_path=deque(["propertyNames", "maxLength"]),
                     rule=None,  # empty because we didn't load child rules

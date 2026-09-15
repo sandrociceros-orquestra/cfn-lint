@@ -10,6 +10,7 @@ from typing import Any, Sequence
 
 from cfnlint.helpers import load_resource
 from cfnlint.jsonschema import ValidationError, ValidationResult, Validator
+from cfnlint.jsonschema._keywords_cfn import cfn_type
 from cfnlint.jsonschema.exceptions import best_match
 from cfnlint.rules.jsonschema.Base import BaseJsonSchema
 
@@ -28,7 +29,7 @@ class CfnLintJsonSchema(BaseJsonSchema):
         self.parent_rules = ["E1101"]
         self.all_matches = all_matches
         self._use_schema_arg = True
-        self._schema: Any = {}
+        self._schema: dict[str, Any] = {}
 
         if schema_details:
             self._schema = load_resource(
@@ -45,7 +46,7 @@ class CfnLintJsonSchema(BaseJsonSchema):
         return self.shortdesc
 
     def _iter_errors(self, validator, instance):
-        errs = list(validator.iter_errors(instance))
+        errs = [err for err in validator.iter_errors(instance) if not err.unknown]
         if not self.all_matches:
             err = best_match(errs)
             if err is not None:
@@ -75,9 +76,11 @@ class CfnLintJsonSchema(BaseJsonSchema):
             ),
             schema=schema,
             context=validator.context.evolve(
-                functions=[],
-                strict_types=True,
+                unresolvable_function_mode=True,
             ),
+            validators={"type": cfn_type},
         )
 
-        yield from self._iter_errors(cfn_validator, instance)
+        for err in self._iter_errors(cfn_validator, instance):
+            if not getattr(err, "unknown", False):
+                yield err

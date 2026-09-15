@@ -8,7 +8,14 @@ from __future__ import annotations
 from dataclasses import dataclass, field, fields
 from typing import TYPE_CHECKING, Any, Iterator, Sequence, Tuple
 
-from cfnlint.helpers import FUNCTIONS, REGEX_DYN_REF, ToPy, ensure_list
+from cfnlint.helpers import (
+    FUNCTIONS,
+    PSEUDOPARAMS,
+    REGEX_DYN_REF,
+    REGEX_DYN_REF_SPACES,
+    ToPy,
+    ensure_list,
+)
 
 if TYPE_CHECKING:
     from cfnlint.jsonschema.protocols import Validator
@@ -45,7 +52,7 @@ class FunctionFilter:
             "minItems",
             "minProperties",
             "required",
-            "requiredAtLeastOne",
+            "requiredOr",
             "requiredXor",
             "then",
             "uniqueItems",
@@ -110,6 +117,12 @@ class FunctionFilter:
     def filter(
         self, validator: Any, instance: Any, schema: Any
     ) -> Iterator[tuple[Any, dict[str, Any], "Validator"]]:
+        # if cfnContext is in the schema it is singular and
+        # needs to be processed first
+        if any(s in schema for s in ["cfnContext"]):
+            yield instance, schema, validator
+            return
+
         # Lets validate dynamic references when appropriate
         if validator.is_type(instance, "string") and self.validate_dynamic_references:
             if REGEX_DYN_REF.findall(instance):
@@ -122,6 +135,21 @@ class FunctionFilter:
                     yield (instance, {"dynamicReference": schema}, validator)
                     return
                 return
+            elif REGEX_DYN_REF_SPACES.search(instance):
+                yield (instance, {"dynamicReferenceSpaces": schema}, validator)
+                return
+
+        # Check for pseudo-parameters used as raw strings (without Ref).
+        # This is independent of dynamic reference validation so that it
+        # also runs for rules that set validate_dynamic_references=False
+        # (e.g. CfnLintJsonSchema rules like Step Functions definitions).
+        if (
+            validator.is_type(instance, "string")
+            and instance in PSEUDOPARAMS
+            and "Ref" not in validator.context.path.path
+        ):
+            yield (instance, {"rawPseudoParameter": schema}, validator)
+            return
 
         # if there are no functions then we don't need to worry
         # about ref AWS::NoValue or If conditions

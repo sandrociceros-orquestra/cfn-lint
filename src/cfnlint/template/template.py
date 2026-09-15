@@ -14,8 +14,10 @@ import regex as re
 
 import cfnlint.conditions
 import cfnlint.helpers
-from cfnlint._typing import CheckValueFn, Path
-from cfnlint.context import create_context_for_template
+from cfnlint._typing import CheckValueFn
+from cfnlint._typing import Path as CfnPath
+from cfnlint.context import Context, ParameterSet, create_context_for_template
+from cfnlint.context.conditions.exceptions import Unsatisfiable
 from cfnlint.decode.node import dict_node, list_node
 from cfnlint.graph import Graph
 from cfnlint.match import Match
@@ -51,6 +53,7 @@ class Template:  # pylint: disable=R0904,too-many-lines,too-many-instance-attrib
         filename: str | None,
         template: dict[str, Any],
         regions: list[str] | None = None,
+        parameter_sets: list[ParameterSet] | None = None,
     ):
         """Initialize a Template instance.
 
@@ -59,18 +62,20 @@ class Template:  # pylint: disable=R0904,too-many-lines,too-many-instance-attrib
             template (dict[str, Any]): The dictionary representing the CloudFormation template.
             regions (list[str] | None): A list of AWS regions associated with the template.
         """
-        if regions is None:
-            self.regions = [cfnlint.helpers.REGION_PRIMARY]
-        else:
-            self.regions = regions
+
+        self.regions = regions or [cfnlint.helpers.REGION_PRIMARY]
+
         self.filename = filename
         self.template = template
         self.transform_pre: dict[str, Any] = {}
         self.transform_pre["Globals"] = {}
         self.transform_pre["Ref"] = self.search_deep_keys("Ref")
         self.transform_pre["Fn::Sub"] = self.search_deep_keys("Fn::Sub")
+        self.transform_pre["Fn::If"] = self.search_deep_keys("Fn::If")
         self.transform_pre["Fn::FindInMap"] = self.search_deep_keys("Fn::FindInMap")
-        self.transform_pre["Transform"] = self.template.get("Transform", [])
+        self.transform_pre["Transform"] = cfnlint.helpers.ensure_list(
+            self.template.get("Transform", [])
+        )
         self.transform_pre["Fn::ForEach"] = self.search_deep_keys(
             cfnlint.helpers.FUNCTION_FOR_EACH
         )
@@ -90,6 +95,8 @@ class Template:  # pylint: disable=R0904,too-many-lines,too-many-instance-attrib
             LOGGER.info("Encountered unknown error while building graph: %s", err)
 
         self.context = create_context_for_template(self)
+        if parameter_sets:
+            self.context = self.context.evolve(parameter_sets=parameter_sets)
         self.search_deep_keys = functools.lru_cache()(self.search_deep_keys)  # type: ignore
 
     def __deepcopy__(self, memo):
@@ -126,10 +133,8 @@ class Template:  # pylint: disable=R0904,too-many-lines,too-many-instance-attrib
             LOGGER.info("DOT representation of the graph written to %s", path)
         except ImportError:
             LOGGER.error(
-                (
-                    "Could not write the graph in DOT format. "
-                    "Please install either `pygraphviz` or `pydot` modules."
-                )
+                "Could not write the graph in DOT format. "
+                "Please install either `pygraphviz` or `pydot` modules."
             )
 
     def has_language_extensions_transform(self) -> bool:
@@ -138,14 +143,10 @@ class Template:  # pylint: disable=R0904,too-many-lines,too-many-instance-attrib
         Returns:
             bool: True if the AWS::LanguageExtensions transform is declared, False otherwise.
         """
-        lang_extensions_transform = "AWS::LanguageExtensions"
-        transform_declaration = self.transform_pre["Transform"]
-        transform_type = (
-            transform_declaration
-            if isinstance(transform_declaration, list)
-            else [transform_declaration]
+        return bool(
+            cfnlint.helpers.TRANSFORM_LANGUAGE_EXTENSION
+            in self.transform_pre["Transform"]
         )
-        return bool(lang_extensions_transform in transform_type)
 
     def has_serverless_transform(self) -> bool:
         """Check if the template has the AWS::Serverless-2016-10-31 transform declared.
@@ -153,14 +154,7 @@ class Template:  # pylint: disable=R0904,too-many-lines,too-many-instance-attrib
         Returns:
             bool: True if the AWS::Serverless-2016-10-31 transform is declared, False otherwise.
         """
-        lang_extensions_transform = "AWS::Serverless-2016-10-31"
-        transform_declaration = self.transform_pre["Transform"]
-        transform_type = (
-            transform_declaration
-            if isinstance(transform_declaration, list)
-            else [transform_declaration]
-        )
-        return bool(lang_extensions_transform in transform_type)
+        return bool(cfnlint.helpers.TRANSFORM_SAM in self.transform_pre["Transform"])
 
     def is_cdk_template(self) -> bool:
         """Check if the template was created by the AWS Cloud Development Kit (CDK).
@@ -325,7 +319,7 @@ class Template:  # pylint: disable=R0904,too-many-lines,too-many-instance-attrib
         results = GetAtts(self.regions)
 
         for name, value in self.context.resources.items():
-            results.add(name, value.type)
+            results.add(name, value)
 
         return results
 
@@ -354,7 +348,7 @@ class Template:  # pylint: disable=R0904,too-many-lines,too-many-instance-attrib
         return results
 
     # pylint: disable=dangerous-default-value
-    def _search_deep_keys(self, searchText: str | re.Pattern, cfndict, path: Path):
+    def _search_deep_keys(self, searchText: str | re.Pattern, cfndict, path: CfnPath):
         """Search deep for keys and get their values.
 
         Args:
@@ -368,7 +362,7 @@ class Template:  # pylint: disable=R0904,too-many-lines,too-many-instance-attrib
         keys = []
         if isinstance(cfndict, dict):
             for key in cfndict:
-                pathprop: Path = path[:]
+                pathprop: CfnPath = path[:]
                 pathprop.append(key)
                 if isinstance(searchText, str):
                     if key == searchText:
@@ -431,7 +425,86 @@ class Template:  # pylint: disable=R0904,too-many-lines,too-many-instance-attrib
                 results.append(["Globals"] + pre_result)
         return results
 
-    def get_condition_values(self, template, path: Path | None) -> list[dict[str, Any]]:
+    def get_cfn_path(
+        self, path: list[str], context: Context
+    ) -> Iterator[tuple[Any, Context]]:
+        """
+        Get the value at the specified path in the CloudFormation template.
+
+        Args:
+            path (list[str]): The path to the value in the template.
+            context (Context): The context object containing the template and other data.
+
+        Returns:
+            Any: The value at the specified path in the template.
+        """
+
+        def _filter_condition(
+            template: Any, context: Context
+        ) -> Iterator[tuple[Any, Context]]:
+            k, v = cfnlint.helpers.is_function(template)
+            if k is None:
+                yield template, context
+                return
+
+            if k == "Fn::If":
+                if isinstance(v, list) and len(v) == 3:
+                    condition = v[0]
+                    if not isinstance(condition, str):
+                        return
+
+                    for i in [1, 2]:
+                        b = True if i == 1 else False
+                        try:
+                            item_context = context.evolve(
+                                conditions=context.conditions.evolve({condition: b})
+                            )
+                            yield from _filter_condition(v[i], item_context)
+                        except Unsatisfiable:
+                            continue
+                return
+            if k == "Ref":
+                if v == "AWS::NoValue":
+                    return
+            yield template, context
+
+        def _get_cfn_path(
+            path: list[str], template: Any, context: Context
+        ) -> Iterator[tuple[Any, Context]]:
+            if len(path) == 0:
+                yield from _filter_condition(template, context)
+                return
+            item = path[0]
+            if isinstance(template, dict):
+                if item in template:
+                    for item_template, item_context in _filter_condition(
+                        template[item], context
+                    ):
+                        yield from _get_cfn_path(path[1:], item_template, item_context)
+                return
+            elif isinstance(template, list):
+                if isinstance(template, list):
+                    if item == "*":
+                        for index, _ in enumerate(template):
+                            yield from _get_cfn_path(path[1:], template[index], context)
+                return
+
+        # handle resource and output conditions
+        if len(path) >= 3 and path[0] in ["Resources", "Outputs"]:
+            condition = self.template.get(path[0], {}).get(path[1], {}).get("Condition")
+            if condition:
+                try:
+                    context = context.evolve(
+                        conditions=context.conditions.evolve({condition: True})
+                    )
+                except Unsatisfiable:
+                    return
+
+        yield from _get_cfn_path(path, self.template, context)
+
+    def get_condition_values(
+        self, template, path: CfnPath | None
+    ) -> list[dict[str, Any]]:
         """
         Evaluates conditions in the provided CloudFormation template and returns the values.
 
@@ -462,7 +535,7 @@ class Template:  # pylint: disable=R0904,too-many-lines,too-many-instance-attrib
                 # Checking for conditions inside of conditions
                 if isinstance(item, dict):
                     for sub_key, sub_value in item.items():
-                        if sub_key in cfnlint.helpers.CONDITION_FUNCTIONS:
+                        if sub_key == cfnlint.helpers.FUNCTION_IF:
                             results = self.get_condition_values(
                                 sub_value, result["Path"] + [sub_key]
                             )
@@ -488,7 +561,7 @@ class Template:  # pylint: disable=R0904,too-many-lines,too-many-instance-attrib
 
         return matches
 
-    def get_values(self, obj, key, path: Path | None = None):
+    def get_values(self, obj, key, path: CfnPath | None = None):
         """
         Logic for getting the value of a key in the provided object.
 
@@ -521,7 +594,7 @@ class Template:  # pylint: disable=R0904,too-many-lines,too-many-instance-attrib
                 is_condition = False
                 is_no_value = False
                 for obj_key, obj_value in value.items():
-                    if obj_key in cfnlint.helpers.CONDITION_FUNCTIONS:
+                    if obj_key == cfnlint.helpers.FUNCTION_IF:
                         is_condition = True
                         results = self.get_condition_values(
                             obj_value, path[:] + [obj_key]
@@ -552,7 +625,7 @@ class Template:  # pylint: disable=R0904,too-many-lines,too-many-instance-attrib
                         is_condition = False
                         is_no_value = False
                         for obj_key, obj_value in list_value.items():
-                            if obj_key in cfnlint.helpers.CONDITION_FUNCTIONS:
+                            if obj_key == cfnlint.helpers.FUNCTION_IF:
                                 is_condition = True
                                 results = self.get_condition_values(
                                     obj_value, path[:] + [list_index, obj_key]
@@ -614,7 +687,7 @@ class Template:  # pylint: disable=R0904,too-many-lines,too-many-instance-attrib
 
         return results
 
-    def get_location_yaml(self, text: Any, path: Path):
+    def get_location_yaml(self, text: Any, path: CfnPath):
         """
         Get the location information for the given YAML text and path.
 
@@ -653,7 +726,7 @@ class Template:  # pylint: disable=R0904,too-many-lines,too-many-instance-attrib
             if isinstance(text, list) and isinstance(path[0], int):
                 try:
                     result = self._loc(text[path[0]])
-                except AttributeError as err:
+                except (AttributeError, IndexError) as err:
                     LOGGER.debug(err)
             else:
                 try:
@@ -670,7 +743,7 @@ class Template:  # pylint: disable=R0904,too-many-lines,too-many-instance-attrib
         self,
         obj: dict[str, Any],
         key: str,
-        path: Path,
+        path: CfnPath,
         check_value: CheckValueFn | None = None,
         check_ref: CheckValueFn | None = None,
         check_get_att: CheckValueFn | None = None,
@@ -735,7 +808,7 @@ class Template:  # pylint: disable=R0904,too-many-lines,too-many-instance-attrib
                                 # Example: Fn::FindInMap becomes
                                 # check_find_in_map
                                 # ruff: noqa: E501
-                                function_name = f'check_{camel_to_snake(dict_name.replace("Fn::", ""))}'
+                                function_name = f"check_{camel_to_snake(dict_name.replace('Fn::', ''))}"
                                 if function_name == "check_ref":
                                     if check_ref:
                                         matches.extend(
@@ -779,7 +852,9 @@ class Template:  # pylint: disable=R0904,too-many-lines,too-many-instance-attrib
 
         return matches
 
-    def is_resource_available(self, path: Path, resource: str) -> list[dict[str, bool]]:
+    def is_resource_available(
+        self, path: CfnPath, resource: str
+    ) -> list[dict[str, bool]]:
         """
         Compares a path to a resource to see if it is available.
 
@@ -831,7 +906,7 @@ class Template:  # pylint: disable=R0904,too-many-lines,too-many-instance-attrib
         return results
 
     def get_object_without_nested_conditions(
-        self, obj: dict | list, path: Path, region: str | None = None
+        self, obj: dict | list, path: CfnPath, region: str | None = None
     ):
         """
         Get a list of object values without conditions included.
@@ -859,7 +934,7 @@ class Template:  # pylint: disable=R0904,too-many-lines,too-many-instance-attrib
                 if len(value) == 1:
                     if "Fn::If" in value:
                         if_values = value.get("Fn::If")
-                        if len(if_values) == 3:
+                        if len(if_values) == 3 and isinstance(if_values[0], str):
                             if_path = scenario.get(if_values[0], None)
                             if if_path is not None:
                                 if if_path:
@@ -920,7 +995,7 @@ class Template:  # pylint: disable=R0904,too-many-lines,too-many-instance-attrib
                 if len(value) == 1:
                     if "Fn::If" in value:
                         if_values = value.get("Fn::If")
-                        if len(if_values) == 3:
+                        if len(if_values) == 3 and isinstance(if_values[0], str):
                             if_path = scenario.get(if_values[0], None)
                             if if_path is not None:
                                 if if_path:
@@ -1056,7 +1131,7 @@ class Template:  # pylint: disable=R0904,too-many-lines,too-many-instance-attrib
 
     def get_condition_scenarios_below_path(
         self,
-        path: Path,
+        path: CfnPath,
         include_if_in_function: bool = False,
         region: str | None = None,
     ) -> list[dict[str, bool]]:
@@ -1158,7 +1233,7 @@ class Template:  # pylint: disable=R0904,too-many-lines,too-many-instance-attrib
     def get_conditions_from_path(
         self,
         text: Any,
-        path: Path,
+        path: CfnPath,
         include_resource_conditions: bool = True,
         include_if_in_function: bool = True,
         only_last: bool = False,
@@ -1202,7 +1277,7 @@ class Template:  # pylint: disable=R0904,too-many-lines,too-many-instance-attrib
     def _get_conditions_from_path(
         self,
         text: Any,
-        path: Path,
+        path: CfnPath,
         include_if_in_function: bool = True,
         only_last: bool = False,
     ) -> dict[str, set[bool]]:

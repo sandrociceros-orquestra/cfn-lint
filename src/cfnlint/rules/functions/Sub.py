@@ -25,54 +25,20 @@ class Sub(BaseFn):
     tags = ["functions", "sub"]
 
     def __init__(self) -> None:
-        super().__init__("Fn::Sub", ("string",), resolved_rule="W1031")
-        self.sub_parameter_types = ["string", "integer", "number", "boolean"]
+        super().__init__(
+            "Fn::Sub",
+            ("string",),
+            resolved_rule="W1031",
+        )
         self.child_rules.update(
             {
                 "W1019": None,
                 "W1020": None,
+                "W1051": None,
             }
         )
-        self._functions = [
-            "Fn::Base64",
-            "Fn::FindInMap",
-            "Fn::GetAtt",
-            "Fn::GetAZs",
-            "Fn::If",
-            "Fn::ImportValue",
-            "Fn::Join",
-            "Fn::Select",
-            "Fn::Sub",
-            "Fn::ToJsonString",
-            "Fn::Transform",
-            "Ref",
-        ]
 
-    def schema(self, validator: Validator, instance: Any) -> dict[str, Any]:
-        return {
-            "type": ["array", "string"],
-            "minItems": 2,
-            "maxItems": 2,
-            "fn_items": [
-                {
-                    "schema": {"type": "string"},
-                },
-                {
-                    "functions": self._functions,
-                    "schema": {
-                        "type": ["object"],
-                        "patternProperties": {
-                            "[a-zA-Z0-9]+": {
-                                "type": ["string"],
-                            }
-                        },
-                        "additionalProperties": False,
-                    },
-                },
-            ],
-        }
-
-    def _clean_error(
+    def _clean_error_sub(
         self, err: ValidationError, instance: Any, param: Any
     ) -> ValidationError:
         err.message = err.message.replace(f"{instance!r}", f"{param!r}")
@@ -88,7 +54,6 @@ class Sub(BaseFn):
         params = re.findall(REGEX_SUB_PARAMETERS, instance)
         validator = validator.evolve(
             context=validator.context.evolve(
-                functions=self._functions,
                 path=validator.context.path.descend(
                     path=key,
                 ),
@@ -105,21 +70,18 @@ class Sub(BaseFn):
                     instance={"Fn::GetAtt": param},
                     schema={"type": ["string"]},
                 ):
-                    yield self._clean_error(err, {"Fn::GetAtt": param}, param)
+                    yield self._clean_error_sub(err, {"Fn::GetAtt": param}, param)
             else:
                 if param not in sub_values:
                     for err in validator.descend(
                         instance={"Ref": param},
                         schema={"type": ["string"]},
                     ):
-                        yield self._clean_error(err, {"Ref": param}, param)
+                        yield self._clean_error_sub(err, {"Ref": param}, param)
 
     def fn_sub(
         self, validator: Validator, s: Any, instance: Any, schema: Any
     ) -> ValidationResult:
-        validator = validator.evolve(
-            context=validator.context.evolve(strict_types=True),
-        )
         errs = list(super().validate(validator, s, instance, schema))
         if errs:
             yield from iter(errs)
@@ -142,9 +104,14 @@ class Sub(BaseFn):
 
         # we know the structure is valid at this point
         # so any child rule doesn't have to revalidate it
+        value_validator = validator.evolve(
+            context=validator.context.evolve(
+                path=validator.context.path.descend(path=key)
+            )
+        )
         for _, rule in self.child_rules.items():
             if rule and hasattr(rule, "validate"):
-                for err in rule.validate(validator, s, instance.get("Fn::Sub"), schema):
+                for err in rule.validate(value_validator, s, value, schema):
                     err.path.append("Fn::Sub")
                     err.rule = rule
                     yield err

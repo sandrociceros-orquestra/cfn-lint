@@ -6,33 +6,39 @@ SPDX-License-Identifier: MIT-0
 # https://github.com/yaml/pyyaml/blob/a2d19c0234866dc9d4d55abf3009699c258bb72f/lib/yaml/scanner.py#L46
 """
 
+from __future__ import annotations
+
 import fileinput
 import logging
 import sys
 
-from yaml import MappingNode, ScalarNode, SequenceNode
-from yaml.composer import Composer
+from yaml import MappingNode, SafeLoader, ScalarNode, SequenceNode
+
+try:
+    from yaml import CSafeLoader
+
+    FastLoader = CSafeLoader  # type: ignore
+except ImportError:
+    FastLoader = SafeLoader  # type: ignore
+
 from yaml.constructor import ConstructorError, SafeConstructor
-from yaml.reader import Reader
-from yaml.resolver import Resolver
-from yaml.scanner import Scanner
+from yaml.parser import ParserError
+from yaml.scanner import ScannerError
 
 from cfnlint.decode.mark import Mark
 from cfnlint.decode.node import dict_node, list_node, str_node
 from cfnlint.rules import Match
 from cfnlint.rules.errors import ParseError
 
-try:
-    from yaml._yaml import CParser as Parser  # pylint: disable=ungrouped-imports,
-
-    cyaml = True
-except ImportError:
-    from yaml.parser import Parser  # type: ignore # pylint: disable=ungrouped-imports
-
-    cyaml = False
-
 UNCONVERTED_SUFFIXES = ["Ref", "Condition"]
 FN_PREFIX = "Fn::"
+
+# CloudFormation rejects YAML aliases; the AWS CLI "package" command and SAM
+# resolve them client-side, so cfn-lint resolves them too.  A small template
+# using nested aliases ("billion laughs") can expand to an exponentially large
+# structure that exhausts CPU in any consumer that walks the template.  Reject
+# templates whose alias-resolved size exceeds this many nodes.
+_MAX_EXPANDED_NODES = 250_000
 
 LOGGER = logging.getLogger(__name__)
 
@@ -74,8 +80,14 @@ class NodeConstructor(SafeConstructor):
     def __init__(self, filename):
         # Call the base class constructor
         super().__init__()
-
         self.filename = filename
+
+    def flatten_mapping(self, node):
+        # Rewrote to handle merging and overwriting keys
+        if any(key_node.tag == "tag:yaml.org,2002:merge" for key_node, _ in node.value):
+            super().flatten_mapping(node)
+            setattr(node, "using_merge", True)
+        super().flatten_mapping(node)
 
     # To support lazy loading, the original constructors first yield
     # an empty object, then fill them in when iterated. Due to
@@ -109,46 +121,47 @@ class NodeConstructor(SafeConstructor):
                         ),
                     ],
                 )
-            for key_dup in mapping:
-                if key_dup == key:
-                    if not matches:
-                        matches.extend(
-                            [
+            if not getattr(node, "using_merge", False):
+                for key_dup in mapping:
+                    if key_dup == key:
+                        if matches:
+                            matches.append(
                                 build_match(
                                     filename=self.filename,
                                     message=(
-                                        f'Duplicate found "{key}" (line'
-                                        f" {key_dup.start_mark.line + 1})"
-                                    ),
-                                    line_number=key_dup.start_mark.line,
-                                    column_number=key_dup.start_mark.column,
-                                    key=key,
-                                ),
-                                build_match(
-                                    filename=self.filename,
-                                    message=(
-                                        f'Duplicate found "{key}" (line'
+                                        f"Duplicate found {key!r} (line"
                                         f" {key_node.start_mark.line + 1})"
                                     ),
                                     line_number=key_node.start_mark.line,
                                     column_number=key_node.start_mark.column,
                                     key=key,
-                                ),
-                            ],
-                        )
-                    else:
-                        matches.append(
-                            build_match(
-                                filename=self.filename,
-                                message=(
-                                    f'Duplicate found "{key}" (line'
-                                    f" {key_node.start_mark.line + 1})"
-                                ),
-                                line_number=key_node.start_mark.line,
-                                column_number=key_node.start_mark.column,
-                                key=key,
-                            ),
-                        )
+                                )
+                            )
+                        else:
+                            matches.extend(
+                                [
+                                    build_match(
+                                        filename=self.filename,
+                                        message=(
+                                            f"Duplicate found {key!r} (line"
+                                            f" {key_dup.start_mark.line + 1})"
+                                        ),
+                                        line_number=key_dup.start_mark.line,
+                                        column_number=key_dup.start_mark.column,
+                                        key=key,
+                                    ),
+                                    build_match(
+                                        filename=self.filename,
+                                        message=(
+                                            f"Duplicate found {key!r} (line"
+                                            f" {key_node.start_mark.line + 1})"
+                                        ),
+                                        line_number=key_node.start_mark.line,
+                                        column_number=key_node.start_mark.column,
+                                        key=key,
+                                    ),
+                                ],
+                            )
             try:
                 mapping[key] = value
             except Exception as exc:
@@ -176,7 +189,8 @@ class NodeConstructor(SafeConstructor):
 
         (obj,) = SafeConstructor.construct_yaml_map(self, node)
 
-        return dict_node(obj, node.start_mark, node.end_mark)
+        using_merge = False if not hasattr(node, "using_merge") else node.using_merge
+        return dict_node(obj, node.start_mark, node.end_mark, using_merge)
 
     def construct_yaml_str(self, node):
         obj = SafeConstructor.construct_yaml_str(self, node)
@@ -187,6 +201,33 @@ class NodeConstructor(SafeConstructor):
         (obj,) = SafeConstructor.construct_yaml_seq(self, node)
         assert isinstance(obj, list)
         return list_node(obj, node.start_mark, node.end_mark)
+
+    def construct_getatt(self, node):
+        """
+        Reconstruct !GetAtt into a list
+        """
+        if isinstance(node.value, (str)):
+            return list_node(node.value.split(".", 1), node.start_mark, node.end_mark)
+        if isinstance(node.value, list):
+            if any(isinstance(value, tuple) for value in node.value):
+                return dict_node(
+                    self.construct_object(
+                        MappingNode(
+                            tag="tag:yaml.org,2002:map",
+                            value=node.value,
+                            start_mark=node.start_mark,
+                            end_mark=node.end_mark,
+                        ),
+                        deep=True,
+                    )
+                )
+            else:
+                return list_node(
+                    [self.construct_object(child, deep=True) for child in node.value],
+                    node.start_mark,
+                    node.end_mark,
+                )
+        raise ValueError(f"Unexpected GetAtt format: {type(node.value)}")
 
 
 NodeConstructor.add_constructor(  # type: ignore
@@ -202,65 +243,29 @@ NodeConstructor.add_constructor(  # type: ignore
 )
 
 
-class _Scanner(Scanner):
-
-    def __init__(self) -> None:
-        super().__init__()
-        self.ESCAPE_REPLACEMENTS = {
-            "0": "\0",
-            "a": "\x07",
-            "b": "\x08",
-            "t": "\x09",
-            "\t": "\x09",
-            "n": "\x0A",
-            "v": "\x0B",
-            "f": "\x0C",
-            "r": "\x0D",
-            "e": "\x1B",
-            " ": "\x20",
-            '"': '"',
-            "\\": "\\",
-            "N": "\x85",
-            "_": "\xA0",
-            "L": "\u2028",
-            "P": "\u2029",
-        }
-
-
-# pylint: disable=too-many-ancestors
-class MarkedLoader(Reader, _Scanner, Parser, Composer, NodeConstructor, Resolver):
+class CfnFullLoader(FastLoader, NodeConstructor):
     """
-    Class for marked loading YAML
+    Custom FullLoader that integrates NodeConstructor functionality
     """
-
-    # pylint: disable=non-parent-init-called,super-init-not-called
 
     def __init__(self, stream, filename):
-        Reader.__init__(self, stream)
-        _Scanner.__init__(self)
-        if cyaml:
-            Parser.__init__(self, stream)
-        else:
-            Parser.__init__(self)
-        Composer.__init__(self)
-        SafeConstructor.__init__(self)
-        Resolver.__init__(self)
+        FastLoader.__init__(self, stream)
         NodeConstructor.__init__(self, filename)
 
-    def construct_getatt(self, node):
-        """
-        Reconstruct !GetAtt into a list
-        """
 
-        if isinstance(node.value, (str)):
-            return list_node(node.value.split(".", 1), node.start_mark, node.end_mark)
-        if isinstance(node.value, list):
-            return [self.construct_object(child, deep=False) for child in node.value]
+# Register NodeConstructor methods with CfnFullLoader
+CfnFullLoader.add_constructor(  # type: ignore[type-var]
+    "tag:yaml.org,2002:map", NodeConstructor.construct_yaml_map
+)
+CfnFullLoader.add_constructor(  # type: ignore[type-var]
+    "tag:yaml.org,2002:str", NodeConstructor.construct_yaml_str
+)
+CfnFullLoader.add_constructor(  # type: ignore[type-var]
+    "tag:yaml.org,2002:seq", NodeConstructor.construct_yaml_seq
+)
 
-        raise ValueError(f"Unexpected node type: {type(node.value)}")
 
-
-def multi_constructor(loader, tag_suffix, node):
+def multi_constructor(loader: CfnFullLoader, tag_suffix, node):
     """
     Deal with !Ref style function format
     """
@@ -268,33 +273,118 @@ def multi_constructor(loader, tag_suffix, node):
     if tag_suffix not in UNCONVERTED_SUFFIXES:
         tag_suffix = f"{FN_PREFIX}{tag_suffix}"
 
-    constructor = None
     if tag_suffix == "Fn::GetAtt":
-        constructor = loader.construct_getatt
+        return dict_node(
+            {tag_suffix: loader.construct_getatt(node)}, node.start_mark, node.end_mark
+        )
     elif isinstance(node, ScalarNode):
-        constructor = loader.construct_scalar
+        return dict_node(
+            {tag_suffix: loader.construct_scalar(node)}, node.start_mark, node.end_mark
+        )
     elif isinstance(node, SequenceNode):
-        constructor = loader.construct_sequence
+        return dict_node(
+            {tag_suffix: loader.construct_sequence(node, True)},
+            node.start_mark,
+            node.end_mark,
+        )
     elif isinstance(node, MappingNode):
-        constructor = loader.construct_mapping
-    else:
-        raise f"Bad tag: !{tag_suffix}"
+        return dict_node(
+            {tag_suffix: loader.construct_mapping(node, True)},
+            node.start_mark,
+            node.end_mark,
+        )
 
-    return dict_node({tag_suffix: constructor(node)}, node.start_mark, node.end_mark)
+    raise Exception(f"Bad tag: !{tag_suffix}")
+
+
+def _guard_alias_expansion(template, filename):
+    """Reject templates whose YAML aliases resolve to an excessive size.
+
+    Computes the alias-resolved (flattened) node count in O(distinct nodes)
+    using memoization on object identity, and raises CfnParseError if it
+    exceeds _MAX_EXPANDED_NODES.  This bounds YAML alias amplification at the
+    single point where the template is loaded, protecting every downstream
+    consumer that walks the template.
+    """
+    size_memo: dict[int, int] = {}
+
+    def size(node):
+        nid = id(node)
+        cached = size_memo.get(nid)
+        if cached is not None:
+            return cached
+        if isinstance(node, dict):
+            children = node.values()
+        elif isinstance(node, list):
+            children = node
+        else:
+            size_memo[nid] = 1
+            return 1
+        total = 1
+        for child in children:
+            total += size(child)
+            if total > _MAX_EXPANDED_NODES:
+                raise CfnParseError(
+                    filename,
+                    [
+                        build_match(
+                            filename=filename,
+                            message=(
+                                "Template resolves to more than "
+                                f"{_MAX_EXPANDED_NODES} nodes once YAML aliases "
+                                "are expanded; this is not supported and may "
+                                "indicate YAML alias amplification"
+                            ),
+                            line_number=0,
+                            column_number=0,
+                            key="",
+                        )
+                    ],
+                )
+        size_memo[nid] = total
+        return total
+
+    size(template)
 
 
 def loads(yaml_string, fname=None):
     """
     Load the given YAML string
     """
-    loader = MarkedLoader(yaml_string, fname)
-    loader.add_multi_constructor("!", multi_constructor)
-    template = loader.get_single_data()
-    # Convert an empty file to an empty dict
-    if template is None:
-        template = dict_node({}, Mark(0, 0), Mark(0, 0))
+    try:
+        loader = CfnFullLoader(yaml_string, fname)
+        loader.add_multi_constructor("!", multi_constructor)
 
-    return template
+        template = loader.get_single_data()
+        # Convert an empty file to an empty dict
+        if template is None:
+            template = dict_node({}, Mark(0, 0), Mark(0, 0))
+        # A YAML alias ("*x") is only valid if a matching anchor ("&x") is
+        # defined, so a source with no "&" cannot contain aliases and needs no
+        # expansion check.  This keeps the guard off the hot path for the vast
+        # majority of templates (which define no anchors) -- only templates
+        # that actually use anchors pay for the walk.
+        if isinstance(yaml_string, str) and "&" in yaml_string:
+            _guard_alias_expansion(template, fname)
+        return template
+    except CfnParseError:
+        raise
+    except (ScannerError, ParserError):
+        # Let YAML parsing errors bubble up so decode.py can handle JSON fallback
+        raise
+    except Exception as exc:
+        raise CfnParseError(
+            fname,
+            [
+                build_match(
+                    filename=fname,
+                    message=f"Template could not be parsed: {str(exc)}",
+                    line_number=0,
+                    column_number=0,
+                    key="",
+                )
+            ],
+        ) from exc
 
 
 def load(filename):
@@ -304,15 +394,13 @@ def load(filename):
 
     content = ""
 
-    if not sys.stdin.isatty():
-        filename = "-" if filename is None else filename
-        if sys.version_info.major <= 3 and sys.version_info.minor <= 9:
-            for line in fileinput.input(files=filename):
-                content = content + line
-        else:
-            for line in fileinput.input(  # pylint: disable=unexpected-keyword-arg
-                files=filename, encoding="utf-8"
-            ):
+    if (filename is None) and (not sys.stdin.isatty()):
+        filename = "-"  # no filename provided, it's stdin
+        fileinput_args = {"files": filename}
+        if sys.version_info.major <= 3 and sys.version_info.minor >= 10:
+            fileinput_args["encoding"] = "utf-8"
+        with fileinput.input(**fileinput_args) as f:
+            for line in f:
                 content = content + line
     else:
         with open(filename, encoding="utf-8") as fp:

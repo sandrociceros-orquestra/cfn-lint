@@ -34,7 +34,6 @@ class DistributionTargetOriginId(CfnLintKeyword):
     def validate(
         self, validator: Validator, _, instance: Any, schema: dict[str, Any]
     ) -> ValidationResult:
-
         for cache_origin_id, cache_validator in get_value_from_path(
             validator, instance, path=deque(["DefaultCacheBehavior", "TargetOriginId"])
         ):
@@ -50,9 +49,22 @@ class DistributionTargetOriginId(CfnLintKeyword):
                     break
                 origin_ids.append(origin_id)
             else:
-                yield ValidationError(
-                    message=f"{cache_origin_id!r} is not one of {origin_ids!r}",
-                    rule=self,
-                    path_override=cache_validator.context.path.path,
-                    validator="enum",
-                )
+                for origin_id, _ in get_value_from_path(
+                    cache_validator,
+                    instance,
+                    path=deque(["OriginGroups", "Items", "*", "Id"]),
+                ):
+                    if origin_id is None:
+                        continue
+                    if not validator.is_type(origin_id, "string"):
+                        break
+                    if origin_id == cache_origin_id:
+                        break
+                    origin_ids.append(origin_id)
+                else:
+                    yield ValidationError(
+                        message=f"{cache_origin_id!r} is not one of {origin_ids!r}",
+                        rule=self,
+                        path_override=cache_validator.context.path.path,
+                        validator="enum",
+                    )

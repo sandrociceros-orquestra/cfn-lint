@@ -7,12 +7,9 @@ from collections import deque
 
 import pytest
 
-from cfnlint.context import create_context_for_template
-from cfnlint.context.context import Transforms
-from cfnlint.jsonschema import CfnTemplateValidator, ValidationError
-from cfnlint.rules import CfnLintKeyword
+from cfnlint.jsonschema import ValidationError
 from cfnlint.rules.functions.GetAtt import GetAtt
-from cfnlint.template import Template
+from cfnlint.rules.jsonschema.CfnLintKeyword import CfnLintKeyword
 
 
 @pytest.fixture(scope="module")
@@ -21,27 +18,30 @@ def rule():
     yield rule
 
 
-@pytest.fixture(scope="module")
-def cfn():
-    return Template(
-        "",
-        {
-            "Resources": {
-                "MyBucket": {"Type": "AWS::S3::Bucket"},
-                "MyCodePipeline": {"Type": "AWS::CodePipeline::Pipeline"},
-            },
-            "Parameters": {
-                "MyResourceParameter": {"Type": "String", "Default": "MyBucket"},
-                "MyAttributeParameter": {"Type": "String", "AllowedValues": ["Arn"]},
-            },
+_template = {
+    "Resources": {
+        "MyBucket": {"Type": "AWS::S3::Bucket"},
+        "MyCodePipeline": {"Type": "AWS::CodePipeline::Pipeline"},
+        "DocDBCluster": {"Type": "AWS::DocDB::DBCluster"},
+        "MyServerlessApplication": {"Type": "AWS::Serverless::Application"},
+    },
+    "Parameters": {
+        "MyResourceParameter": {"Type": "String", "Default": "MyBucket"},
+        "MyAttributeParameter": {"Type": "String", "AllowedValues": ["Arn"]},
+    },
+}
+
+_template_with_transform = _template.copy()
+_template_with_transform["Transform"] = "AWS::LanguageExtensions"
+
+_custom_template = {
+    "Resources": {
+        "MyCustomResource": {
+            "Type": "Custom::Thing",
+            "Properties": {"ServiceToken": "arn:aws:lambda:us-east-1:1:function:f"},
         },
-        regions=["us-east-1"],
-    )
-
-
-@pytest.fixture(scope="module")
-def context(cfn):
-    return create_context_for_template(cfn)
+    },
+}
 
 
 class _Pass(CfnLintKeyword):
@@ -66,13 +66,13 @@ class _Fail(CfnLintKeyword):
 
 
 @pytest.mark.parametrize(
-    "name,instance,schema,context_evolve,child_rules,expected",
+    "name,instance,schema,template,child_rules,expected",
     [
         (
             "Valid GetAtt with a good attribute",
             {"Fn::GetAtt": ["MyBucket", "Arn"]},
             {"type": "string"},
-            {},
+            _template,
             {},
             [],
         ),
@@ -80,14 +80,23 @@ class _Fail(CfnLintKeyword):
             "Invalid GetAtt with bad attribute",
             {"Fn::GetAtt": ["MyBucket", "foo"]},
             {"type": "string"},
-            {},
+            _template,
             {},
             [
                 ValidationError(
-                    (
-                        "'foo' is not one of ['Arn', 'DomainName', "
-                        "'DualStackDomainName', 'RegionalDomainName', 'WebsiteURL']"
-                    ),
+                    "'foo' is not one of ['Arn', 'DomainName',"
+                    " 'DualStackDomainName', 'RegionalDomainName',"
+                    " 'MetadataTableConfiguration.S3TablesDestination.TableNamespace',"
+                    " 'MetadataTableConfiguration.S3TablesDestination.TableArn',"
+                    " 'MetadataConfiguration.Destination',"
+                    " 'MetadataConfiguration.JournalTableConfiguration.TableName',"
+                    " 'MetadataConfiguration.JournalTableConfiguration.TableArn',"
+                    " 'MetadataConfiguration.InventoryTableConfiguration.TableName',"
+                    " 'MetadataConfiguration.InventoryTableConfiguration.TableArn',"
+                    " 'MetadataConfiguration.AnnotationTableConfiguration.TableName',"
+                    " 'MetadataConfiguration.AnnotationTableConfiguration.TableArn',"
+                    " 'WebsiteURL'] "
+                    "in ['us-east-1']",
                     path=deque(["Fn::GetAtt", 1]),
                     schema_path=deque([]),
                     validator="fn_getatt",
@@ -98,11 +107,13 @@ class _Fail(CfnLintKeyword):
             "Invalid GetAtt with bad resource name",
             {"Fn::GetAtt": ["Foo", "bar"]},
             {"type": "string"},
-            {},
+            _template,
             {},
             [
                 ValidationError(
-                    "'Foo' is not one of ['MyBucket', 'MyCodePipeline']",
+                    "'Foo' is not one of ['MyBucket', "
+                    "'MyCodePipeline', 'DocDBCluster', "
+                    "'MyServerlessApplication']",
                     path=deque(["Fn::GetAtt", 0]),
                     schema_path=deque(["enum"]),
                     validator="fn_getatt",
@@ -113,22 +124,45 @@ class _Fail(CfnLintKeyword):
             "Invalid GetAtt with a bad type",
             {"Fn::GetAtt": {"foo": "bar"}},
             {"type": "string"},
-            {},
+            _template,
             {},
             [
                 ValidationError(
                     "{'foo': 'bar'} is not of type 'string', 'array'",
                     path=deque(["Fn::GetAtt"]),
-                    schema_path=deque(["type"]),
+                    schema_path=deque(["cfnContext", "schema", "type"]),
                     validator="fn_getatt",
                 ),
             ],
         ),
         (
+            "Invalid GetAtt string form without an attribute",
+            {"Fn::GetAtt": "MyBucket"},
+            {"type": "string"},
+            _template,
+            {},
+            [
+                ValidationError(
+                    "{'Fn::GetAtt': 'MyBucket'} is not a valid GetAtt. "
+                    "It must specify a resource and an attribute name",
+                    path=deque(["Fn::GetAtt"]),
+                    validator="fn_getatt",
+                ),
+            ],
+        ),
+        (
+            "Valid GetAtt to a custom resource attribute with non-alphanumerics",
+            {"Fn::GetAtt": "MyCustomResource.My_Attribute-1"},
+            {"type": "string"},
+            _custom_template,
+            {},
+            [],
+        ),
+        (
             "Invalid GetAtt with a bad response type",
             {"Fn::GetAtt": "MyBucket.Arn"},
             {"type": "array"},
-            {},
+            _template,
             {},
             [
                 ValidationError(
@@ -143,7 +177,7 @@ class _Fail(CfnLintKeyword):
             "Invalid GetAtt with a bad response type and multiple types",
             {"Fn::GetAtt": "MyBucket.Arn"},
             {"type": ["array", "object"]},
-            {},
+            _template,
             {},
             [
                 ValidationError(
@@ -158,37 +192,51 @@ class _Fail(CfnLintKeyword):
             "Valid GetAtt with integer to string",
             {"Fn::GetAtt": "MyCodePipeline.Version"},
             {"type": ["integer"]},
-            {
-                "strict_types": False,
-            },
+            _template,
             {},
             [],
         ),
         (
-            "Invalid GetAtt with integer to string",
-            {"Fn::GetAtt": "MyCodePipeline.Version"},
-            {"type": ["integer"]},
-            {
-                "strict_types": True,
-            },
+            "Valid GetAtt with exception type",
+            {"Fn::GetAtt": "DocDBCluster.Port"},
+            {"type": ["string"]},
+            _template,
             {},
-            [
-                ValidationError(
-                    (
-                        "{'Fn::GetAtt': 'MyCodePipeline.Version'} "
-                        "is not of type 'integer'"
-                    ),
-                    path=deque(["Fn::GetAtt"]),
-                    schema_path=deque(["type"]),
-                    validator="fn_getatt",
-                )
-            ],
+            [],
         ),
+        # (
+        #    "Invalid GetAtt with integer to string",
+        #    {"Fn::GetAtt": "MyCodePipeline.Version"},
+        #    {"type": ["integer"]},
+        #    {
+        #        "strict_types": True,
+        #    },
+        #    {},
+        #    [
+        #        ValidationError(
+        #            (
+        #                "{'Fn::GetAtt': 'MyCodePipeline.Version'} "
+        #                "is not of type 'integer'"
+        #            ),
+        #            path=deque(["Fn::GetAtt"]),
+        #            schema_path=deque(["type"]),
+        #            validator="fn_getatt",
+        #        )
+        #    ],
+        # ),
         (
             "Valid GetAtt with one good response type",
             {"Fn::GetAtt": "MyBucket.Arn"},
             {"type": ["array", "string"]},
+            _template,
             {},
+            [],
+        ),
+        (
+            "Valid GetAtt to a serverless application output",
+            {"Fn::GetAtt": "MyServerlessApplication.Outputs.TopicArn"},
+            {"type": "string"},
+            _template,
             {},
             [],
         ),
@@ -196,15 +244,15 @@ class _Fail(CfnLintKeyword):
             "Valid Ref in GetAtt for resource",
             {"Fn::GetAtt": [{"Ref": "MyResourceParameter"}, "Arn"]},
             {"type": "string"},
-            {"transforms": Transforms(["AWS::LanguageExtensions"])},
+            _template_with_transform,
             {},
             [],
         ),
         (
             "Valid Ref in GetAtt for attribute",
-            {"Fn::GetAtt": ["MyBucket", {"Ref": "MyAttributeParameter"}]},
+            {"Fn::GetAtt": ["MyBucket", {"Fn::Sub": "${MyAttributeParameter}"}]},
             {"type": "string"},
-            {"transforms": Transforms(["AWS::LanguageExtensions"])},
+            _template_with_transform,
             {},
             [],
         ),
@@ -212,16 +260,23 @@ class _Fail(CfnLintKeyword):
             "Invalid Ref in GetAtt for attribute",
             {"Fn::GetAtt": ["MyBucket", {"Ref": "MyResourceParameter"}]},
             {"type": "string"},
-            {"transforms": Transforms(["AWS::LanguageExtensions"])},
+            _template_with_transform,
             {},
             [
                 ValidationError(
-                    (
-                        "'MyBucket' is not one of ['Arn', 'DomainName', "
-                        "'DualStackDomainName', 'RegionalDomainName', "
-                        "'WebsiteURL'] when "
-                        "{'Ref': 'MyResourceParameter'} is resolved"
-                    ),
+                    "'MyBucket' is not one of ['Arn', 'DomainName',"
+                    " 'DualStackDomainName', 'RegionalDomainName',"
+                    " 'MetadataTableConfiguration.S3TablesDestination.TableNamespace',"
+                    " 'MetadataTableConfiguration.S3TablesDestination.TableArn',"
+                    " 'MetadataConfiguration.Destination',"
+                    " 'MetadataConfiguration.JournalTableConfiguration.TableName',"
+                    " 'MetadataConfiguration.JournalTableConfiguration.TableArn',"
+                    " 'MetadataConfiguration.InventoryTableConfiguration.TableName',"
+                    " 'MetadataConfiguration.InventoryTableConfiguration.TableArn',"
+                    " 'MetadataConfiguration.AnnotationTableConfiguration.TableName',"
+                    " 'MetadataConfiguration.AnnotationTableConfiguration.TableArn',"
+                    " 'WebsiteURL'] in ['us-east-1'] when "
+                    "{'Ref': 'MyResourceParameter'} is resolved",
                     path=deque(["Fn::GetAtt", 1]),
                     validator="fn_getatt",
                 )
@@ -231,14 +286,14 @@ class _Fail(CfnLintKeyword):
             "Invalid Ref in GetAtt for attribute",
             {"Fn::GetAtt": [{"Ref": "MyAttributeParameter"}, "Arn"]},
             {"type": "string"},
-            {"transforms": Transforms(["AWS::LanguageExtensions"])},
+            _template_with_transform,
             {},
             [
                 ValidationError(
-                    (
-                        "'Arn' is not one of ['MyBucket', 'MyCodePipeline'] when "
-                        "{'Ref': 'MyAttributeParameter'} is resolved"
-                    ),
+                    "'Arn' is not one of ['MyBucket', "
+                    "'MyCodePipeline', 'DocDBCluster', "
+                    "'MyServerlessApplication'] when "
+                    "{'Ref': 'MyAttributeParameter'} is resolved",
                     path=deque(["Fn::GetAtt", 0]),
                     schema_path=deque(["enum"]),
                     validator="fn_getatt",
@@ -249,7 +304,7 @@ class _Fail(CfnLintKeyword):
             "Valid GetAtt with child rules",
             {"Fn::GetAtt": ["MyBucket", "Arn"]},
             {"type": "string"},
-            {},
+            _template,
             {
                 "AAAAA": _Pass(),
                 "BBBBB": _Fail(),
@@ -258,13 +313,68 @@ class _Fail(CfnLintKeyword):
             [ValidationError("Fail")],
         ),
     ],
+    indirect=["template"],
 )
-def test_validate(
-    name, instance, schema, context_evolve, child_rules, expected, rule, context, cfn
-):
-    context = context.evolve(**context_evolve)
+def test_validate(name, instance, schema, child_rules, expected, validator, rule):
     rule.child_rules = child_rules
-    validator = CfnTemplateValidator({}, context=context, cfn=cfn)
     errs = list(rule.fn_getatt(validator, schema, instance, {}))
-
     assert errs == expected, f"Test {name!r} got {errs!r}"
+
+
+_sam_template = {
+    "Transform": "AWS::Serverless-2016-10-31",
+    "Resources": {
+        "Lambda": {
+            "Type": "AWS::Serverless::Function",
+            "Properties": {"AutoPublishAlias": "live"},
+        },
+    },
+}
+
+
+@pytest.mark.parametrize(
+    "name,template,value,expected",
+    [
+        (
+            "SAM synthetic Version resource keeps the dotted logical id together",
+            _sam_template,
+            ["Lambda", "Version.FunctionArn"],
+            ["Lambda.Version", "FunctionArn"],
+        ),
+        (
+            "SAM synthetic Alias resource keeps the dotted logical id together",
+            _sam_template,
+            ["Lambda", "Alias.Arn"],
+            ["Lambda.Alias", "Arn"],
+        ),
+        (
+            "List form with the dotted logical id already intact is unchanged",
+            _sam_template,
+            ["Lambda.Version", "FunctionArn"],
+            ["Lambda.Version", "FunctionArn"],
+        ),
+        (
+            "A plain attribute on the function itself is unchanged",
+            _sam_template,
+            ["Lambda", "Arn"],
+            ["Lambda", "Arn"],
+        ),
+        (
+            "No matching synthetic resource leaves the split unchanged",
+            _template,
+            ["MyBucket", "Foo.Bar"],
+            ["MyBucket", "Foo.Bar"],
+        ),
+        (
+            "A resolved (non string) resource name is left untouched",
+            _sam_template,
+            [{"Ref": "Lambda"}, "Version.FunctionArn"],
+            [{"Ref": "Lambda"}, "Version.FunctionArn"],
+        ),
+    ],
+    indirect=["template"],
+)
+def test_resolve_sam_getatt(name, value, expected, validator, rule):
+    assert rule._resolve_sam_getatt(value, validator) == expected, (
+        f"Test {name!r} got {rule._resolve_sam_getatt(value, validator)!r}"
+    )

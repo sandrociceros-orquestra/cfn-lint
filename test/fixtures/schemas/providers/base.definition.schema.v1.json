@@ -114,6 +114,9 @@
                         "if": {
                             "$ref": "#"
                         },
+                        "not": {
+                            "$ref": "#"
+                        },
                         "then": {
                             "$ref": "#"
                         },
@@ -156,6 +159,9 @@
                             }
                         },
                         "maxItems": {
+                            "$ref": "http://json-schema.org/draft-07/schema#/properties/maxItems"
+                        },
+                        "maxUniqueItems": {
                             "$ref": "http://json-schema.org/draft-07/schema#/properties/maxItems"
                         },
                         "minItems": {
@@ -223,6 +229,9 @@
                             "$ref": "http://json-schema.org/draft-07/schema#/properties/const"
                         },
                         "enum": {
+                            "$ref": "http://json-schema.org/draft-07/schema#/properties/enum"
+                        },
+                        "enumCaseInsensitive": {
                             "$ref": "http://json-schema.org/draft-07/schema#/properties/enum"
                         },
                         "type": {
@@ -329,6 +338,15 @@
             "$comment": "All properties of a resource must be expressed in the schema - arbitrary inputs are not allowed",
             "type": "boolean",
             "const": false
+        },
+        "patternProperties": {
+            "type": "object",
+            "patternProperties": {
+                ".*": {
+                    "$ref": "#/definitions/properties"
+                }
+            },
+            "additionalProperties": false
         },
         "properties": {
             "type": "object",

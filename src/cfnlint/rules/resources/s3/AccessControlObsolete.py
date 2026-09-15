@@ -31,6 +31,8 @@ class AccessControlObsolete(CfnLintKeyword):
     def validate(
         self, validator: Validator, _, instance: Any, schema: dict[str, Any]
     ) -> ValidationResult:
+        if not validator.is_type(instance, "object"):
+            return
         property_sets = validator.cfn.get_object_without_conditions(
             instance, ["AccessControl"]
         )
@@ -40,10 +42,8 @@ class AccessControlObsolete(CfnLintKeyword):
             access_control = props.get("AccessControl", None)
             if access_control:
                 yield ValidationError(
-                    (
-                        "'AccessControl' is a legacy property. Consider "
-                        "using 'AWS::S3::BucketPolicy' instead"
-                    ),
+                    "'AccessControl' is a legacy property. Consider "
+                    "using 'AWS::S3::BucketPolicy' instead",
                     path=deque(["AccessControl"]),
                     instance=access_control,
                 )

@@ -19,6 +19,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import json
 from copy import deepcopy
 from difflib import SequenceMatcher
 from typing import Any, Sequence
@@ -66,19 +67,15 @@ def additionalProperties(
                 for key in schema.get("properties", {}).keys():
                     if SequenceMatcher(a=extra, b=key).ratio() > 0.8:
                         yield ValidationError(
-                            (
-                                f"Additional properties are not allowed ({extra!r} "
-                                f"was unexpected. Did you mean {key!r}?)"
-                            ),
+                            f"Additional properties are not allowed ({extra!r} "
+                            f"was unexpected. Did you mean {key!r}?)",
                             path=[extra],
                         )
                         break
                 else:
                     yield ValidationError(
-                        (
-                            f"Additional properties are not allowed ({extra!r} "
-                            "was unexpected)"
-                        ),
+                        f"Additional properties are not allowed ({extra!r} "
+                        "was unexpected)",
                         path=[extra],
                     )
 
@@ -86,10 +83,13 @@ def additionalProperties(
 def allOf(
     validator: Validator, allOf: Any, instance: Any, schema: dict[str, Any]
 ) -> ValidationResult:
+    # allOf is conjunctive: every subschema must hold and there is no branch to
+    # select, so an unresolvable intrinsic function creates no ambiguity here
+    # (unlike anyOf/oneOf/if). Validate each subschema and yield all errors.
     validator = validator.evolve(
         function_filter=validator.function_filter.evolve(
             add_cfn_lint_keyword=False,
-        )
+        ),
     )
     for index, subschema in enumerate(allOf):
         yield from validator.descend(instance, subschema, schema_path=index)
@@ -101,26 +101,51 @@ def anyOf(
     validator = validator.evolve(
         function_filter=validator.function_filter.evolve(
             add_cfn_lint_keyword=False,
-        )
+        ),
+        context=validator.context.evolve(
+            unresolvable_function_mode=True,
+        ),
     )
     all_errors = []
+    other_errors = []
+    has_valid = False
+    has_unknown = False
+
     for index, subschema in enumerate(anyOf):
         errs = []
-        # warning and informational errors need to be returned but shouldn't
-        # be part of if the anyOf is valid
+        # warning and informational shouldn't count towards if anyOf is
+        # valid.  Save W, I errors and return if errors exist
         for err in validator.descend(instance, subschema, schema_path=index):
             if err.rule is not None and not err.rule.id.startswith("E"):
-                yield err
+                other_errors.append(err)
                 continue
             errs.append(err)
-        if not errs:
+
+        if any(getattr(err, "unknown", False) for err in errs):
+            has_unknown = True
+        elif not errs:
+            has_valid = True
             break
-        all_errors.extend(errs)
-    else:
+        else:
+            all_errors.extend(errs)
+
+    # If we found a valid branch, we're done
+    if has_valid:
+        return
+
+    # If we have unknown branches, we can't determine
+    if has_unknown:
         yield ValidationError(
-            f"{instance!r} is not valid under any of the given schemas",
-            context=all_errors,
+            f"Cannot determine anyOf for {instance!r}",
+            unknown=True,
         )
+        return
+
+    # All known branches failed
+    yield ValidationError(
+        f"{instance!r} is not valid under any of the given schemas",
+        context=all_errors + other_errors,
+    )
 
 
 def const(
@@ -136,12 +161,53 @@ def contains(
     if not validator.is_type(instance, "array"):
         return
 
-    if not any(
-        validator.evolve(schema=contains).is_valid(element) for element in instance
-    ):
+    matches = 0
+    unknown_count = 0
+    min_contains = schema.get("minContains", 1)
+    max_contains = schema.get("maxContains", len(instance))
+
+    contains_validator = validator.evolve(schema=contains)
+
+    for each in instance:
+        errs = list(contains_validator.iter_errors(each))
+        # Filter unknown errors
+        non_unknown_errs = [err for err in errs if not err.unknown]
+
+        if not non_unknown_errs:
+            # If no non-unknown errors, it's either valid or unknown
+            if any(err.unknown for err in errs):
+                unknown_count += 1
+            else:
+                matches += 1
+                if matches > max_contains:
+                    yield ValidationError(
+                        "Too many items match the given schema "
+                        f"(expected at most {max_contains})",
+                        validator="maxContains",
+                        validator_value=max_contains,
+                    )
+                    return
+
+    # If we have unknown items, we can't determine if contains is satisfied
+    if unknown_count > 0 and matches < min_contains:
         yield ValidationError(
-            f"{instance!r} does not contain items matching the given schema",
+            "Cannot determine if contains constraint is satisfied",
+            unknown=True,
         )
+        return
+
+    if matches < min_contains:
+        if not matches:
+            yield ValidationError(
+                f"{instance!r} does not contain items matching the given schema",
+            )
+        else:
+            yield ValidationError(
+                "Too few items match the given schema (expected at least "
+                f"{min_contains} but only {matches} matched)",
+                validator="minContains",
+                validator_value=min_contains,
+            )
 
 
 def dependencies(
@@ -217,6 +283,24 @@ def enum(
             yield ValidationError(f"{instance!r} is not one of {enums!r}")
 
 
+def enumCaseInsensitive(
+    validator: Validator, enums: list[Any], instance: Any, schema: dict[str, Any]
+) -> ValidationResult:
+    if validator.is_type(instance, "string"):
+        instance = instance.lower()
+
+    lower_enums = []
+    for e in enums:
+        if validator.is_type(e, "string"):
+            lower_enums.append(e.lower())
+        else:
+            lower_enums.append(e)
+
+    for err in enum(validator, lower_enums, instance, schema):
+        err.message = err.message + " (case-insensitive)"
+        yield err
+
+
 def exclusiveMaximum(
     validator: Validator, m: Any, instance: Any, schema: dict[str, Any]
 ) -> ValidationResult:
@@ -271,7 +355,25 @@ def if_(
             add_cfn_lint_keyword=False,
         )
     )
-    if validator.evolve(schema=if_schema).is_valid(instance):
+
+    if_validator = validator.evolve(
+        context=validator.context.evolve(
+            allow_exceptions=False,
+            unresolvable_function_mode=True,
+        )
+    )
+
+    if_errors = list(if_validator.evolve(schema=if_schema).iter_errors(instance))
+    # If any error is unknown, we can't determine the condition
+    if any(getattr(err, "unknown", False) for err in if_errors):
+        yield ValidationError(
+            f"Cannot determine if condition for {instance!r}",
+            unknown=True,
+        )
+        return
+
+    # Original logic
+    if not if_errors:
         if "then" in schema:
             then = schema["then"]
             yield from validator.descend(instance, then, schema_path="then")
@@ -286,25 +388,47 @@ def items(
     if not validator.is_type(instance, "array"):
         return
 
-    if validator.is_type(items, "array"):
-        for (index, item), subschema in zip(enumerate(instance), items):
+    prefix = len(schema.get("prefixItems", []))
+    total = len(instance)
+    extra = total - prefix
+    if extra <= 0:
+        return
+
+    if items is False:
+        rest = instance[prefix:] if extra != 1 else instance[prefix]
+        item = "items" if prefix != 1 else "item"
+        yield ValidationError(
+            f"Expected at most {prefix} {item} but found {extra} extra: {rest!r}",
+        )
+    else:
+        for index in range(prefix, total):
             yield from validator.descend(
-                item,
-                subschema,
+                instance=instance[index],
+                schema=items,
                 path=index,
-                schema_path=index,
                 property_path="*",
             )
-    else:
-        for index, item in enumerate(instance):
-            yield from validator.descend(item, items, path=index, property_path="*")
 
 
 def maxItems(
     validator: Validator, mI: Any, instance: Any, schema: dict[str, Any]
 ) -> ValidationResult:  # pylint: disable=arguments-renamed
     if validator.is_type(instance, "array") and len(instance) > mI:
-        yield ValidationError(f"{instance!r} is too long ({mI})")
+        yield ValidationError(
+            f"expected maximum item count: {mI}, found: {len(instance)}"
+        )
+
+
+def maxUniqueItems(
+    validator: Validator, mI: Any, instance: Any, schema: dict[str, Any]
+) -> ValidationResult:
+    if not validator.is_type(instance, "array"):
+        return
+    unique_count = len(set(str(unbool(i)) for i in instance))
+    if unique_count > mI:
+        yield ValidationError(
+            f"expected maximum unique item count: {mI}, found: {unique_count}"
+        )
 
 
 def maxLength(
@@ -314,7 +438,7 @@ def maxLength(
         return
 
     if len(instance) > mL:
-        yield ValidationError(f"{instance!r} is longer than {mL}")
+        yield ValidationError(f"expected maximum length: {mL}, found: {len(instance)}")
 
 
 def maxProperties(
@@ -323,7 +447,9 @@ def maxProperties(
     if not validator.is_type(instance, "object"):
         return
     if validator.is_type(instance, "object") and len(instance) > mP:
-        yield ValidationError(f"{instance!r} has too many properties")
+        yield ValidationError(
+            f"expected maximum property count: {mP}, found: {len(instance)}"
+        )
 
 
 def maximum(
@@ -347,7 +473,9 @@ def minItems(
     validator: Validator, mI: Any, instance: Any, schema: dict[str, Any]
 ) -> ValidationResult:
     if validator.is_type(instance, "array") and len(instance) < mI:
-        yield ValidationError(f"{instance!r} is too short ({mI})")
+        yield ValidationError(
+            f"expected minimum item count: {mI}, found: {len(instance)}"
+        )
 
 
 def minLength(
@@ -357,14 +485,16 @@ def minLength(
         return
 
     if len(instance) < mL:
-        yield ValidationError(f"{instance!r} is shorter than {mL}")
+        yield ValidationError(f"expected minimum length: {mL}, found: {len(instance)}")
 
 
 def minProperties(
     validator: Validator, mP: Any, instance: Any, schema: dict[str, Any]
 ) -> ValidationResult:
     if validator.is_type(instance, "object") and len(instance) < mP:
-        yield ValidationError(f"{instance!r} does not have enough properties")
+        yield ValidationError(
+            f"expected minimum property count: {mP}, found: {len(instance)}"
+        )
 
 
 def minimum(
@@ -415,9 +545,24 @@ def not_(
     validator = validator.evolve(
         function_filter=validator.function_filter.evolve(
             add_cfn_lint_keyword=False,
-        )
+        ),
+        context=validator.context.evolve(
+            unresolvable_function_mode=True,
+        ),
     )
-    if validator.evolve(schema=not_schema).is_valid(instance):
+
+    errs = list(validator.evolve(schema=not_schema).iter_errors(instance))
+
+    # If there are unknown errors, we can't determine if not is satisfied
+    if any(getattr(err, "unknown", False) for err in errs):
+        yield ValidationError(
+            f"Cannot determine not for {instance!r}",
+            unknown=True,
+        )
+        return
+
+    # If no errors, the schema is valid, so 'not' fails
+    if not errs:
         message = f"{instance!r} should not be valid under {not_schema!r}"
         yield ValidationError(message)
 
@@ -428,38 +573,59 @@ def oneOf(
     validator = validator.evolve(
         function_filter=validator.function_filter.evolve(
             add_cfn_lint_keyword=False,
-        )
+        ),
+        context=validator.context.evolve(
+            unresolvable_function_mode=True,
+        ),
     )
     subschemas = enumerate(oneOf)
     all_errors = []
+    valid_count = 0
+    has_unknown = False
+    valid_schemas = []
+
     for index, subschema in subschemas:
         errs = list(validator.descend(instance, subschema, schema_path=index))
-        if not errs:
-            first_valid = subschema
-            break
-        all_errors.extend(errs)
-    else:
+
+        if any(getattr(err, "unknown", False) for err in errs):
+            has_unknown = True
+        elif not errs:
+            valid_count += 1
+            valid_schemas.append(subschema)
+        else:
+            all_errors.extend(errs)
+
+    # If we can't determine, yield unknown error
+    if has_unknown and valid_count < 2:
+        yield ValidationError(
+            f"Cannot determine oneOf for {instance!r}",
+            unknown=True,
+        )
+        return
+
+    # Definitive results
+    if valid_count == 1:
+        return
+
+    if valid_count == 0:
         yield ValidationError(
             f"{instance!r} is not valid under any of the given schemas",
             context=all_errors,
         )
-
-    more_valid = [
-        each
-        for _, each in subschemas
-        if validator.evolve(schema=each).is_valid(instance)
-    ]
-    if more_valid:
-        more_valid.append(first_valid)
-        reprs = ", ".join(repr(schema) for schema in more_valid)
+    else:
+        # Multiple valid schemas
+        reprs = ", ".join(repr(schema) for schema in valid_schemas)
         yield ValidationError(f"{instance!r} is valid under each of {reprs}")
 
 
 def pattern(
     validator: Validator, patrn: Any, instance: Any, schema: dict[str, Any]
 ) -> ValidationResult:
-    if not validator.is_type(instance, "string"):
+    if not isinstance(instance, (str, int, float, bool)):
         return
+
+    if not isinstance(instance, str):
+        instance = json.dumps(instance)
 
     if not re.search(patrn, instance):
         yield ValidationError(f"{instance!r} does not match {patrn!r}")
@@ -540,6 +706,17 @@ def required(
             yield ValidationError(f"{property!r} is a required property")
 
 
+def requiredOr(
+    validator: Validator, required: Any, instance: Any, schema: dict[str, Any]
+) -> ValidationResult:
+    if not validator.is_type(instance, "object"):
+        return
+    matches = set(required).intersection(instance.keys())
+    if not matches:
+        yield ValidationError(f"One of {required!r} is a required property")
+        return
+
+
 def requiredXor(
     validator: Validator, required: Any, instance: Any, schema: dict[str, Any]
 ) -> ValidationResult:
@@ -560,14 +737,14 @@ def uniqueItems(
     validator: Validator, uI: Any, instance: Any, schema: dict[str, Any]
 ) -> ValidationResult:
     if uI and validator.is_type(instance, "array") and not uniq(instance):
-        yield ValidationError(f"{instance!r} has non-unique elements")
+        yield ValidationError("array items are not unique")
 
 
 def uniqueKeys(
     validator: Validator, uKs: Any, instance: Any, schema: dict[str, Any]
 ) -> ValidationResult:
     if uKs and validator.is_type(instance, "array") and not uniq_keys(instance, uKs):
-        yield ValidationError(f"{instance!r} has non-unique elements for keys {uKs!r}")
+        yield ValidationError(f"array items are not unique for keys {uKs!r}")
 
 
 def type(

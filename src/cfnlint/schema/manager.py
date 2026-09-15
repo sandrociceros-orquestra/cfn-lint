@@ -5,70 +5,111 @@ SPDX-License-Identifier: MIT-0
 
 from __future__ import annotations
 
-import filecmp
-import fnmatch
 import json
 import logging
-import multiprocessing
 import os
 import re
 import shutil
 import sys
+import tempfile
 import zipfile
-from copy import copy
 from functools import lru_cache
-from typing import Any, Dict, Iterator, Sequence
-
-import jsonpatch
-import jsonpointer
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, Iterator, Sequence
 
 from cfnlint.helpers import (
-    REGION_PRIMARY,
     REGIONS,
-    ToPy,
+    get_cache_dir,
+    get_url_content,
+    get_url_metadata,
     get_url_retrieve,
-    load_resource,
+    save_metadata,
     url_has_newer_version,
 )
 from cfnlint.schema._exceptions import ResourceNotFoundError
 from cfnlint.schema._getatts import AttributeDict
+from cfnlint.schema._lock import file_lock
 from cfnlint.schema._schema import Schema
-from cfnlint.schema.patch import SchemaPatch
+
+if TYPE_CHECKING:
+    from cfnlint.schema._patch import SchemaPatch
 
 LOGGER = logging.getLogger(__name__)
 
+_ENHANCED_SCHEMAS_URL = (
+    "https://github.com/aws-cloudformation/"
+    "resource-provider-enhanced-schemas/releases/download/latest/schemas-cfn-lint.zip"
+)
+_VERSION_URL = (
+    "https://github.com/aws-cloudformation/"
+    "resource-provider-enhanced-schemas/releases/download/latest/version.json"
+)
 
-class _FileLocation:
-    def __init__(self, path: list[str]):
-        self.path_relative = os.path.join(
-            os.path.dirname(__file__),
-            "..",
-            *path,
-        )
-        self.module = ".".join(["cfnlint"] + path[:])
-        self.path = path
+_MODULE_SCHEMA = Schema(
+    {"additionalProperties": True, "type": "object", "typeName": "Module"}
+)
 
 
 class ProviderSchemaManager:
-    def __init__(self) -> None:
-        self._root = _FileLocation(
-            [
-                "data",
-                "schemas",
-                "providers",
-            ]
-        )
-        self._patches = _FileLocation(
-            [
-                "data",
-                "schemas",
-                "patches",
-            ]
-        )
-        self._region_primary = ToPy(REGION_PRIMARY)
+    def __init__(
+        self,
+        providers_dir: Path | None = None,
+        resources_dir: Path | None = None,
+    ) -> None:
+        if providers_dir or resources_dir:
+            _cache = Path(get_cache_dir())
+            self._providers_dir = providers_dir or _cache / "providers"
+            self._resources_dir = resources_dir or _cache / "resources"
+        else:
+            self._providers_dir, self._resources_dir = self._resolve_schema_dirs()
         self._registry_schemas: dict[str, Schema] = {}
-        self._provider_schema_modules: dict[str, Any] = {}
+        self._provider_schema_modules: dict[str, dict[str, str]] = {}
+        self._sam_schema_module: dict[str, str] | None = None
         self.reset()
+
+    @staticmethod
+    def _read_schema_date(directory: Path) -> str:
+        """Read schema_date from a version.json file."""
+        version_file = directory / "version.json"
+        try:
+            with open(version_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                result: str = data.get("schema_date", "")
+                return result
+        except (FileNotFoundError, json.JSONDecodeError):
+            return ""
+
+    @staticmethod
+    def _resolve_schema_dirs() -> tuple[Path, Path]:
+        """Determine which schema directory to use.
+
+        Precedence:
+        1. If both bundled and cache exist, use whichever has a newer schema_date
+        2. If only bundled exists, use bundled
+        3. If only cache exists, use cache
+        4. If neither exists, use cache (auto-download will populate it)
+        """
+        _pkg_data = Path(os.path.dirname(__file__), "..", "data", "schemas")
+        _pkg_providers = _pkg_data / "providers"
+        _cache = Path(get_cache_dir())
+        _cache_providers = _cache / "providers"
+
+        bundled_exists = _pkg_providers.exists() and any(_pkg_providers.glob("*.json"))
+        cache_exists = _cache_providers.exists() and any(
+            _cache_providers.glob("*.json")
+        )
+
+        if bundled_exists and cache_exists:
+            bundled_date = ProviderSchemaManager._read_schema_date(_pkg_data)
+            cache_date = ProviderSchemaManager._read_schema_date(_cache)
+            if cache_date > bundled_date:
+                return _cache / "providers", _cache / "resources"
+            return _pkg_providers, _pkg_data / "resources"
+
+        if bundled_exists:
+            return _pkg_providers, _pkg_data / "resources"
+
+        return _cache / "providers", _cache / "resources"
 
     def reset(self) -> None:
         """
@@ -80,9 +121,54 @@ class ProviderSchemaManager:
         for region in REGIONS:
             self._schemas[region] = {}
         self._removed_types: list[str] = []
+        self._provider_schema_modules = {}
+        self._sam_schema_module = None
         self.get_resource_schema.cache_clear()
         self.get_resource_types.cache_clear()
         self.get_type_getatts.cache_clear()
+
+    def _load_sam_module(self) -> dict[str, str]:
+        """Load the SAM provider mapping from sam.json.
+
+        SAM resource types are region-independent and stored in a
+        separate pointer file from the per-region provider files.
+
+        Returns:
+            Dict mapping SAM resource type to schema hash
+        """
+        if self._sam_schema_module is None:
+            sam_file = self._providers_dir / "sam.json"
+            try:
+                with open(sam_file, "r", encoding="utf-8") as f:
+                    self._sam_schema_module = json.load(f)
+            except FileNotFoundError:
+                self._sam_schema_module = {}
+        return self._sam_schema_module
+
+    def _load_provider_module(self, region: str) -> dict[str, str]:
+        """Load the provider mapping for a region from JSON.
+
+        Falls back to us-east-1 if the region file is not available.
+        Merges SAM resource types from sam.json.
+
+        Args:
+            region: Region name (e.g. 'us-east-1')
+        Returns:
+            Dict mapping resource type to schema hash
+        """
+        if region not in self._provider_schema_modules:
+            if not (self._providers_dir / "us-east-1.json").exists():
+                self.update(force=False)
+            provider_file = self._providers_dir / f"{region}.json"
+            if not provider_file.exists():
+                provider_file = self._providers_dir / "us-east-1.json"
+            try:
+                with open(provider_file, "r", encoding="utf-8") as f:
+                    self._provider_schema_modules[region] = json.load(f)
+            except FileNotFoundError:
+                self._provider_schema_modules[region] = {}
+            self._provider_schema_modules[region].update(self._load_sam_module())
+        return self._provider_schema_modules[region]
 
     def load_registry_schemas(self, path: str) -> None:
         """Load extra registry schemas from a directory
@@ -93,7 +179,9 @@ class ProviderSchemaManager:
             None: None
         """
         for dirpath, _, filenames in os.walk(path):
-            for filename in fnmatch.filter(filenames, "*.json"):
+            for filename in filenames:
+                if not filename.endswith(".json"):
+                    continue
                 with open(os.path.join(dirpath, filename), "r", encoding="utf-8") as fh:
                     schema = Schema(json.load(fh))
                     self._registry_schemas[schema.type_name] = schema
@@ -111,21 +199,30 @@ class ProviderSchemaManager:
             Iterator[tuple[list[str], Schema]]: the unique schemas with
               their associated regions
         """
-        cached_regions: list[str] = []
-        cached_schema: Schema | None = None
-        for region in regions:
-            try:
-                schema = self.get_resource_schema(region, resource_type)
-            except ResourceNotFoundError:
-                continue
-            if not schema.is_cached and region != REGION_PRIMARY:
-                yield [region], schema
-            else:
-                cached_regions.append(region)
-                cached_schema = schema
+        resource_type = self._normalize_resource_type(resource_type)
 
-        if cached_schema is not None:
-            yield cached_regions, cached_schema
+        hash_to_regions: dict[str, list[str]] = {}
+        hash_to_schema: dict[str, Schema] = {}
+
+        for region in regions:
+            provider_types = self._load_provider_module(region)
+            schema_hash = provider_types.get(resource_type)
+
+            if not schema_hash:
+                continue
+
+            if schema_hash not in hash_to_regions:
+                try:
+                    schema = self.get_resource_schema(region, resource_type)
+                    hash_to_regions[schema_hash] = []
+                    hash_to_schema[schema_hash] = schema
+                except ResourceNotFoundError:
+                    continue
+
+            hash_to_regions[schema_hash].append(region)
+
+        for schema_hash, region_list in hash_to_regions.items():
+            yield region_list, hash_to_schema[schema_hash]
 
     def _normalize_resource_type(self, resource_type: str) -> str:
         """
@@ -159,43 +256,30 @@ class ProviderSchemaManager:
         if resource_type in self._removed_types:
             raise ResourceNotFoundError(resource_type, region)
 
-        reg = ToPy(region)
-        rt = ToPy(resource_type)
+        if resource_type == "Module":
+            return _MODULE_SCHEMA
 
-        schema = self._schemas[reg.name].get(rt.name)
+        schema = self._schemas[region].get(resource_type)
         if schema is not None:
             return schema
 
-        # dynamically import the modules as needed
-        self._provider_schema_modules[reg.name] = __import__(
-            f"{self._root.module}.{reg.py}", fromlist=[""]
-        )
-        # check cfn-lint provided schemas
-        if rt.name in self._registry_schemas:
-            self._schemas[reg.name][rt.name] = self._registry_schemas[rt.name]
-            return self._schemas[reg.name][rt.name]
+        if resource_type in self._registry_schemas:
+            self._schemas[region][resource_type] = self._registry_schemas[resource_type]
+            return self._schemas[region][resource_type]
 
-        # load the schema
-        if f"{rt.provider}.json" in self._provider_schema_modules[reg.name].cached:
-            schema_cached = copy(
-                self.get_resource_schema(
-                    region=self._region_primary.name,
-                    resource_type=rt.name,
-                )
-            )
-            schema_cached.is_cached = True
-            self._schemas[reg.name][rt.name] = schema_cached
-            return self._schemas[reg.name][rt.name]
+        provider_types = self._load_provider_module(region)
+        schema_hash = provider_types.get(resource_type)
+
+        if not schema_hash:
+            raise ResourceNotFoundError(resource_type, region)
+
         try:
-            self._schemas[reg.name][rt.name] = Schema(
-                load_resource(
-                    self._provider_schema_modules[reg.name],
-                    filename=f"{rt.provider}.json",
-                )
-            )
-            return self._schemas[reg.name][rt.name]
+            schema_file = self._resources_dir / f"{schema_hash}.json"
+            with open(schema_file, "r", encoding="utf-8") as f:
+                self._schemas[region][resource_type] = Schema(json.load(f))
+            return self._schemas[region][resource_type]
         except Exception as e:
-            raise ResourceNotFoundError(rt.name, region) from e
+            raise ResourceNotFoundError(resource_type, region) from e
 
     @lru_cache(maxsize=None)
     def get_resource_types(self, region: str) -> list[str]:
@@ -206,283 +290,193 @@ class ProviderSchemaManager:
         Returns:
             list[str]: returns a list of resource types
         """
-        reg = ToPy(region)
+        provider_types = self._load_provider_module(region)
 
-        if self._region_primary.name not in self._provider_schema_modules:
-            self._provider_schema_modules[self._region_primary.name] = __import__(
-                f"{self._root.module}.{self._region_primary.py}", fromlist=[""]
-            )
         resource_types: list[str] = []
-        if reg.name not in self._provider_schema_modules:
-            self._provider_schema_modules[region] = __import__(
-                f"{self._root.module}.{reg.py}", fromlist=[""]
-            )
         resource_types.extend(
-            rt
-            for rt in self._provider_schema_modules[reg.name].types
-            if rt not in self._removed_types
+            rt for rt in provider_types.keys() if rt not in self._removed_types
         )
         resource_types.extend(list(self._registry_schemas.keys()))
 
         return resource_types
 
-    def update(self, force: bool) -> None:
-        """Update every regions provider schemas
+    def update(self, force: bool) -> int:
+        """Update schemas from the enhanced schemas repository.
+
+        Uses file locking to prevent concurrent processes from corrupting the
+        cache. Extracts to a temporary directory and atomically replaces the
+        active cache directories.
 
         Args:
             force (bool): force the schemas to be downloaded
         Returns:
-            None: returns when complete
+            int: exit code (0=success, 2=failure)
         """
-        self._update_provider_schema(self._region_primary.name, force=force)
-        # pylint: disable=not-context-manager
-        with multiprocessing.Pool() as pool:
-            # Patch from registry schema
-            provider_pool_tuple = [
-                (k, force) for k in REGIONS if k != self._region_primary.name
-            ]
-            pool.starmap(self._update_provider_schema, provider_pool_tuple)
+        # url_has_newer_version() performs a network HEAD request. URLError is
+        # an OSError subclass, so wrap it here — otherwise a network failure
+        # would surface later as a misleading lock-acquisition error.
+        # `force` is evaluated first so a --force update bypasses the network
+        # check entirely (matches the short-circuit order in _update_locked).
+        try:
+            if not (force or url_has_newer_version(_ENHANCED_SCHEMAS_URL)):
+                LOGGER.info("Schemas are up to date")
+                return 0
+        except OSError as e:
+            LOGGER.error("Failed to check schema version: %s", e)
+            return 2
 
-    def _remove_descriptions(self, spec: Any) -> Any:
-        if isinstance(spec, dict):
-            r: dict[Any, Any] = {}
-            for k, v in spec.items():
-                if k != "description":
-                    r[k] = self._remove_descriptions(v)
-
-            return r
-        elif isinstance(spec, list):
-            m: list[Any] = []
-            for v in spec:
-                m.append(self._remove_descriptions(v))
-
-            return m
-        else:
-            return spec
-
-    def _update_provider_schema(self, region: str, force: bool = False) -> None:
-        """Update the provider schemas from the AWS websites
-
-        Args:
-            region (str): the region in which do ge the provider schema for
-            force (bool): force the schemas to be downloaded
-        Returns:
-            None: returns when complete
-        """
-        # China regions in .com.cn
-        suffix = ".cn" if region in ["cn-north-1", "cn-northwest-1"] else ""
-        url = f"https://schema.cloudformation.{region}.amazonaws.com{suffix}/CloudformationSchema.zip"
-        reg = ToPy(region)
-        directory = os.path.join(f"{self._root.path_relative}/{reg.py}/")
-        directory_pr = os.path.join(
-            f"{self._root.path_relative}/{self._region_primary.py}/"
-        )
-
-        multiprocessing_logger = multiprocessing.log_to_stderr()
-
-        multiprocessing_logger.debug("Downloading template %s into %s", url, directory)
-
-        # Check to see if we already have the latest version, and if so stop
-        if not (url_has_newer_version(url) or force):
-            return
-
-        if not os.path.exists(directory):
-            os.mkdir(directory)
+        _cache = Path(get_cache_dir())
+        lock_path = _cache / ".update.lock"
 
         try:
-            filehandle = get_url_retrieve(url, caching=True)
-            # clean folder
-            shutil.rmtree(directory)
-            with zipfile.ZipFile(filehandle, "r") as zip_ref:
-                zip_ref.extractall(directory)
+            with file_lock(lock_path):
+                return self._update_locked(_cache, force)
+        except TimeoutError as e:
+            LOGGER.error("Timed out waiting for schema cache lock: %s", e)
+            return 2
+        except OSError as e:
+            # Raised by file_lock while creating/locking the lock file
+            LOGGER.error("Failed to acquire schema cache lock: %s", e)
+            return 2
+        except Exception as e:  # pragma: no cover
+            LOGGER.error("Schema update failed: %s", e)
+            return 2
 
-            filenames = [
-                f
-                for f in os.listdir(directory)
-                if os.path.isfile(os.path.join(directory, f)) and f != "__init__.py"
-            ]
-            # There is no schema for CDK but its an allowable type
-            all_types = ["AWS::CDK::Metadata", "Module"]
-            with open(f"{directory}module.json", "w", encoding="utf-8") as fh:
-                json.dump(
-                    {
-                        "additionalProperties": True,
-                        "type": "object",
-                        "typeName": "Module",
-                    },
-                    fh,
-                    indent=1,
-                    separators=(",", ": "),
-                    sort_keys=True,
-                )
-                fh.write("\n")
-            for filename in filenames:
-                with open(f"{directory}{filename}", "r+", encoding="utf-8") as fh:
-                    spec = json.load(fh)
-                    all_types.append(spec["typeName"])
-                    try:
-                        spec = self._remove_descriptions(spec)
-                        spec = self._patch_provider_schema(spec, filename, "all")
-                        spec = self._patch_provider_schema(
-                            spec, filename, region=reg.py
-                        )
-                    except Exception as e:  # pylint: disable=broad-except
-                        LOGGER.info(
-                            "Issuing patching schema for %s in %s: %s",
-                            filename,
-                            reg.name,
-                            e,
-                        )
-                    # Back to zero to write spec
-                    fh.seek(0)
-                    json.dump(
-                        spec,
-                        fh,
-                        indent=1,
-                        separators=(",", ": "),
-                        sort_keys=True,
-                    )
-                    fh.write("\n")
-                    # Resize doc as needed
-                    fh.truncate()
+    def _update_locked(self, cache_dir: Path, force: bool) -> int:
+        """Perform the actual update while holding the lock.
 
-            # if the region is not us-east-1 compare the files to those in us-east-1
-            # symlink if the files are the same
-            if reg.name != self._region_primary.name:
-                cached = ["Module"]
-                for filename in os.listdir(directory):
-                    if filename != "__init__.py":
-                        try:
-                            if filecmp.cmp(
-                                f"{directory}{filename}",
-                                f"{directory_pr}{filename}",
-                            ):
-                                cached.append(filename)
-                                os.remove(f"{directory}{filename}")
-                        except FileNotFoundError:
-                            pass
-                        except Exception as e:  # pylint: disable=broad-except
-                            # Exceptions will typically be the file
-                            # doesn't exist in primary region
-                            LOGGER.info(
-                                "Issuing comparing %s into %s: %s",
-                                f"{directory}{filename}",
-                                f"{directory_pr}{filename}",
-                                e,
-                            )
-                with open(f"{directory}__init__.py", encoding="utf-8", mode="w") as f:
-                    f.write("from __future__ import annotations\n\n")
-                    f.write("# pylint: disable=too-many-lines\ntypes: list[str] = [\n")
-                    for rt in sorted(all_types):
-                        f.write(f'    "{rt}",\n')
-                    f.write(
-                        "]\n\n# pylint: disable=too-many-lines\ncached: list[str] = [\n"
-                    )
-                    for cache_file in sorted(cached):
-                        f.write(f'    "{cache_file}",\n')
-                    f.write("]\n")
-            else:
-                with open(f"{directory}__init__.py", encoding="utf-8", mode="w") as f:
-                    f.write("from __future__ import annotations\n\n")
-                    f.write("# pylint: disable=too-many-lines\ntypes: list[str] = [\n")
-                    for rt in sorted(all_types):
-                        f.write(f'    "{rt}",\n')
-                    f.write("]\ncached: list[str] = []\n")
-
-        except Exception as e:  # pylint: disable=broad-except
-            LOGGER.info("Issuing updating schemas for %s: %s", region, e)
-
-    def _patch_provider_schema(
-        self, content: Dict, source_filename: str, region: str
-    ) -> Dict:
-        """Provides the logic to patch a CloudFormation provider schema file.
+        Extracts schemas to a temporary directory, then atomically replaces
+        the live providers/ and resources/ directories.
 
         Args:
-            content: A Dict representing the data that needs to be patched
-            source_filename: The source filename for the JSON patches
-            region: The region to apply the patch against
+            cache_dir: The cache directory root
+            force: Whether the update was forced
         Returns:
-            Dict: returns the patched content
+            int: exit code (0=success, 2=failure)
         """
-        for patch_type in ["providers", "extensions"]:
-            source_dir = source_filename.replace("-", "_").replace(".json", "")
-            append_dir = os.path.join(
-                self._patches.path_relative, patch_type, region, source_dir
+        # Re-check version under lock in case another process just updated.
+        # url_has_newer_version() makes a network request; URLError subclasses
+        # OSError, so handle it here rather than letting it propagate to the
+        # caller's lock-acquisition handler. This keeps the invariant that
+        # _update_locked never raises — it always returns an exit code.
+        try:
+            if not force and not url_has_newer_version(_ENHANCED_SCHEMAS_URL):
+                LOGGER.info("Schemas were updated by another process")
+                return 0
+        except OSError as e:
+            LOGGER.error("Failed to check schema version: %s", e)
+            return 2
+
+        try:
+            pending_metadata = get_url_metadata(_ENHANCED_SCHEMAS_URL)
+            filehandle = get_url_retrieve(_ENHANCED_SCHEMAS_URL)
+        except Exception as e:
+            LOGGER.error(
+                "Failed to download enhanced schemas; metadata was not updated: %s",
+                e,
             )
-            for dirpath, _, filenames in os.walk(append_dir):
-                filenames.sort()
-                for filename in fnmatch.filter(filenames, "*.json"):
-                    file_path = os.path.basename(filename)
-                    module = dirpath.replace(f"{append_dir}", f"{region}").replace(
-                        os.path.sep, "."
-                    )
-                    try:
-                        jsonpatch.JsonPatch(
-                            load_resource(
-                                f"{self._patches.module}.{patch_type}.{module}.{source_dir}",
-                                file_path,
-                            )
-                        ).apply(content, in_place=True)
-                    except jsonpatch.JsonPatchConflict as e:
-                        LOGGER.info(
-                            "Patch already applied %s: %s",
-                            os.path.join(append_dir, file_path),
-                            str(e),
-                        )
-                    except jsonpatch.JsonPatchTestFailed as e:
-                        LOGGER.info(
-                            "Patch test failed %s: %s",
-                            os.path.join(append_dir, file_path),
-                            str(e),
-                        )
-                    except jsonpatch.JsonPatchException as e:
-                        LOGGER.info(
-                            "Patch exception raised for %s: %s",
-                            os.path.join(append_dir, file_path),
-                            str(e),
-                        )
-                    except jsonpointer.JsonPointerException as e:
-                        LOGGER.info(
-                            "Patch exception with pointer %s: %s",
-                            os.path.join(append_dir, file_path),
-                            str(e),
-                        )
-                    except Exception as e:  # pylint: disable=broad-exception-caught
-                        LOGGER.info(
-                            "Unknown exception raised applying patch %s: %s",
-                            os.path.join(append_dir, file_path),
-                            str(e),
-                        )
+            return 2
 
-        return content
+        providers_dir = cache_dir / "providers"
+        resources_dir = cache_dir / "resources"
 
-    def patch(self, filename: str, regions: Sequence[str]):
+        # Extract to a temporary directory, then atomically swap
         try:
-            with open(filename, encoding="utf-8") as fp:
-                custom_spec_data = json.load(fp)
-                schema_patch = SchemaPatch.from_dict(custom_spec_data)
-                for region in regions:
-                    self._patch(schema_patch, region)
-        except IOError as e:
-            if e.errno == 2:
-                LOGGER.error("Override spec file not found: %s", filename)
-                sys.exit(1)
-            elif e.errno == 21:
-                LOGGER.error(
-                    "Override spec file references a directory, not a file: %s",
-                    filename,
-                )
-                sys.exit(1)
-            elif e.errno == 13:
-                LOGGER.error(
-                    "Permission denied when accessing override spec file: %s", filename
-                )
-                sys.exit(1)
-        except ValueError as err:
-            LOGGER.error("Override spec file %s is malformed: %s", filename, err)
-            sys.exit(1)
+            with tempfile.TemporaryDirectory(dir=cache_dir) as tmpdir:
+                tmp_path = Path(tmpdir)
+                tmp_providers = tmp_path / "providers"
+                tmp_resources = tmp_path / "resources"
+                tmp_providers.mkdir()
+                tmp_resources.mkdir()
 
-    def _patch(self, patch: SchemaPatch, region: str) -> None:
+                with zipfile.ZipFile(filehandle, "r") as zip_ref:
+                    for name in zip_ref.namelist():
+                        if not name.endswith(".json"):
+                            continue
+                        if name.startswith("providers/"):
+                            dest = tmp_providers / Path(name).name
+                            with zip_ref.open(name) as src, open(dest, "wb") as dst:
+                                dst.write(src.read())
+                        elif name.startswith("resources/"):
+                            dest = tmp_resources / Path(name).name
+                            with zip_ref.open(name) as src, open(dest, "wb") as dst:
+                                dst.write(src.read())
+
+                # Atomic replacement: remove old, rename new. On POSIX, rename()
+                # is atomic when src and dst share a filesystem, which is
+                # guaranteed here by extracting under the same cache_dir.
+                self._atomic_replace_dir(tmp_providers, providers_dir)
+                self._atomic_replace_dir(tmp_resources, resources_dir)
+        except (OSError, zipfile.BadZipFile) as e:
+            LOGGER.error(
+                "Failed to extract and install schemas; metadata was not updated: %s",
+                e,
+            )
+            return 2
+
+        if pending_metadata:
+            try:
+                save_metadata(*pending_metadata)
+                LOGGER.debug("Schema cache metadata updated after installation")
+            except OSError as e:
+                LOGGER.error(
+                    "Schemas installed but failed to update schema cache metadata: %s",
+                    e,
+                )
+                return 2
+        else:
+            LOGGER.debug("No schema ETag returned; cache metadata was not updated")
+
+        try:
+            version_content = get_url_content(_VERSION_URL)
+            with open(cache_dir / "version.json", "w", encoding="utf-8") as vf:
+                vf.write(version_content)
+        except Exception:
+            LOGGER.debug("Could not download version.json")
+
+        self._providers_dir = providers_dir
+        self._resources_dir = resources_dir
+        LOGGER.info("Schemas updated successfully")
+        self.reset()
+        return 0
+
+    @staticmethod
+    def _atomic_replace_dir(src: Path, dst: Path) -> None:
+        """Atomically replace dst directory with src.
+
+        Renames any existing dst to a backup, renames src to dst,
+        then removes the backup. If rename fails (cross-device),
+        falls back to shutil.move.
+
+        Args:
+            src: Source directory (will be moved)
+            dst: Destination directory (will be replaced)
+        """
+        backup = dst.with_suffix(".bak")
+
+        # Remove any stale backup from a previous failed update
+        if backup.exists():
+            shutil.rmtree(backup, ignore_errors=True)
+
+        # Move existing dst out of the way
+        if dst.exists():
+            try:
+                dst.rename(backup)
+            except OSError:
+                # Cross-device or other issue; use shutil
+                shutil.move(str(dst), str(backup))
+
+        # Move new dir into place
+        try:
+            src.rename(dst)
+        except OSError:
+            shutil.move(str(src), str(dst))
+
+        # Clean up backup
+        if backup.exists():
+            shutil.rmtree(backup, ignore_errors=True)
+
+    def patch(self, patch: SchemaPatch, region: str) -> None:
         """Patch the schemas as needed
 
         Args:
@@ -528,7 +522,11 @@ class ProviderSchemaManager:
             except ResourceNotFoundError:
                 # Resource type doesn't exist in this region
                 continue
-            schema.patch(patches=patches)
+            try:
+                schema.patch(patches=patches)
+            except Exception as e:
+                print(f"Error applying patch {patches} for {resource_type}: {e}")
+                sys.exit(1)
 
     @lru_cache(maxsize=None)
     def get_type_getatts(self, resource_type: str, region: str) -> AttributeDict:
@@ -541,9 +539,22 @@ class ProviderSchemaManager:
             Dict(str, Dict): Returns a Dict where the keys are the attributes and the
                 value is the CloudFormation schema description of the attribute
         """
-        resource_type = self._normalize_resource_type(resource_type)
-        self.get_resource_schema(region=region, resource_type=resource_type)
-        return self._schemas[region][resource_type].get_atts
+        schema = self.get_resource_schema(region=region, resource_type=resource_type)
+        return schema.get_atts
+
+    @lru_cache(maxsize=None)
+    def get_type_ref(self, resource_type: str, region: str) -> dict[str, Any]:
+        """Get the Ref information for a type in a region
+
+        Args:
+            resource_type: The type of the resource. Example: AWS::S3::Bucket
+            region: The region to load the resource type from
+        Returns:
+            dict(str, Any): Returns a Dict where the keys are the attributes and the
+                value is the CloudFormation schema description of the attribute
+        """
+        schema = self.get_resource_schema(region=region, resource_type=resource_type)
+        return schema.ref
 
 
 PROVIDER_SCHEMA_MANAGER: ProviderSchemaManager = ProviderSchemaManager()

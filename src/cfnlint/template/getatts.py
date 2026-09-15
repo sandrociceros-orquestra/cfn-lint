@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections import UserDict
 from typing import Any
 
+from cfnlint.context import Resource
 from cfnlint.schema import PROVIDER_SCHEMA_MANAGER, AttributeDict, ResourceNotFoundError
 
 
@@ -51,21 +52,19 @@ class GetAtts:
         for region in self._regions:
             self._getatts[region] = _ResourceDict()
 
-    def add(self, resource_name: str, resource_type: str) -> None:
+    def add(self, resource_name: str, resource: Resource) -> None:
         for region in self._regions:
             if resource_name not in self._getatts[region]:
-                if resource_type.endswith("::MODULE"):
+                if resource.type.endswith("::MODULE"):
                     self._getatts[region][f"{resource_name}.*"] = (
                         PROVIDER_SCHEMA_MANAGER.get_type_getatts(
-                            resource_type=resource_type, region=region
+                            resource_type=resource.type, region=region
                         )
                     )
 
                 try:
-                    self._getatts[region][resource_name] = (
-                        PROVIDER_SCHEMA_MANAGER.get_type_getatts(
-                            resource_type=resource_type, region=region
-                        )
+                    self._getatts[region][resource_name] = resource.get_atts(
+                        region=region
                     )
                 except ResourceNotFoundError:
                     self._getatts[region][resource_name] = AttributeDict()
@@ -87,9 +86,7 @@ class GetAtts:
             attr_enum = []
             for attribute in attributes:
                 attr_enum.append(attribute)
-                schema_strings["enum"].append(
-                    f"{resource_name}.{attribute}"
-                )  # type: ignore
+                schema_strings["enum"].append(f"{resource_name}.{attribute}")  # type: ignore
 
             schema_array["items"][0]["enum"].append(resource_name)  # type: ignore
             schema_array["allOf"].append(  # type: ignore

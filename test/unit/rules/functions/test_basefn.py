@@ -7,46 +7,239 @@ from collections import deque
 
 import pytest
 
+from cfnlint.context.parameters import ParameterSet
 from cfnlint.jsonschema import ValidationError
 from cfnlint.rules import CloudFormationLintRule
-from cfnlint.rules.functions._BaseFn import BaseFn
+from cfnlint.rules.functions._BaseFn import BaseFn, _has_schema_constraints
 
 
 class _ChildRule(CloudFormationLintRule):
     id = "XXXXX"
 
 
+@pytest.mark.parametrize(
+    "name,schema,expected",
+    [
+        ("Empty schema", {}, False),
+        ("Type only", {"type": "string"}, False),
+        ("Type and cfnLint", {"type": "string", "cfnLint": []}, False),
+        ("Enum", {"enum": ["a"]}, True),
+        ("Pattern", {"type": "string", "pattern": "^a"}, True),
+        ("Const", {"const": "a"}, True),
+        ("Format", {"type": "string", "format": "uri"}, True),
+        ("MinLength", {"type": "string", "minLength": 1}, True),
+        ("AnyOf", {"anyOf": [{"type": "string"}]}, True),
+        ("AllOf", {"allOf": [{"type": "string"}]}, True),
+        ("If", {"if": {"type": "string"}}, True),
+        (
+            "Unconstrained items",
+            {"type": "array", "items": {"type": "string"}},
+            False,
+        ),
+        (
+            "Constrained items",
+            {"type": "array", "items": {"enum": ["a", "b"]}},
+            True,
+        ),
+        (
+            "Unconstrained patternProperties",
+            {"patternProperties": {".*": {"type": "string"}}},
+            False,
+        ),
+        (
+            "Constrained patternProperties",
+            {"patternProperties": {".*": {"pattern": "^arn:"}}},
+            True,
+        ),
+        (
+            "Unconstrained properties",
+            {"properties": {"Foo": {"type": "string"}}},
+            False,
+        ),
+        (
+            "Constrained properties",
+            {"properties": {"Foo": {"enum": ["a"]}}},
+            True,
+        ),
+        ("Not a dict", "string", False),
+        (
+            "$ref",
+            {"$ref": "#/definitions/Foo", "type": "string"},
+            True,
+        ),
+    ],
+)
+def test_has_schema_constraints(name, schema, expected):
+    assert _has_schema_constraints(schema) == expected, f"{name!r} failed"
+
+
 @pytest.fixture(scope="module")
-def rule():
+def rule(request):
     rule = BaseFn(resolved_rule="XXXXX")
+    rule._schema = request.param.get("schema")
+
     rule.child_rules["XXXXX"] = _ChildRule()
     yield rule
 
 
+@pytest.fixture
+def template():
+    return {"Parameters": {"MyString": {"Type": "String"}}}
+
+
 @pytest.mark.parametrize(
-    "name,instance,schema,expected",
+    "name,rule,instance,parameters,expected",
     [
         (
-            "Dynamic references are ignored",
-            {"Fn::Sub": "{{resolve:ssm:${AWS::AccountId}/${AWS::Region}/ac}}"},
-            {"enum": ["Foo"]},
+            "Skip resolution when schema has no constraints",
+            {
+                "schema": {"type": "string"},
+            },
+            {"Fn::Sub": "Bar"},
+            [],
             [],
         ),
-        ("Everything is fine", {"Fn::Sub": "Foo"}, {"enum": ["Foo"]}, []),
+        (
+            "Skip resolution with type and cfnLint only",
+            {
+                "schema": {"type": "string", "cfnLint": []},
+            },
+            {"Fn::Sub": "Bar"},
+            [],
+            [],
+        ),
+        (
+            "Skip resolution with unconstrained items",
+            {
+                "schema": {
+                    "type": ["string", "array"],
+                    "items": {"type": "string"},
+                },
+            },
+            {"Fn::Sub": "Bar"},
+            [],
+            [],
+        ),
+        (
+            "Dynamic references are ignored",
+            {
+                "schema": {
+                    "enum": ["Foo"],
+                },
+            },
+            {"Fn::Sub": "{{resolve:ssm:${AWS::AccountId}/${AWS::Region}/ac}}"},
+            [],
+            [],
+        ),
+        (
+            "Everything is fine",
+            {"schema": {"enum": ["Foo"]}},
+            {"Fn::Sub": "Foo"},
+            {},
+            [],
+        ),
         (
             "Resolved Fn::Sub has no strict type validation",
+            {
+                "schema": {"type": ["integer"]},
+            },
             {"Fn::Sub": "2"},
-            {"type": ["integer"]},
+            [],
             [],
         ),
         (
             "Standard error",
+            {
+                "schema": {"enum": ["Foo"]},
+            },
             {"Fn::Sub": "Bar"},
-            {"enum": ["Foo"]},
+            [],
             [
                 ValidationError(
                     message=(
-                        "{'Fn::Sub': 'Bar'} is not one of "
+                        "{'Fn::Sub': 'Bar'} is not one of ['Foo'] when '' is resolved"
+                    ),
+                    path=deque(["Fn::Sub"]),
+                    validator="",
+                    schema_path=deque(["enum"]),
+                    rule=_ChildRule(),
+                )
+            ],
+        ),
+        (
+            "Errors with context error",
+            {
+                "schema": {"anyOf": [{"enum": ["Foo"]}]},
+            },
+            {"Fn::Sub": "Bar"},
+            [],
+            [
+                ValidationError(
+                    message=(
+                        "{'Fn::Sub': 'Bar'} is not valid "
+                        "under any of the given schemas "
+                        "when '' is resolved"
+                    ),
+                    path=deque(["Fn::Sub"]),
+                    validator="",
+                    schema_path=deque(["anyOf"]),
+                    rule=_ChildRule(),
+                    context=[
+                        ValidationError(
+                            message=(
+                                "{'Fn::Sub': 'Bar'} is not one of "
+                                "['Foo'] when '' is resolved"
+                            ),
+                            path=deque([]),
+                            validator="enum",
+                            schema_path=deque([0, "enum"]),
+                            rule=_ChildRule(),
+                        )
+                    ],
+                )
+            ],
+        ),
+        (
+            "Ref of a parameter with parameter set",
+            {
+                "schema": {"enum": ["Foo"]},
+            },
+            {"Ref": "MyString"},
+            [
+                ParameterSet(
+                    parameters={"MyString": "Bar"},
+                    source=None,
+                )
+            ],
+            [
+                ValidationError(
+                    message=(
+                        "{'Ref': 'MyString'} is not one of "
+                        "['Foo'] when '' is resolved to 'Bar'"
+                    ),
+                    path=deque(["Ref"]),
+                    validator="",
+                    schema_path=deque(["enum"]),
+                    rule=_ChildRule(),
+                )
+            ],
+        ),
+        (
+            "Fn::Sub of a parameter with parameter set",
+            {
+                "schema": {"enum": ["Foo"]},
+            },
+            {"Fn::Sub": "${MyString}"},
+            [
+                ParameterSet(
+                    parameters={"MyString": "Bar"},
+                    source=None,
+                )
+            ],
+            [
+                ValidationError(
+                    message=(
+                        "{'Fn::Sub': '${MyString}'} is not one of "
                         "['Foo'] when '' is resolved"
                     ),
                     path=deque(["Fn::Sub"]),
@@ -57,7 +250,57 @@ def rule():
             ],
         ),
     ],
+    indirect=["rule", "parameters"],
 )
-def test_resolve(name, instance, schema, expected, validator, rule):
-    errs = list(rule.resolve(validator, schema, instance, {}))
+def test_resolve(name, instance, parameters, rule, expected, validator):
+    errs = list(rule.resolve(validator, rule._schema, instance, {}))
     assert errs == expected, f"{name!r} failed and got errors {errs!r}"
+
+
+def test_clean_resolve_errors_with_path_override():
+    """Test that usage path is included in message when path_override is set."""
+    from unittest.mock import MagicMock
+
+    rule = BaseFn("Ref", resolved_rule="XXXXX")
+    rule.child_rules["XXXXX"] = _ChildRule()
+
+    err = ValidationError(
+        message="0 is less than the minimum of 1",
+        path=deque(["Ref"]),
+        validator="minimum",
+    )
+    err.path_override = deque(["Parameters", "MyParam", "MinValue"])
+
+    validator = MagicMock()
+    validator.context.path.path = deque(
+        ["Resources", "MyResource", "Properties", "Count"]
+    )
+    validator.context.parameter_sets = None
+
+    result = rule._clean_resolve_errors(err, 0, {"Ref": "MyParam"}, validator)
+    assert "at 'Resources/MyResource/Properties/Count'" in result.message
+    assert "when 'Ref' is resolved" in result.message
+
+
+def test_clean_resolve_errors_without_path_override():
+    """Test that usage path is NOT included when path_override is not set."""
+    from unittest.mock import MagicMock
+
+    rule = BaseFn("Ref", resolved_rule="XXXXX")
+    rule.child_rules["XXXXX"] = _ChildRule()
+
+    err = ValidationError(
+        message="0 is less than the minimum of 1",
+        path=deque(["Ref"]),
+        validator="minimum",
+    )
+
+    validator = MagicMock()
+    validator.context.path.path = deque(
+        ["Resources", "MyResource", "Properties", "Count"]
+    )
+    validator.context.parameter_sets = None
+
+    result = rule._clean_resolve_errors(err, 0, {"Ref": "MyParam"}, validator)
+    assert "at '" not in result.message
+    assert "when 'Ref' is resolved" in result.message

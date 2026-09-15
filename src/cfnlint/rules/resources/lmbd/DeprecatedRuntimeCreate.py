@@ -15,7 +15,6 @@ from cfnlint.rules.jsonschema.CfnLintKeyword import CfnLintKeyword
 
 
 class DeprecatedRuntimeCreate(CfnLintKeyword):
-
     id = "E2531"
     shortdesc = "Validate if lambda runtime is deprecated"
     description = "Check the lambda runtime has reached the end of life"
@@ -24,8 +23,13 @@ class DeprecatedRuntimeCreate(CfnLintKeyword):
 
     def __init__(self):
         """Init"""
-        super().__init__(["Resources/AWS::Lambda::Function/Properties/Runtime"])
-        self.current_date = datetime.today()
+        super().__init__(
+            [
+                "Resources/AWS::Lambda::Function/Properties/Runtime",
+                "Resources/AWS::Serverless::Function/Properties/Runtime",
+                "Globals/Function/Runtime",
+            ]
+        )
         self.deprecated_runtimes = load_resource(
             AdditionalSpecs, "LmbdRuntimeLifecycle.json"
         )
@@ -41,18 +45,16 @@ class DeprecatedRuntimeCreate(CfnLintKeyword):
 
         if not runtime_data:
             return
+        current_date = datetime.today()
         if (
-            datetime.strptime(runtime_data["create-block"], "%Y-%m-%d")
-            <= self.current_date
+            datetime.strptime(runtime_data["create-block"], "%Y-%m-%d") <= current_date
             and datetime.strptime(runtime_data["update-block"], "%Y-%m-%d")
-            > self.current_date
+            > current_date
         ):
             yield ValidationError(
-                (
-                    f"Runtime {runtime!r} was deprecated on "
-                    f"{runtime_data['deprecated']!r}. Creation was disabled on "
-                    f"{runtime_data['create-block']!r} and update on "
-                    f"{runtime_data['update-block']!r}. Please consider "
-                    f"updating to {runtime_data['successor']!r}"
-                ),
+                f"Runtime {runtime!r} was deprecated on "
+                f"{runtime_data['deprecated']!r}. Creation was disabled on "
+                f"{runtime_data['create-block']!r} and update on "
+                f"{runtime_data['update-block']!r}. Please consider "
+                f"updating to {runtime_data['successor']!r}",
             )

@@ -25,6 +25,7 @@ _all_property_types = [
     "AWS::AutoScaling::AutoScalingGroup",
     "AWS::Backup::BackupSelection",
     "AWS::Backup::BackupVault",
+    "AWS::Backup::LogicallyAirGappedBackupVault",
     "AWS::CodeArtifact::Domain",
     "AWS::CodeArtifact::Repository",
     "AWS::EC2::CapacityReservation",
@@ -34,6 +35,7 @@ _all_property_types = [
     "AWS::EC2::VPC",
     "AWS::EFS::MountTarget",
     "AWS::EKS::Nodegroup",
+    "AWS::ElastiCache::ReplicationGroup",
     "AWS::ElasticLoadBalancingV2::LoadBalancer",
     "AWS::Events::EventBus",
     "AWS::EventSchemas::Discoverer",
@@ -57,9 +59,11 @@ _all_property_types = [
     "AWS::ImageBuilder::ImagePipeline",
     "AWS::ImageBuilder::ImageRecipe",
     "AWS::ImageBuilder::InfrastructureConfiguration",
+    "AWS::ManagedBlockchain::Node",
     "AWS::Neptune::DBCluster",
     "AWS::RDS::DBInstance",
     "AWS::RDS::DBParameterGroup",
+    "AWS::RedshiftServerless::Workgroup",
     "AWS::RoboMaker::RobotApplication",
     "AWS::RoboMaker::SimulationApplication",
     "AWS::Route53Resolver::ResolverRule",
@@ -126,10 +130,6 @@ _exceptions = {
     "AWS::DocDB::DBCluster": [
         "Port",
     ],
-    "AWS::EC2::Instance": [
-        "AvailabilityZone",
-    ],
-    "AWS::EC2::SecurityGroup": ["VpcId"],
     "AWS::Greengrass::ConnectorDefinition": [
         "Name",
     ],
@@ -211,16 +211,14 @@ _exceptions = {
 
 _unnamed_unknown_types = (
     "Custom::",
-    "AWS::Serverless::",
     "AWS::CloudFormation::CustomResource",
     "Module",
 )
 
 
-class AttributeDict(UserDict):
-    def __init__(self, __dict: None = None) -> None:
+class AttributeDict(UserDict[str, str]):
+    def __init__(self, __dict: dict[str, str] | None = None) -> None:
         super().__init__(__dict)
-        self.data: dict[str, str] = {}
 
     def __getitem__(self, key: str) -> str:
         possible_items = {}
@@ -260,7 +258,10 @@ class GetAtts:
                     f"/properties/{name}"
                 )
 
-        if schema.type_name == "AWS::CloudFormation::Stack":
+        if schema.type_name in [
+            "AWS::CloudFormation::Stack",
+            "AWS::Serverless::Application",
+        ]:
             self._attrs["Outputs\\..*"] = "/properties/CfnLintStringType"
             return
 

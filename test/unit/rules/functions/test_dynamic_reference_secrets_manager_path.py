@@ -43,15 +43,19 @@ def context(cfn):
             [],
         ),
         (
+            "Valid secrets manager",
+            "{{resolve:secretsmanager:Parameter}}",
+            ["Parameters", "MyParameter", "Default"],
+            [],
+        ),
+        (
             "Short list",
             "{{resolve:secretsmanager:Parameter}}",
             ["Parameters", "MyParameter"],
             [
                 ValidationError(
-                    (
-                        "Dynamic reference '{{resolve:secretsmanager:Parameter}}' "
-                        "to secrets manager can only be used in resource properties"
-                    ),
+                    "Dynamic reference '{{resolve:secretsmanager:Parameter}}' "
+                    "to secrets manager can only be used in resource properties",
                     rule=DynamicReferenceSecretsManagerPath(),
                 )
             ],
@@ -62,10 +66,8 @@ def context(cfn):
             ["Outputs", "MyOutput", "Value"],
             [
                 ValidationError(
-                    (
-                        "Dynamic reference '{{resolve:secretsmanager:Parameter}}' "
-                        "to secrets manager can only be used in resource properties"
-                    ),
+                    "Dynamic reference '{{resolve:secretsmanager:Parameter}}' "
+                    "to secrets manager can only be used in resource properties",
                     rule=DynamicReferenceSecretsManagerPath(),
                 )
             ],

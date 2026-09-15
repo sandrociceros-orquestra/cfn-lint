@@ -1,0 +1,28 @@
+name: "[CI] Test PR Data"
+
+on:
+  pull_request:
+    paths:
+    - "src/cfnlint/data/**"
+
+permissions:
+  contents: read
+
+jobs:
+  data:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Setup Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Install dependencies
+        run: |
+          pip install tox
+          pip install -e .
+      - name: Download schemas
+        run: cfn-lint --update-specs --force
+      - name: Run Tox
+        run: |
+          tox -e py -- -m "data"

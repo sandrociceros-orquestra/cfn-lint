@@ -38,11 +38,7 @@ def rule():
             {"taggable": True},
             [
                 ValidationError(
-                    (
-                        "[{'Key': 'Foo', 'Value': 'Bar'}, "
-                        "{'Key': 'Foo', 'Value': 'Bar'}] "
-                        "has non-unique elements for keys ['Key']"
-                    ),
+                    "array items are not unique for keys ['Key']",
                     path=deque(["Tags"]),
                     schema_path=deque(["properties", "Tags", "uniqueKeys"]),
                     validator="tagging",
@@ -59,7 +55,7 @@ def rule():
             {"taggable": True},
             [
                 ValidationError(
-                    f"{'a'*257!r} is longer than 256",
+                    "expected maximum length: 256, found: 257",
                     path=deque(["Tags", 0, "Value"]),
                     schema_path=deque(
                         [
@@ -83,7 +79,7 @@ def rule():
             {"taggable": True},
             [
                 ValidationError(
-                    f"{'a'*257!r} is longer than 256",
+                    "expected maximum length: 256, found: 257",
                     path=deque(["Tags", "Foo"]),
                     schema_path=deque(
                         [
@@ -108,7 +104,7 @@ def rule():
             {"taggable": True},
             [
                 ValidationError(
-                    ("'aws:Foo' does not match " "'^(?!aws:).+$'"),
+                    "'aws:Foo' does not match '^(?!aws:).+$'",
                     path=deque(["Tags", 0, "Key"]),
                     schema_path=deque(
                         ["properties", "Tags", "items", "properties", "Key", "pattern"]
@@ -125,11 +121,7 @@ def rule():
             {"taggable": True},
             [
                 ValidationError(
-                    (
-                        "'aws:Foo' does not match any of "
-                        "the regexes: "
-                        "'^(?!aws:).+$'"
-                    ),
+                    "'aws:Foo' does not match any of the regexes: '^(?!aws:).+$'",
                     path=deque(["Tags", "aws:Foo"]),
                     schema_path=deque(["properties", "Tags", "additionalProperties"]),
                     validator="tagging",

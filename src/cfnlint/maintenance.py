@@ -15,18 +15,17 @@ from cfnlint.schema import PROVIDER_SCHEMA_MANAGER
 
 LOGGER = logging.getLogger(__name__)
 
-REGISTRY_SCHEMA_ZIP = (
-    "https://schema.cloudformation.us-east-1.amazonaws.com/CloudformationSchema.zip"
-)
 
+def update_resource_specs(force: bool = False) -> int:
+    """Update provider schemas from the enhanced schemas repository.
 
-def update_resource_specs(force: bool = False):
-    # Pool() uses cpu count if no number of processors is specified
-    # Pool() only implements the Context Manager protocol from Python3.3 onwards,
-    # so it will fail Python2.7 style linting, as well as throw AttributeError
+    Args:
+        force: force the schemas to be downloaded
 
-    # Update provider Schemas
-    PROVIDER_SCHEMA_MANAGER.update(force)
+    Returns:
+        int: exit code (0=success, 2=failure)
+    """
+    return PROVIDER_SCHEMA_MANAGER.update(force)
 
 
 def update_documentation(rules):
@@ -94,7 +93,7 @@ def update_documentation(rules):
             rule_id = rule.id + "*" if rule.experimental else rule.id
             tags = ",".join(f"`{tag}`" for tag in rule.tags)
             config = "<br />".join(
-                f'{key}:{values.get("type")}:{values.get("default")}'
+                f"{key}:{values.get('type')}:{values.get('default')}"
                 for key, values in rule.config_definition.items()
             )
             new_file.write(
@@ -114,30 +113,72 @@ def update_documentation(rules):
 def update_iam_policies():
     """update iam policies file"""
 
-    url = "https://awspolicygen.s3.amazonaws.com/js/policies.js"
+    url = "https://servicereference.us-east-1.amazonaws.com"
 
     filename = os.path.join(
         os.path.dirname(cfnlint.data.AdditionalSpecs.__file__), "Policies.json"
     )
     LOGGER.debug("Downloading policies %s into %s", url, filename)
 
-    content = get_url_content(url)
+    services = json.loads(get_url_content(url))
 
-    content = content.split("app.PolicyEditorConfig=")[1]
-    content = json.loads(content)
+    def _clean_arn_formats(arn):
+        arn_parts = arn.split(":", 5)
 
-    actions = {
-        "Manage Amazon API Gateway": ["HEAD", "OPTIONS"],
-        "Amazon API Gateway Management": ["HEAD", "OPTIONS"],
-        "Amazon API Gateway Management V2": ["HEAD", "OPTIONS"],
-        "Amazon Kinesis Video Streams": ["StartStreamEncryption"],
-    }
-    for k, v in actions.items():
-        if content.get("serviceMap").get(k):
-            content["serviceMap"][k]["Actions"].extend(v)
+        resource = arn_parts[5]
+        delimiter = None
+        for d in [":", "/"]:
+            if d in resource:
+                delimiter = d
+                break
         else:
-            LOGGER.debug('"%s" was not found in the policies file', k)
+            delimiter = ":"
+
+        if delimiter:
+            resource_parts = []
+            for resource_part in resource.split(delimiter):
+                if "${" in resource_part:
+                    resource_parts.append(".*")
+                    break
+
+                resource_parts.append(resource_part)
+
+            arn_parts[5] = delimiter.join(resource_parts)
+
+        return ":".join(arn_parts)
+
+    def _processes_a_service(data):
+        results = {
+            "Actions": {},
+            "Resources": {},
+        }
+
+        for action in data.get("Actions", []):
+            results["Actions"][action.get("Name").lower()] = {}
+            if "Resources" in action:
+                results["Actions"][action.get("Name").lower()] = {
+                    "Resources": list([i["Name"] for i in action["Resources"]])
+                }
+
+        for resource in data.get("Resources", []):
+            results["Resources"][resource.get("Name").lower()] = {
+                "ARNFormats": [
+                    _clean_arn_formats(arn) for arn in resource.get("ARNFormats")
+                ],
+            }
+            if "ConditionKeys" in resource:
+                results["Resources"][resource.get("Name").lower()]["ConditionKeys"] = (
+                    resource.get("ConditionKeys")
+                )
+
+        return results
+
+    data = {}
+    for service in services:
+        name = service.get("service")
+        content = json.loads(get_url_content(service.get("url")))
+        data[name] = _processes_a_service(content)
 
     with open(filename, "w", encoding="utf-8") as f:
-        json.dump(content, f, indent=1, sort_keys=True, separators=(",", ": "))
+        json.dump(data, f, indent=1, sort_keys=True, separators=(",", ": "))
         f.write("\n")

@@ -10,6 +10,7 @@ from typing import Any, Dict
 import jsonpatch
 
 from cfnlint.schema._getatts import AttributeDict, GetAtts
+from cfnlint.schema._ref import Ref
 from cfnlint.schema.resolver import RefResolver
 
 # Can't use a dataclass because its hard to parse in json
@@ -17,12 +18,12 @@ from cfnlint.schema.resolver import RefResolver
 
 
 class Schema:
-    def __init__(self, schema: dict[str, Any], is_cached: bool = False) -> None:
-        self.is_cached: bool = is_cached
+    def __init__(self, schema: dict[str, Any]) -> None:
         self._schema: dict[str, Any] = schema
         self._type_name: str = schema["typeName"]
         self.resolver: RefResolver = RefResolver.from_schema(schema)
         self._getatts: GetAtts = GetAtts(self)
+        self._ref: Ref = Ref(self)
 
     @property
     def type_name(self) -> str:
@@ -60,3 +61,7 @@ class Schema:
             object for the property
         """
         return self._getatts.attrs
+
+    @property
+    def ref(self) -> dict[str, Any]:
+        return self._ref.ref

@@ -10,6 +10,7 @@ from typing import Any, Sequence
 
 from cfnlint.context import Context
 from cfnlint.jsonschema import V, ValidationError, Validator
+from cfnlint.jsonschema.exceptions import _unset
 from cfnlint.rules import CloudFormationLintRule, RuleMatch
 from cfnlint.schema.resolver import RefResolver
 
@@ -31,10 +32,19 @@ class BaseJsonSchema(CloudFormationLintRule):
         path: Sequence[str],
         e: ValidationError,
     ):
+        # Don't convert unknown errors to matches
+        if getattr(e, "unknown", False):
+            return []
+
         matches = []
         kwargs: dict[Any, Any] = {}
+
+        # Only add validator and instance if they are not unset
+        if e.validator is not _unset:
+            kwargs["validator"] = e.validator
+
         if e.extra_args:
-            kwargs = e.extra_args
+            kwargs.update(e.extra_args)
         e_path = list(path) + list(e.path)
         if len(e.path) > 0:
             e_path_override = e.path_override
@@ -127,11 +137,16 @@ class BaseJsonSchema(CloudFormationLintRule):
         return validators
 
     def extend_validator(
-        self, validator: Validator, schema: Any, context: Context
+        self,
+        validator: Validator,
+        schema: Any,
+        context: Context,
+        validators: dict[str, V] | None = None,
     ) -> Validator:
-        return validator.extend(validators=self._get_validators())(
-            schema=schema
-        ).evolve(
+        all_validators = self._get_validators()
+        if validators:
+            all_validators.update(validators)
+        return validator.extend(validators=all_validators)(schema=schema).evolve(
             cfn=validator.cfn,
             context=context,
             resolver=RefResolver.from_schema(

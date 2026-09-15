@@ -37,8 +37,10 @@ class Properties(CfnLintJsonSchema):
             "dependentExcluded": "E3020",
             "dependentRequired": "E3021",
             "required": "E3003",
+            "requiredOr": "E3058",
             "requiredXor": "E3014",
             "enum": "E3030",
+            "enumCaseInsensitive": "E3030",
             "type": "E3012",
             "minLength": "E3033",
             "maxLength": "E3033",
@@ -48,12 +50,14 @@ class Properties(CfnLintJsonSchema):
             "exclusiveMaximum": "E3034",
             "exclusiveMinimum": "E3034",
             "maxItems": "E3032",
+            "maxUniqueItems": "E3065",
             "minItems": "E3032",
             "pattern": "E3031",
             "prefixItems": "E3008",
             "oneOf": "E3018",
             "cfnLint": "E1101",
             "tagging": "E3024",
+            "lifecycle": "E3710",
         }
         self.child_rules = dict.fromkeys(list(self.rule_set.values()))
 
@@ -84,7 +88,24 @@ class Properties(CfnLintJsonSchema):
         if not validator.is_type(t, "string"):
             return
 
-        properties = instance.get("Properties", {})
+        if "Properties" not in instance:
+            # assume properties is an empty object
+            # this helps with validating if the resource
+            # has required properties
+            properties = {}
+        else:
+            # covers if Properties is null
+            properties = instance.get("Properties")
+        # Properties needs to be an object
+        if not validator.is_type(properties, "object"):
+            yield ValidationError(
+                # Expected an object
+                message=f"{properties!r} is not of type object",
+                path=deque(["Properties"]),
+                rule=self.child_rules.get(self.rule_set.get("type")),  # type: ignore
+                validator="type",
+            )
+            return
         fn_k, fn_v = is_function(properties)
         if fn_k == "Ref" and fn_v == "AWS::NoValue":
             yield ValidationError(

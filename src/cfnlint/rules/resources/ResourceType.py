@@ -38,7 +38,7 @@ class ResourceType(CfnLintKeyword):
             if validator.is_type(resource_condition, "string"):
                 if validator.cfn is None:
                     continue
-                if False in validator.cfn.conditions.build_scenerios_on_region(
+                if True not in validator.cfn.conditions.build_scenerios_on_region(
                     resource_condition, region
                 ):
                     continue
@@ -46,9 +46,9 @@ class ResourceType(CfnLintKeyword):
                 region=region
             ):
                 continue
-            if not resource_type.startswith(
-                ("Custom::", "AWS::Serverless::")
-            ) and not resource_type.endswith("::MODULE"):
+            if not resource_type.startswith("Custom::") and not resource_type.endswith(
+                "::MODULE"
+            ):
                 yield ValidationError(
                     f"Resource type {resource_type!r} does not exist in {region!r}",
                     path=deque(["Type"]),

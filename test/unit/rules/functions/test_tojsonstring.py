@@ -7,7 +7,6 @@ from collections import deque
 
 import pytest
 
-from cfnlint.context import create_context_for_template
 from cfnlint.context.context import Transforms
 from cfnlint.jsonschema import CfnTemplateValidator, ValidationError
 from cfnlint.rules.functions.Ref import Ref
@@ -30,11 +29,6 @@ def cfn():
     )
 
 
-@pytest.fixture(scope="module")
-def context(cfn):
-    return create_context_for_template(cfn)
-
-
 @pytest.mark.parametrize(
     "name,instance,schema,context_evolve,expected",
     [
@@ -45,10 +39,8 @@ def context(cfn):
             {},
             [
                 ValidationError(
-                    (
-                        "Fn::ToJsonString is not supported without "
-                        "'AWS::LanguageExtensions' transform"
-                    ),
+                    "Fn::ToJsonString is not supported without "
+                    "'AWS::LanguageExtensions' transform",
                     path=deque([]),
                     schema_path=deque([]),
                     validator="fn_tojsonstring",
@@ -72,15 +64,22 @@ def context(cfn):
             ],
         ),
         (
+            "Fn::ToJsonString is valid with a simple key/value",
+            {"Fn::ToJsonString": {"foo": "bar"}},
+            {"type": "string"},
+            {"transforms": Transforms(["AWS::LanguageExtensions"])},
+            [],
+        ),
+        (
             "Fn::ToJsonString is invalid with an empty object",
             {"Fn::ToJsonString": {}},
             {"type": "string"},
             {"transforms": Transforms(["AWS::LanguageExtensions"])},
             [
                 ValidationError(
-                    "{} does not have enough properties",
+                    "expected minimum property count: 1, found: 0",
                     path=deque(["Fn::ToJsonString"]),
-                    schema_path=deque(["minProperties"]),
+                    schema_path=deque(["cfnContext", "schema", "minProperties"]),
                     validator="fn_tojsonstring",
                     rule=ToJsonString(),
                 ),
@@ -93,9 +92,9 @@ def context(cfn):
             {"transforms": Transforms(["AWS::LanguageExtensions"])},
             [
                 ValidationError(
-                    "[] is too short (1)",
+                    "expected minimum item count: 1, found: 0",
                     path=deque(["Fn::ToJsonString"]),
-                    schema_path=deque(["minItems"]),
+                    schema_path=deque(["cfnContext", "schema", "minItems"]),
                     validator="fn_tojsonstring",
                     rule=ToJsonString(),
                 ),
@@ -108,14 +107,23 @@ def context(cfn):
             {"transforms": Transforms(["AWS::LanguageExtensions"])},
             [
                 ValidationError(
-                    (
-                        "'AWS::NotificationARNs' is not one of "
-                        "['MyResource', 'AWS::AccountId', "
-                        "'AWS::NoValue', 'AWS::Partition', 'AWS::Region', "
-                        "'AWS::StackId', 'AWS::StackName', 'AWS::URLSuffix']"
-                    ),
+                    "'AWS::NotificationARNs' is not one of "
+                    "['MyResource', 'AWS::AccountId', "
+                    "'AWS::NoValue', 'AWS::Partition', 'AWS::Region', "
+                    "'AWS::StackId', 'AWS::StackName', 'AWS::URLSuffix']",
                     path=deque(["Fn::ToJsonString", "Ref"]),
-                    schema_path=deque(["ref", "enum"]),
+                    schema_path=deque(
+                        [
+                            "cfnContext",
+                            "schema",
+                            "ref",
+                            "then",
+                            "cfnContext",
+                            "schema",
+                            "dynamicValidation",
+                            "enum",
+                        ]
+                    ),
                     validator="ref",
                     rule=ToJsonString(),
                 ),

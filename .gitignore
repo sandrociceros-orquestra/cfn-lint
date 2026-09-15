@@ -2,6 +2,11 @@
 test/fixtures/templates/bad/limit_numbers.yaml
 test/fixtures/templates/bad/limit_size.yaml
 
+# Legacy schema data location (no longer used, but may exist from prior runs)
+src/cfnlint/data/schemas/providers/
+src/cfnlint/data/schemas/resources/
+src/cfnlint/data/DownloadsMetadata/
+
 # Local files for Build and Release
 Dockerfile.local
 create-release.sh
@@ -37,7 +42,6 @@ MANIFEST
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
 *.manifest
-*.spec
 
 # Installer logs
 pip-log.txt

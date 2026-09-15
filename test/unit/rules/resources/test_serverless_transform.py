@@ -44,11 +44,9 @@ def rule():
             {},
             [
                 ValidationError(
-                    (
-                        "'AWS::Serverless::Function' type used "
-                        "without the serverless transform "
-                        "'AWS::Serverless-2016-10-31'"
-                    ),
+                    "'AWS::Serverless::Function' type used "
+                    "without the serverless transform "
+                    "'AWS::Serverless-2016-10-31'",
                     rule=ServerlessTransform(),
                 )
             ],
@@ -56,6 +54,6 @@ def rule():
     ],
     indirect=["template"],
 )
-def test_validate(name, instance, template, expected, rule, validator):
+def test_validate(name, instance, template, expected, rule, validator, cfn):
     errors = list(rule.validate(validator, False, instance, {}))
     assert errors == expected, f"Test {name!r} got {errors!r}"

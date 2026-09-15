@@ -12,12 +12,15 @@ import json
 import logging
 import os
 import sys
+from copy import deepcopy
 from pathlib import Path
 from typing import Any, Dict, Sequence, TypedDict
 
 from typing_extensions import Unpack
 
 import cfnlint.decode.cfn_yaml
+from cfnlint.context.parameters import ParameterSet
+from cfnlint.exceptions import ConfigFileError
 from cfnlint.helpers import REGIONS, format_json_string
 from cfnlint.jsonschema import StandardValidator
 from cfnlint.version import __version__
@@ -171,7 +174,7 @@ class ConfigFileArgs:
             JSONSchema to validate against
         Raises
         -------
-        jsonschema.exceptions.ValidationError
+        ConfigFileError
             Returned when cfnlintrc doesn't match schema provided
         """
         LOGGER.debug("Validating CFNLINTRC config with given JSONSchema")
@@ -179,8 +182,63 @@ class ConfigFileArgs:
         LOGGER.debug("Config used: %s", config)
 
         validator = StandardValidator(schema=schema)
-        validator.validate(config)
-        LOGGER.debug("CFNLINTRC looks valid!")
+        try:
+            validator.validate(config)
+            LOGGER.debug("CFNLINTRC looks valid!")
+        except Exception as e:
+            # Convert technical JSON schema validation errors to user-friendly messages
+            error_path = (
+                ".".join(str(p) for p in e.absolute_path)
+                if hasattr(e, "absolute_path") and e.absolute_path
+                else "root"
+            )
+
+            if hasattr(e, "validator") and e.validator == "additionalProperties":
+                invalid_key = (
+                    list(e.instance.keys() - e.schema.get("properties", {}).keys())[0]
+                    if hasattr(e, "instance") and isinstance(e.instance, dict)
+                    else "unknown"
+                )
+                raise ConfigFileError(
+                    (
+                        f"Invalid configuration key '{invalid_key}' "
+                        f"in .cfnlintrc at {error_path}"
+                    ),
+                    None,
+                )
+            elif hasattr(e, "validator") and e.validator == "type":
+                expected_type = (
+                    e.schema.get("type", "unknown")
+                    if hasattr(e, "schema")
+                    else "unknown"
+                )
+                raise ConfigFileError(
+                    (
+                        f"Invalid type for '{error_path}' "
+                        f"in .cfnlintrc. Expected {expected_type}"
+                    ),
+                    None,
+                )
+            elif hasattr(e, "validator") and e.validator == "required":
+                missing_prop = (
+                    e.message.split("'")[1] if "'" in str(e.message) else "unknown"
+                )
+                raise ConfigFileError(
+                    (
+                        f"Missing required property '{missing_prop}' "
+                        f"in .cfnlintrc at {error_path}"
+                    ),
+                    None,
+                )
+            else:
+                # Fallback for other validation errors
+                raise ConfigFileError(
+                    (
+                        f"Invalid configuration in .cfnlintrc at {error_path}: "
+                        f"{e.message if hasattr(e, 'message') else str(e)}"
+                    ),
+                    None,
+                )
 
     def merge_config(self, user_config, project_config):
         """Merge project and user configuration into a single dictionary
@@ -313,7 +371,65 @@ class RuleConfigurationAction(argparse.Action):
             setattr(namespace, self.dest, items)
         except Exception:  # pylint: disable=W0703
             parser.print_help()
-            parser.exit()
+            parser.exit(1)
+
+
+class ExtendKeyValuePairs(argparse.Action):
+    def __init__(
+        self,
+        option_strings,
+        dest,
+        nargs=None,
+        const=None,
+        default=None,
+        type=None,
+        choices=None,
+        required=False,
+        help=None,
+        metavar=None,
+    ):  # pylint: disable=W0622
+        super().__init__(
+            option_strings=option_strings,
+            dest=dest,
+            nargs=nargs,
+            const=const,
+            default=default,
+            type=type,
+            choices=choices,
+            required=required,
+            help=help,
+            metavar=metavar,
+        )
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        try:
+            items = {}
+            for value in values:
+                # split it into key and value
+                key, value = value.split("=", 1)
+                items[key.strip()] = value.strip()
+
+            result = getattr(namespace, self.dest) + [items]
+            setattr(namespace, self.dest, result)
+        except Exception:  # pylint: disable=W0703
+            parser.print_help()
+            parser.exit(1)
+
+
+class ExtendAction(argparse.Action):
+    """Support argument types that are lists and can
+    be specified multiple times.
+    """
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        items = getattr(namespace, self.dest)
+        items = [] if items is None else items
+        for value in values:
+            if isinstance(value, list):
+                items.extend(value)
+            else:
+                items.append(value)
+        setattr(namespace, self.dest, items)
 
 
 class CliArgs:
@@ -331,22 +447,7 @@ class CliArgs:
 
             def error(self, message):
                 self.print_help(sys.stderr)
-                self.exit(32, f"{self.prog}: error: {message}\n")
-
-        class ExtendAction(argparse.Action):
-            """Support argument types that are lists and can
-            be specified multiple times.
-            """
-
-            def __call__(self, parser, namespace, values, option_string=None):
-                items = getattr(namespace, self.dest)
-                items = [] if items is None else items
-                for value in values:
-                    if isinstance(value, list):
-                        items.extend(value)
-                    else:
-                        items.append(value)
-                setattr(namespace, self.dest, items)
+                self.exit(1, f"{self.prog}: error: {message}\n")
 
         usage = (
             "\nBasic: cfn-lint test.yaml\n"
@@ -357,9 +458,14 @@ class CliArgs:
 
         parser = ArgumentParser(description="CloudFormation Linter", usage=usage)
         parser.register("action", "extend", ExtendAction)
+        parser.register("action", "rule_configuration", RuleConfigurationAction)
+        parser.register("action", "extend_key_value", ExtendKeyValuePairs)
 
         standard = parser.add_argument_group("Standard")
         advanced = parser.add_argument_group("Advanced / Debugging")
+
+        validation_group = standard.add_mutually_exclusive_group()
+        parameter_group = standard.add_mutually_exclusive_group()
 
         # Allow the template to be passes as an optional or a positional argument
         standard.add_argument(
@@ -368,7 +474,7 @@ class CliArgs:
             nargs="*",
             help="The CloudFormation template to be linted",
         )
-        standard.add_argument(
+        validation_group.add_argument(
             "-t",
             "--template",
             metavar="TEMPLATE",
@@ -392,6 +498,30 @@ class CliArgs:
             default=[],
             action="extend",
         )
+        validation_group.add_argument(
+            "--deployment-files",
+            dest="deployment_files",
+            help="Deployment files",
+            nargs="+",
+            default=[],
+            action="extend",
+        )
+        parameter_group.add_argument(
+            "--parameters",
+            dest="parameters",
+            nargs="+",
+            default=[],
+            action="extend_key_value",
+            help="A list of parameters",
+        )
+        validation_group.add_argument(
+            "--parameter-files",
+            dest="parameter_files",
+            help="A list of parameter files",
+            nargs="+",
+            default=[],
+            action="extend",
+        )
         advanced.add_argument(
             "-D", "--debug", help="Enable debug logging", action="store_true"
         )
@@ -411,6 +541,14 @@ class CliArgs:
             default=False,
             action="store_true",
             help="list all the rules",
+        )
+        advanced.add_argument(
+            "-L",
+            "--list-templates",
+            dest="listtemplates",
+            default=False,
+            action="store_true",
+            help="List all the templates would have linted",
         )
         standard.add_argument(
             "-r",
@@ -480,7 +618,7 @@ class CliArgs:
             dest="configure_rules",
             nargs="+",
             default={},
-            action=RuleConfigurationAction,
+            action="rule_configuration",
             help=(
                 "Provide configuration for a rule. Format RuleId:key=value. Example:"
                 " E3012:strict=true"
@@ -515,6 +653,7 @@ class CliArgs:
         advanced.add_argument(
             "-s",
             "--registry-schemas",
+            default=[],
             help="one or more directories of CloudFormation Registry Schemas",
             action="extend",
             type=comma_separated_arg,
@@ -531,6 +670,12 @@ class CliArgs:
             "-u",
             "--update-specs",
             help="Update the CloudFormation Specs",
+            action="store_true",
+        )
+        advanced.add_argument(
+            "-p",
+            "--patch-specs",
+            help=argparse.SUPPRESS,
             action="store_true",
         )
         advanced.add_argument(
@@ -579,15 +724,17 @@ class TemplateArgs:
 
             if isinstance(configs, dict):
                 for key, value in {
-                    "ignore_checks": (list),
-                    "regions": (list),
-                    "append_rules": (list),
-                    "override_spec": (str),
-                    "custom_rules": (str),
-                    "ignore_bad_template": (bool),
-                    "include_checks": (list),
-                    "configure_rules": (dict),
-                    "include_experimental": (bool),
+                    "append_rules": list,
+                    "configure_rules": dict,
+                    "custom_rules": str,
+                    "ignore_bad_template": bool,
+                    "ignore_checks": list,
+                    "include_checks": list,
+                    "include_experimental": bool,
+                    "override_spec": str,
+                    "parameters": list,
+                    "parameter_files": list,
+                    "regions": list,
                 }.items():
                     if key in configs:
                         if isinstance(configs[key], value):
@@ -600,22 +747,54 @@ class TemplateArgs:
 
 class ManualArgs(TypedDict, total=False):
     configure_rules: dict[str, dict[str, Any]]
-    include_checks: list[str]
-    ignore_checks: list[str]
-    mandatory_checks: list[str]
-    include_experimental: bool
+    deployment_files: list[str]
     ignore_bad_template: bool
+    ignore_checks: list[str]
     ignore_templates: list
+    include_checks: list[str]
+    include_experimental: bool
+    mandatory_checks: list[str]
     merge_configs: bool
     non_zero_exit_code: str
     output_file: str
+    parameter_files: list[str]
+    parameters: list[ParameterSet]
     regions: list
+    registry_schemas: list[str]
+    template_parameters: list[dict[str, Any]]
+    templates: list[str]
+
+
+def _merge_configs(
+    cli_value: Any, template_value: Any, file_value: Any, manual_value: Any
+) -> Any:
+    # the CLI will always have an empty list when the item is a list
+    # we will use that to evaluate if we need to merge the lists
+    if isinstance(cli_value, list):
+        merged_list = cli_value.copy()
+        if isinstance(template_value, list):
+            merged_list.extend(template_value)
+        if isinstance(file_value, list):
+            merged_list.extend(file_value)
+        if isinstance(manual_value, list):
+            merged_list.extend(manual_value)
+        return merged_list
+
+    elif isinstance(cli_value, dict):
+        merged_dict = cli_value.copy()
+        if isinstance(template_value, dict):
+            merged_dict.update(template_value)
+        if isinstance(file_value, dict):
+            merged_dict.update(file_value)
+        if isinstance(manual_value, dict):
+            merged_dict.update(manual_value)
+        return merged_dict
+
+    return None
 
 
 # pylint: disable=too-many-public-methods
 class ConfigMixIn(TemplateArgs, CliArgs, ConfigFileArgs):
-    """Mixin for the Configs"""
-
     def __init__(self, cli_args: list[str] | None = None, **kwargs: Unpack[ManualArgs]):
         self._manual_args = kwargs or ManualArgs()
         CliArgs.__init__(self, cli_args)
@@ -628,51 +807,134 @@ class ConfigMixIn(TemplateArgs, CliArgs, ConfigFileArgs):
     def __repr__(self):
         return format_json_string(
             {
+                "append_rules": self.append_rules,
+                "config_file": self.config_file,
+                "configure_rules": self.configure_rules,
+                "custom_rules": self.custom_rules,
+                "debug": self.debug,
+                "deployment_files": self.deployment_files,
+                "format": self.format,
+                "ignore_bad_template": self.ignore_bad_template,
                 "ignore_checks": self.ignore_checks,
                 "include_checks": self.include_checks,
-                "mandatory_checks": self.mandatory_checks,
                 "include_experimental": self.include_experimental,
-                "configure_rules": self.configure_rules,
-                "regions": self.regions,
-                "ignore_bad_template": self.ignore_bad_template,
-                "debug": self.debug,
                 "info": self.info,
-                "format": self.format,
-                "templates": self.templates,
-                "append_rules": self.append_rules,
-                "override_spec": self.override_spec,
-                "custom_rules": self.custom_rules,
-                "config_file": self.config_file,
+                "mandatory_checks": self.mandatory_checks,
                 "merge_configs": self.merge_configs,
                 "non_zero_exit_code": self.non_zero_exit_code,
+                "override_spec": self.override_spec,
+                "parameter_files": self.parameter_files,
+                "parameters": self.parameters,
+                "regions": self.regions,
+                "registry_schemas": self.registry_schemas,
+                "templates": self.templates,
             }
         )
+
+    def __eq__(self, value):
+        if not isinstance(value, ConfigMixIn):
+            return False
+        for key in [
+            "configure_rules",
+            "deployment_files",
+            "ignore_bad_template",
+            "ignore_checks",
+            "include_checks",
+            "include_experimental",
+            "mandatory_checks",
+            "merge_configs",
+            "non_zero_exit_code",
+            "output_file",
+            "regions",
+            "parameter_files",
+            "parameters",
+            "templates",
+        ]:
+            if getattr(self, key) != getattr(value, key):
+                return False
+
+        return True
+
+    def validate(self, allow_stdin: bool = False) -> None:
+        """
+        Validate the configuration for logical consistency.
+
+        This method validates configuration constraints that may not be enforced
+        by argparse when using the API directly (vs CLI usage). While the CLI
+        uses argparse mutually exclusive groups to prevent some conflicts, the
+        API bypasses argparse, so this method ensures all constraints are enforced
+        consistently across both usage patterns.
+
+        Args:
+            allow_stdin: If True, allows validation to pass when no templates/deployment
+                        files are specified (for CLI stdin handling)
+
+        Raises:
+            ValueError: When configuration is invalid with a descriptive message
+        """
+        # Get raw configuration values using the same logic as the templates property
+        # For templates, we need to check both templates and template_alt
+        raw_templates = []
+        if "templates" in self._manual_args:
+            raw_templates = self._manual_args["templates"]
+        else:
+            cli_alt_args = self._get_argument_value("template_alt", False, False)
+            cli_args = self._get_argument_value("templates", False, False)
+            if cli_alt_args:
+                raw_templates = cli_alt_args
+            elif cli_args:
+                raw_templates = cli_args
+
+        # Ensure it's a list
+        if isinstance(raw_templates, str):
+            raw_templates = [raw_templates]
+        raw_templates = raw_templates or []
+        raw_deployment_files = (
+            self._get_argument_value("deployment_files", False, False) or []
+        )
+        raw_parameters = self._get_argument_value("parameters", False, False) or {}
+        raw_parameter_files = (
+            self._get_argument_value("parameter_files", False, False) or []
+        )
+
+        # Check if no templates or deployment files are specified
+        if not raw_templates and not raw_deployment_files and not allow_stdin:
+            raise ValueError("No templates or deployment files specified")
+
+        # Check for conflicting deployment files with other options
+        if raw_deployment_files:
+            if raw_templates or raw_parameters or raw_parameter_files:
+                raise ValueError(
+                    "Deployment files cannot be used with templates, parameters, "
+                    "or parameter files"
+                )
+
+        # Check for conflicting parameter options
+        if raw_parameters and raw_parameter_files:
+            raise ValueError("Cannot specify both --parameters and --parameter-files")
+
+        # Check for multiple templates with parameters
+        if (raw_parameters or raw_parameter_files) and len(raw_templates) > 1:
+            raise ValueError("Parameters can only be used with a single template")
 
     def _get_argument_value(self, arg_name, is_template, is_config_file):
         cli_value = getattr(self.cli_args, arg_name)
         template_value = self.template_args.get(arg_name)
         file_value = self.file_args.get(arg_name)
+        manual_value = self._manual_args.get(arg_name)
 
         # merge list configurations
         # make sure we don't do an infinite loop so skip this check for merge_configs
         if arg_name != "merge_configs":
             if self.merge_configs:
-                # the CLI will always have an empty list when the item is a list
-                # we will use that to evaluate if we need to merge the lists
-                if isinstance(cli_value, list):
-                    # Use a copy here, otherwise we will
-                    # accumulate template level config
-                    # into the cli_value which will persist between template files
-                    result = cli_value.copy()
-                    if isinstance(template_value, list):
-                        result.extend(template_value)
-                    if isinstance(file_value, list):
-                        result.extend(file_value)
-                    return result
+                if isinstance(cli_value, (list, dict)):
+                    return _merge_configs(
+                        cli_value, template_value, file_value, manual_value
+                    )
 
         # return individual items
-        if arg_name in self._manual_args:
-            return self._manual_args[arg_name]
+        if manual_value:
+            return manual_value
         if cli_value:
             return cli_value
         if template_value and is_template:
@@ -714,7 +976,7 @@ class ConfigMixIn(TemplateArgs, CliArgs, ConfigFileArgs):
 
     @property
     def debug(self):
-        return self._get_argument_value("debug", False, False)
+        return self._get_argument_value("debug", False, True)
 
     @property
     def info(self):
@@ -726,23 +988,48 @@ class ConfigMixIn(TemplateArgs, CliArgs, ConfigFileArgs):
 
     @property
     def templates(self):
-        templates_args = self._get_argument_value("templates", False, True)
-        template_alt_args = self._get_argument_value("template_alt", False, False)
-        if template_alt_args:
-            filenames = template_alt_args
-        elif templates_args:
-            filenames = templates_args
+        """
+
+        Returns a list of Cloudformation templates to lint.
+
+        Order of precedence:
+        - Filenames provided via `-t` CLI
+        - Filenames specified in the config file.
+        - Arguments provided via `cfn-lint` CLI.
+        """
+
+        all_filenames = []
+
+        cli_alt_args = self._get_argument_value("template_alt", False, False)
+        file_args = self._get_argument_value("templates", False, True)
+        cli_args = self._get_argument_value("templates", False, False)
+
+        if "templates" in self._manual_args:
+            filenames = self._manual_args["templates"]
+        elif cli_alt_args:
+            filenames = cli_alt_args
+        elif cli_args:
+            filenames = cli_args
+        # elif not sys.stdin.isatty():
+        #    if bool(select.select([sys.stdin], [], [], 0)):
+        #        return []
+        elif file_args:
+            filenames = file_args
         else:
+            # No filenames found, could be piped in or be using the api.
             return None
 
-        # if only one is specified convert it to array
         if isinstance(filenames, str):
             filenames = [filenames]
 
         ignore_templates = self._ignore_templates()
-        all_filenames = self._glob_filenames(filenames)
+        all_filenames.extend(self._glob_filenames(filenames))
 
-        return [i for i in all_filenames if i not in ignore_templates]
+        found_files = [i for i in all_filenames if i not in ignore_templates]
+        LOGGER.debug(
+            f"List of Cloudformation Templates to lint: {found_files} from {filenames}"
+        )
+        return found_files
 
     def _ignore_templates(self):
         ignore_template_args = self._get_argument_value("ignore_templates", False, True)
@@ -755,21 +1042,23 @@ class ConfigMixIn(TemplateArgs, CliArgs, ConfigFileArgs):
         if isinstance(filenames, str):
             filenames = [filenames]
 
-        return self._glob_filenames(filenames)
+        return self._glob_filenames(filenames, False)
 
-    def _glob_filenames(self, filenames: Sequence[str]) -> list[str]:
+    def _glob_filenames(
+        self, filenames: Sequence[str], raise_exception: bool = True
+    ) -> list[str]:
         # handle different shells and Config files
         # some shells don't expand * and configparser won't expand wildcards
         all_filenames = []
 
         for filename in filenames:
             add_filenames = glob.glob(filename, recursive=True)
-            # only way to know of the glob failed is to test it
-            # then add the filename as requested
-            if not add_filenames:
-                all_filenames.append(filename)
-            else:
-                all_filenames.extend(add_filenames)
+
+            if not add_filenames and not self.ignore_bad_template:
+                if raise_exception:
+                    raise ValueError(f"{filename} could not be processed by glob.glob")
+
+            all_filenames.extend(add_filenames)
 
         return sorted(list(map(str, map(Path, all_filenames))))
 
@@ -780,17 +1069,49 @@ class ConfigMixIn(TemplateArgs, CliArgs, ConfigFileArgs):
         )
 
     @property
+    def parameter_files(self):
+        filenames = self._get_argument_value("parameter_files", True, True)
+        return self._glob_filenames(filenames, raise_exception=True)
+
+    @property
+    def parameters(self) -> list[ParameterSet]:
+        parameter_sets = self._get_argument_value("parameters", True, True)
+        results: list[ParameterSet] = []
+        for parameter_set in parameter_sets:
+            if isinstance(parameter_set, ParameterSet):
+                results.append(parameter_set)
+            else:
+                results.append(
+                    ParameterSet(
+                        source=None,
+                        parameters=parameter_set,
+                    )
+                )
+
+        return results
+
+    @property
+    def listtemplates(self):
+        """
+        Get the listtemplates from the CLI arguments or config file.
+        """
+        return self._get_argument_value("listtemplates", False, False)
+
+    @property
     def override_spec(self):
         return self._get_argument_value("override_spec", False, True)
 
     @property
     def custom_rules(self):
-        """custom_rules_spec"""
         return self._get_argument_value("custom_rules", False, True)
 
     @property
     def update_specs(self):
         return self._get_argument_value("update_specs", False, False)
+
+    @property
+    def patch_specs(self):
+        return self._get_argument_value("patch_specs", False, False)
 
     @property
     def update_documentation(self):
@@ -807,6 +1128,11 @@ class ConfigMixIn(TemplateArgs, CliArgs, ConfigFileArgs):
     @property
     def configure_rules(self):
         return self._get_argument_value("configure_rules", True, True)
+
+    @property
+    def deployment_files(self):
+        deployment_files = self._get_argument_value("deployment_files", False, True)
+        return self._glob_filenames(deployment_files, True)
 
     @property
     def config_file(self):
@@ -835,3 +1161,8 @@ class ConfigMixIn(TemplateArgs, CliArgs, ConfigFileArgs):
     @property
     def force(self):
         return self._get_argument_value("force", False, False)
+
+    def evolve(self, **kwargs: Unpack[ManualArgs]) -> "ConfigMixIn":
+        config = deepcopy(self)
+        config._manual_args.update(kwargs)
+        return config

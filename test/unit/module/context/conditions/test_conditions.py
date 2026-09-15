@@ -276,6 +276,19 @@ def test_condition_status(current_status, new_status, expected):
                 ),
             ],
         ),
+        (
+            {},
+            [
+                "a",
+                "b",
+                {"Fn::If": ["IsDev", "c", {"Ref": "AWS::NoValue"}]},
+                {"Fn::If": ["IsProd", "d", {"Ref": "AWS::NoValue"}]},
+            ],
+            [
+                (["a", "b", "c"], {"IsDev": True, "IsProd": False}),
+                (["a", "b", "d"], {"IsDev": False, "IsProd": True}),
+            ],
+        ),
     ],
 )
 def test_evolve_from_instance(current_status, instance, expected):
@@ -289,11 +302,53 @@ def test_evolve_from_instance(current_status, instance, expected):
 
     results = list(context.conditions.evolve_from_instance(instance, context))
     assert len(results) == len(expected)
-    for result, expected_result in zip(results, expected):
-        assert result[0] == expected_result[0]
-        assert result[1].status == expected_result[1]
+    result_set = {(str(r[0]), tuple(sorted(r[1].status.items()))) for r in results}
+    expected_set = {(str(e[0]), tuple(sorted(e[1].items()))) for e in expected}
+    assert result_set == expected_set
 
 
 def test_condition_failures():
     with pytest.raises(ValueError):
-        Conditions.create_from_instance([], {})
+        Conditions.create_from_instance([], {}, {})
+
+
+def test_is_reachable_unknown_condition():
+    cfn = Template(None, template(), regions=["us-east-1"])
+    context = create_context_for_template(cfn)
+
+    # An unknown condition is conservatively considered reachable.
+    assert context.conditions.is_reachable("DoesNotExist", True) is True
+    assert context.conditions.is_reachable("DoesNotExist", False) is True
+
+
+def test_is_reachable_fact_vs_assumption():
+    cfn = Template(None, template(), regions=["us-east-1"])
+    base = create_context_for_template(cfn).conditions
+
+    # A fact (e.g. a resource Condition or enclosing Fn::If) forces the value,
+    # so the opposite is unreachable.
+    fact = base.evolve({"IsUsEast1": True})
+    assert fact.is_reachable("IsUsEast1", True) is True
+    assert fact.is_reachable("IsUsEast1", False) is False
+
+    # An assumption from scenario enumeration does not force anything, so both
+    # values remain reachable.
+    assumed = base.evolve({"IsUsEast1": True}, assumed=True)
+    assert assumed.is_reachable("IsUsEast1", True) is True
+    assert assumed.is_reachable("IsUsEast1", False) is True
+
+
+def test_is_reachable_implication():
+    cfn = Template(None, template(), regions=["us-east-1"])
+    base = create_context_for_template(cfn).conditions
+
+    # IsUsEast1AndProd = IsUsEast1 AND IsProd, so pinning it True as a fact
+    # forces both operands True; their False values are unreachable.
+    fact = base.evolve({"IsUsEast1AndProd": True})
+    assert fact.is_reachable("IsUsEast1", True) is True
+    assert fact.is_reachable("IsUsEast1", False) is False
+    assert fact.is_reachable("IsProd", False) is False
+
+    # As an assumption it forces nothing.
+    assumed = base.evolve({"IsUsEast1AndProd": True}, assumed=True)
+    assert assumed.is_reachable("IsUsEast1", False) is True

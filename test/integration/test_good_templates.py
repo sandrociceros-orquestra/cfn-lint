@@ -38,100 +38,9 @@ class TestQuickStartTemplates(BaseCliTestCase):
             "filename": (
                 "test/fixtures/templates/bad/transform_serverless_template.yaml"
             ),
-            "results": [
-                {
-                    "Filename": str(
-                        Path(
-                            "test/fixtures/templates/bad/transform_serverless_template.yaml"
-                        )
-                    ),
-                    "Id": "74181426-e865-10eb-96fd-908dfd30a358",
-                    "Location": {
-                        "Start": {"ColumnNumber": 1, "LineNumber": 1},
-                        "End": {"ColumnNumber": 2, "LineNumber": 1},
-                        "Path": None,
-                    },
-                    "ParentId": None,
-                    "Rule": {
-                        "Id": "E0001",
-                        "Description": (
-                            "Errors found when performing transformation on the"
-                            " template"
-                        ),
-                        "Source": ("https://github.com/aws-cloudformation/cfn-lint"),
-                        "ShortDescription": (
-                            "Error found when transforming the template"
-                        ),
-                    },
-                    "Level": "Error",
-                    "Message": (
-                        "Error transforming template: Resource with id [AppName] is"
-                        " invalid. Resource is missing the required [Location]"
-                        " property."
-                    ),
-                },
-                {
-                    "Filename": str(
-                        Path(
-                            "test/fixtures/templates/bad/transform_serverless_template.yaml"
-                        )
-                    ),
-                    "Id": "fd751fa3-7d1f-e194-7108-eb08352814c8",
-                    "Location": {
-                        "Start": {"ColumnNumber": 1, "LineNumber": 1},
-                        "End": {"ColumnNumber": 2, "LineNumber": 1},
-                        "Path": None,
-                    },
-                    "ParentId": None,
-                    "Rule": {
-                        "Id": "E0001",
-                        "Description": (
-                            "Errors found when performing transformation on the"
-                            " template"
-                        ),
-                        "Source": ("https://github.com/aws-cloudformation/cfn-lint"),
-                        "ShortDescription": (
-                            "Error found when transforming the template"
-                        ),
-                    },
-                    "Level": "Error",
-                    "Message": (
-                        "Error transforming template: Resource with id [ExampleLayer]"
-                        " is invalid. Missing required property 'ContentUri'."
-                    ),
-                },
-                {
-                    "Filename": str(
-                        Path(
-                            "test/fixtures/templates/bad/transform_serverless_template.yaml"
-                        )
-                    ),
-                    "Id": "9e05773a-b0d0-f157-2955-596d9bd54749",
-                    "Location": {
-                        "Start": {"ColumnNumber": 1, "LineNumber": 1},
-                        "End": {"ColumnNumber": 2, "LineNumber": 1},
-                        "Path": None,
-                    },
-                    "ParentId": None,
-                    "Rule": {
-                        "Id": "E0001",
-                        "Description": (
-                            "Errors found when performing transformation on the"
-                            " template"
-                        ),
-                        "Source": ("https://github.com/aws-cloudformation/cfn-lint"),
-                        "ShortDescription": (
-                            "Error found when transforming the template"
-                        ),
-                    },
-                    "Level": "Error",
-                    "Message": (
-                        "Error transforming template: Resource with id"
-                        " [myFunctionMyTimer] is invalid. Missing required property"
-                        " 'Schedule'."
-                    ),
-                },
-            ],
+            "results_filename": (
+                "test/fixtures/results/good/transform_serverless_template.json"
+            ),
             "exit_code": 2,
         },
         {
@@ -145,12 +54,16 @@ class TestQuickStartTemplates(BaseCliTestCase):
             "exit_code": 0,
         },
         {
-            "filename": "test/fixtures/templates/good/resources_cognito_userpool_tag_is_string_map.yaml",
+            "filename": (
+                "test/fixtures/templates/good/resources_cognito_userpool_tag_is_string_map.yaml"
+            ),
             "results": [],
             "exit_code": 0,
         },
         {
-            "filename": "test/fixtures/templates/bad/resources_cognito_userpool_tag_is_list.yaml",
+            "filename": (
+                "test/fixtures/templates/bad/resources_cognito_userpool_tag_is_list.yaml"
+            ),
             "results": [
                 {
                     "Filename": str(
@@ -182,7 +95,9 @@ class TestQuickStartTemplates(BaseCliTestCase):
                         ),
                         "Id": "E3012",
                         "ShortDescription": "Check resource properties values",
-                        "Source": "https://github.com/aws-cloudformation/cfn-lint/blob/main/docs/cfn-schema-specification.md#type",
+                        "Source": (
+                            "https://github.com/aws-cloudformation/cfn-lint/blob/main/docs/cfn-schema-specification.md#type"
+                        ),
                     },
                 }
             ],
@@ -204,34 +119,18 @@ class TestQuickStartTemplates(BaseCliTestCase):
             "filename": (
                 "test/fixtures/templates/good/transform_serverless_globals.yaml"
             ),
-            "results": [
-                {
-                    "Filename": str(
-                        Path(
-                            "test/fixtures/templates/good/transform_serverless_globals.yaml"
-                        )
-                    ),
-                    "Id": "f0f6c586-81bc-9182-de02-659a3a1a5b2c",
-                    "Level": "Error",
-                    "Location": {
-                        "End": {"ColumnNumber": 13, "LineNumber": 10},
-                        "Path": ["Resources", "myFunction", "Properties", "Runtime"],
-                        "Start": {"ColumnNumber": 3, "LineNumber": 10},
-                    },
-                    "Message": "Runtime 'nodejs6.10' was deprecated on '2019-08-12'. Creation was disabled on '2019-08-12' and update on '2019-08-12'. Please consider updating to 'nodejs20.x'",
-                    "ParentId": None,
-                    "Rule": {
-                        "Description": (
-                            "Check if an EOL Lambda Runtime is specified and you cannot update the function"
-                        ),
-                        "Id": "E2533",
-                        "ShortDescription": (
-                            "Check if Lambda Function Runtimes are updatable"
-                        ),
-                        "Source": "https://docs.aws.amazon.com/lambda/latest/dg/runtime-support-policy.html",
-                    },
-                }
-            ],
+            "results_filename": (
+                "test/fixtures/results/good/transform_serverless_globals.json"
+            ),
+            "exit_code": 2,
+        },
+        {
+            "filename": (
+                "test/fixtures/templates/good/transform_serverless_ignore_globals.yaml"
+            ),
+            "results_filename": (
+                "test/fixtures/results/good/transform_serverless_ignore_globals.json"
+            ),
             "exit_code": 2,
         },
         {
@@ -249,6 +148,21 @@ class TestQuickStartTemplates(BaseCliTestCase):
         {
             "filename": (
                 "test/fixtures/templates/good/transform/list_transform_not_sam.yaml"
+            ),
+            "results": [],
+            "exit_code": 0,
+        },
+        {
+            "filename": (
+                "test/fixtures/templates/good/functions/get_stack_output.yaml"
+            ),
+            "results": [],
+            "exit_code": 0,
+        },
+        {
+            "filename": (
+                "test/fixtures/templates/good/functions/"
+                "getatt_serverless_function_version.yaml"
             ),
             "results": [],
             "exit_code": 0,

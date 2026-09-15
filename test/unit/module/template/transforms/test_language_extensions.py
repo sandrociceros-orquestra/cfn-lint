@@ -4,8 +4,9 @@ SPDX-License-Identifier: MIT-0
 """
 
 from copy import deepcopy
-from unittest import TestCase
+from unittest import TestCase, mock
 
+import cfnlint.template.transforms._language_extensions
 from cfnlint.decode import convert_dict
 from cfnlint.template import Template
 from cfnlint.template.transforms._language_extensions import (
@@ -73,12 +74,36 @@ class TestForEachCollection(TestCase):
     def test_valid(self):
         fec = _ForEachCollection({"Ref": "AccountIds"})
         self.assertListEqual(
-            list(fec.values(self.cfn, {})),
+            list(fec.values(self.cfn, {}, {})),
             [
                 {"Fn::Select": [0, {"Ref": "AccountIds"}]},
                 {"Fn::Select": [1, {"Ref": "AccountIds"}]},
             ],
         )
+        self.assertListEqual(
+            list(fec.values(self.cfn, {}, {"AccountIds": ["A", "B"]})),
+            ["A", "B"],
+        )
+
+
+class TestFnIf(TestCase):
+    def setUp(self) -> None:
+        self.template_obj = convert_dict({})
+        self.cfn = Template(
+            filename="", template=self.template_obj, regions=["us-west-2"]
+        )
+
+    def test_fn_if(self):
+        fe = _ForEachValue.create({"Fn::If": ["Name", "Foo", "Bar"]})
+        with self.assertRaises(_ResolveError):
+            fe.value(self.cfn)
+
+    def test_bad_if(self):
+        with self.assertRaises(_TypeError):
+            _ForEachValue.create({"Fn::If": {}})
+
+        with self.assertRaises(_TypeError):
+            _ForEachValue.create({"Fn::If": ["Name"]})
 
 
 class TestRef(TestCase):
@@ -122,7 +147,15 @@ class TestRef(TestCase):
         self.assertEqual(fe.value(self.cfn), "us-west-2")
 
         fe = _ForEachValue.create({"Ref": "AWS::AccountId"})
-        self.assertEqual(fe.value(self.cfn), "123456789012")
+        with self.assertRaises(_ResolveError):
+            fe.value(self.cfn)
+
+        with mock.patch(
+            "cfnlint.template.transforms._language_extensions._ACCOUNT_ID",
+            "123456789012",
+        ):
+            fe = _ForEachValue.create({"Ref": "AWS::AccountId"})
+            self.assertEqual(fe.value(self.cfn), "123456789012")
 
         fe = _ForEachValue.create({"Ref": "AWS::NotificationARNs"})
         self.assertListEqual(
@@ -286,6 +319,21 @@ class TestFindInMap(TestCase):
         with self.assertRaises(_ResolveError):
             map.value(self.cfn, None, False, False)
 
+    def test_find_in_map_values_not_found_with_default(self):
+        map = _ForEachValueFnFindInMap(
+            "a", ["Bucket", "Production", "DNE", {"DefaultValue": "bar"}]
+        )
+
+        self.assertEqual(map.value(self.cfn, None, False, True), "bar")
+        with self.assertRaises(_ResolveError):
+            map.value(self.cfn, None, False, False)
+
+    def test_find_in_map_values_strings_without_default(self):
+        map = _ForEachValueFnFindInMap("a", ["Bucket", "Production", "DNE"])
+
+        with self.assertRaises(_ResolveError):
+            map.value(self.cfn, None, False, True)
+
     def test_find_in_map_values_without_default(self):
         map = _ForEachValueFnFindInMap("a", ["Bucket", {"Ref": "Foo"}, "Key"])
 
@@ -356,6 +404,30 @@ class TestFindInMap(TestCase):
         )
         with self.assertRaises(_ResolveError):
             fe.value(self.cfn)
+
+    def test_account_id(self):
+        cfnlint.template.transforms._language_extensions._ACCOUNT_ID = None
+
+        with mock.patch(
+            "cfnlint.template.transforms._language_extensions._ACCOUNT_ID", None
+        ):
+            self.assertIsNone(
+                cfnlint.template.transforms._language_extensions._ACCOUNT_ID
+            )
+            fe = _ForEachValueFnFindInMap(
+                "a",
+                [
+                    "Bucket",
+                    {"Ref": "AWS::AccountId"},
+                    "Names",
+                ],
+            )
+            self.assertListEqual(fe.value(self.cfn), ["foo", "bar"])
+
+            self.assertEqual(
+                cfnlint.template.transforms._language_extensions._ACCOUNT_ID,
+                "Production",
+            )
 
 
 class TestTransform(TestCase):
@@ -662,6 +734,192 @@ class TestTransform(TestCase):
             [{"Key": "Foo", "Value": {"Fn::FindInMap": ["Bucket", "Tags", "Key"]}}],
         )
 
+    def test_getatt_not_a_list(self):
+        template_obj = deepcopy(self.template_obj)
+        nested_set(
+            template_obj,
+            [
+                "Outputs",
+                "Fn::ForEach::BucketOutputs",
+                2,
+                "Fn::ForEach::Attribute",
+                2,
+                "S3Bucket${Identifier}${Property}",
+                "Value",
+            ],
+            {"Fn::GetAtt": {"Fn::FindInMap": ["Bucket", "Outputs", "Attributes"]}},
+        )
+        cfn = Template(filename="", template=template_obj, regions=["us-east-1"])
+
+        matches, template = language_extension(cfn)
+        self.assertListEqual(matches, [])
+        self.assertDictEqual(
+            template["Outputs"]["S3BucketAArn"]["Value"],
+            {"Fn::GetAtt": {"Fn::FindInMap": ["Bucket", "Outputs", "Attributes"]}},
+        )
+
+
+class TestTransformValues(TestCase):
+    def setUp(self) -> None:
+        self.template_obj = convert_dict(
+            {
+                "Transform": ["AWS::LanguageExtensions"],
+                "Mappings": {
+                    "111111111111": {
+                        "A": {"AppName": "appa-dev"},
+                        "B": {"AppName": "appb-dev"},
+                    },
+                    "222222222222": {
+                        "A": {"AppName": "appa-qa"},
+                        "B": {"AppName": "appb-qa"},
+                    },
+                },
+                "Resources": {
+                    "Fn::ForEach::Regions": [
+                        "Region",
+                        ["A"],
+                        {
+                            "${Region}Role": {
+                                "Type": "AWS::IAM::Role",
+                                "Properties": {
+                                    "RoleName": {
+                                        "Fn::Sub": [
+                                            "${appname}",
+                                            {
+                                                "appname": {
+                                                    "Fn::FindInMap": [
+                                                        {"Ref": "AWS::AccountId"},
+                                                        {"Ref": "Region"},
+                                                        "AppName",
+                                                    ]
+                                                }
+                                            },
+                                        ]
+                                    },
+                                    "AssumeRolePolicyDocument": {
+                                        "Version": "2012-10-17",
+                                        "Statement": [
+                                            {
+                                                "Effect": "Allow",
+                                                "Principal": {
+                                                    "Service": ["ec2.amazonaws.com"]
+                                                },
+                                                "Action": ["sts:AssumeRole"],
+                                            }
+                                        ],
+                                    },
+                                    "Path": "/",
+                                },
+                            }
+                        },
+                    ],
+                    "Fn::ForEach::NewRegions": [
+                        "Region",
+                        ["B"],
+                        {
+                            "${Region}Role": {
+                                "Type": "AWS::IAM::Role",
+                                "Properties": {
+                                    "RoleName": {
+                                        "Fn::Sub": [
+                                            "${appname}",
+                                            {
+                                                "appname": {
+                                                    "Fn::FindInMap": [
+                                                        {"Ref": "AWS::AccountId"},
+                                                        {"Ref": "Region"},
+                                                        "AppName",
+                                                    ]
+                                                }
+                                            },
+                                        ]
+                                    },
+                                    "AssumeRolePolicyDocument": {
+                                        "Version": "2012-10-17",
+                                        "Statement": [
+                                            {
+                                                "Effect": "Allow",
+                                                "Principal": {
+                                                    "Service": ["ec2.amazonaws.com"]
+                                                },
+                                                "Action": ["sts:AssumeRole"],
+                                            }
+                                        ],
+                                    },
+                                    "Path": "/",
+                                },
+                            }
+                        },
+                    ],
+                },
+            }
+        )
+
+        self.result = {
+            "Mappings": {
+                "111111111111": {
+                    "A": {"AppName": "appa-dev"},
+                    "B": {"AppName": "appb-dev"},
+                },
+                "222222222222": {
+                    "A": {"AppName": "appa-qa"},
+                    "B": {"AppName": "appb-qa"},
+                },
+            },
+            "Resources": {
+                "ARole": {
+                    "Properties": {
+                        "AssumeRolePolicyDocument": {
+                            "Statement": [
+                                {
+                                    "Action": ["sts:AssumeRole"],
+                                    "Effect": "Allow",
+                                    "Principal": {"Service": ["ec2.amazonaws.com"]},
+                                }
+                            ],
+                            "Version": "2012-10-17",
+                        },
+                        "Path": "/",
+                        "RoleName": {
+                            "Fn::Sub": ["${appname}", {"appname": "appa-dev"}]
+                        },
+                    },
+                    "Type": "AWS::IAM::Role",
+                },
+                "BRole": {
+                    "Properties": {
+                        "AssumeRolePolicyDocument": {
+                            "Statement": [
+                                {
+                                    "Action": ["sts:AssumeRole"],
+                                    "Effect": "Allow",
+                                    "Principal": {"Service": ["ec2.amazonaws.com"]},
+                                }
+                            ],
+                            "Version": "2012-10-17",
+                        },
+                        "Path": "/",
+                        "RoleName": {
+                            "Fn::Sub": ["${appname}", {"appname": "appb-dev"}]
+                        },
+                    },
+                    "Type": "AWS::IAM::Role",
+                },
+            },
+            "Transform": ["AWS::LanguageExtensions"],
+        }
+
+    def test_transform(self):
+        self.maxDiff = None
+        cfn = Template(filename="", template=self.template_obj, regions=["us-east-1"])
+        matches, template = language_extension(cfn)
+        self.assertListEqual(matches, [])
+        self.assertDictEqual(
+            template,
+            self.result,
+            template,
+        )
+
 
 def nested_set(dic, keys, value):
     for key in keys[:-1]:
@@ -670,3 +928,682 @@ def nested_set(dic, keys, value):
         if isinstance(key, int):
             dic = dic[key]
     dic[keys[-1]] = value
+
+
+class TestTransformValueAccountId(TestCase):
+    def setUp(self) -> None:
+        self.template_obj = convert_dict(
+            {
+                "Transform": ["AWS::LanguageExtensions"],
+                "Mappings": {
+                    "Accounts": {
+                        "111111111111": {"AppName": ["A", "B"]},
+                        "222222222222": {"AppName": ["C", "D"]},
+                    },
+                },
+                "Resources": {
+                    "Fn::ForEach::Regions": [
+                        "AppName",
+                        {
+                            "Fn::FindInMap": [
+                                "Accounts",
+                                {"Ref": "AWS::AccountId"},
+                                "AppName",
+                            ]
+                        },
+                        {
+                            "${AppName}Role": {
+                                "Type": "AWS::IAM::Role",
+                                "Properties": {
+                                    "RoleName": {"Ref": "AppName"},
+                                    "AssumeRolePolicyDocument": {
+                                        "Version": "2012-10-17",
+                                        "Statement": [
+                                            {
+                                                "Effect": "Allow",
+                                                "Principal": {
+                                                    "Service": ["ec2.amazonaws.com"]
+                                                },
+                                                "Action": ["sts:AssumeRole"],
+                                            }
+                                        ],
+                                    },
+                                    "Path": "/",
+                                },
+                            }
+                        },
+                    ],
+                },
+            }
+        )
+
+        self.result = {
+            "Mappings": {
+                "Accounts": {
+                    "111111111111": {"AppName": ["A", "B"]},
+                    "222222222222": {"AppName": ["C", "D"]},
+                },
+            },
+            "Resources": {
+                "ARole": {
+                    "Properties": {
+                        "AssumeRolePolicyDocument": {
+                            "Statement": [
+                                {
+                                    "Action": ["sts:AssumeRole"],
+                                    "Effect": "Allow",
+                                    "Principal": {"Service": ["ec2.amazonaws.com"]},
+                                }
+                            ],
+                            "Version": "2012-10-17",
+                        },
+                        "Path": "/",
+                        "RoleName": "A",
+                    },
+                    "Type": "AWS::IAM::Role",
+                },
+                "BRole": {
+                    "Properties": {
+                        "AssumeRolePolicyDocument": {
+                            "Statement": [
+                                {
+                                    "Action": ["sts:AssumeRole"],
+                                    "Effect": "Allow",
+                                    "Principal": {"Service": ["ec2.amazonaws.com"]},
+                                }
+                            ],
+                            "Version": "2012-10-17",
+                        },
+                        "Path": "/",
+                        "RoleName": "B",
+                    },
+                    "Type": "AWS::IAM::Role",
+                },
+            },
+            "Transform": ["AWS::LanguageExtensions"],
+        }
+
+    def test_transform(self):
+        self.maxDiff = None
+        cfn = Template(filename="", template=self.template_obj, regions=["us-east-1"])
+        matches, template = language_extension(cfn)
+        self.assertListEqual(matches, [])
+        self.assertDictEqual(
+            template,
+            self.result,
+            template,
+        )
+
+
+class TestTransformValueEmptyList(TestCase):
+    def setUp(self) -> None:
+        cfnlint.template.transforms._language_extensions._ACCOUNT_ID = None
+
+        self.template_obj = convert_dict(
+            {
+                "Transform": ["AWS::LanguageExtensions"],
+                "Mappings": {
+                    "Accounts": {
+                        "111111111111": {"AppName": []},
+                    },
+                },
+                "Resources": {
+                    "Fn::ForEach::Regions": [
+                        "AppName",
+                        {
+                            "Fn::FindInMap": [
+                                "Accounts",
+                                {"Ref": "AWS::AccountId"},
+                                "AppName",
+                            ]
+                        },
+                        {
+                            "${AppName}Role": {
+                                "Type": "AWS::IAM::Role",
+                                "Properties": {
+                                    "RoleName": {"Ref": "AppName"},
+                                    "AssumeRolePolicyDocument": {
+                                        "Version": "2012-10-17",
+                                        "Statement": [
+                                            {
+                                                "Effect": "Allow",
+                                                "Principal": {
+                                                    "Service": ["ec2.amazonaws.com"]
+                                                },
+                                                "Action": ["sts:AssumeRole"],
+                                            }
+                                        ],
+                                    },
+                                    "Path": "/",
+                                },
+                            }
+                        },
+                    ],
+                },
+            }
+        )
+
+        self.result = {
+            "Mappings": {
+                "Accounts": {
+                    "111111111111": {"AppName": []},
+                },
+            },
+            "Resources": {},
+            "Transform": ["AWS::LanguageExtensions"],
+        }
+
+    def test_transform(self):
+        self.maxDiff = None
+        with mock.patch(
+            "cfnlint.template.transforms._language_extensions._ACCOUNT_ID", None
+        ):
+            cfn = Template(
+                filename="", template=self.template_obj, regions=["us-east-1"]
+            )
+            matches, template = language_extension(cfn)
+            self.assertListEqual(matches, [])
+            self.assertDictEqual(
+                template,
+                self.result,
+                template,
+            )
+
+
+class TestTransformValueOneEmpty(TestCase):
+    def setUp(self) -> None:
+        self.template_obj = convert_dict(
+            {
+                "Transform": ["AWS::LanguageExtensions"],
+                "Mappings": {
+                    "Accounts": {
+                        "111111111111": {"AppName": []},
+                        "222222222222": {"AppName": ["C", "D"]},
+                        "333333333333": {"AppName": []},
+                    },
+                },
+                "Resources": {
+                    "Fn::ForEach::Regions": [
+                        "AppName",
+                        {
+                            "Fn::FindInMap": [
+                                "Accounts",
+                                {"Ref": "AWS::AccountId"},
+                                "AppName",
+                            ]
+                        },
+                        {
+                            "${AppName}Role": {
+                                "Type": "AWS::IAM::Role",
+                                "Properties": {
+                                    "RoleName": {"Ref": "AppName"},
+                                    "AssumeRolePolicyDocument": {
+                                        "Version": "2012-10-17",
+                                        "Statement": [
+                                            {
+                                                "Effect": "Allow",
+                                                "Principal": {
+                                                    "Service": ["ec2.amazonaws.com"]
+                                                },
+                                                "Action": ["sts:AssumeRole"],
+                                            }
+                                        ],
+                                    },
+                                    "Path": "/",
+                                },
+                            }
+                        },
+                    ],
+                },
+            }
+        )
+
+        self.result = {
+            "Mappings": {
+                "Accounts": {
+                    "111111111111": {"AppName": []},
+                    "222222222222": {"AppName": ["C", "D"]},
+                    "333333333333": {"AppName": []},
+                },
+            },
+            "Resources": {
+                "CRole": {
+                    "Properties": {
+                        "AssumeRolePolicyDocument": {
+                            "Statement": [
+                                {
+                                    "Action": ["sts:AssumeRole"],
+                                    "Effect": "Allow",
+                                    "Principal": {"Service": ["ec2.amazonaws.com"]},
+                                }
+                            ],
+                            "Version": "2012-10-17",
+                        },
+                        "Path": "/",
+                        "RoleName": "C",
+                    },
+                    "Type": "AWS::IAM::Role",
+                },
+                "DRole": {
+                    "Properties": {
+                        "AssumeRolePolicyDocument": {
+                            "Statement": [
+                                {
+                                    "Action": ["sts:AssumeRole"],
+                                    "Effect": "Allow",
+                                    "Principal": {"Service": ["ec2.amazonaws.com"]},
+                                }
+                            ],
+                            "Version": "2012-10-17",
+                        },
+                        "Path": "/",
+                        "RoleName": "D",
+                    },
+                    "Type": "AWS::IAM::Role",
+                },
+            },
+            "Transform": ["AWS::LanguageExtensions"],
+        }
+
+    def test_transform(self):
+        self.maxDiff = None
+        with mock.patch(
+            "cfnlint.template.transforms._language_extensions._ACCOUNT_ID", None
+        ):
+            cfn = Template(
+                filename="", template=self.template_obj, regions=["us-east-1"]
+            )
+            matches, template = language_extension(cfn)
+            self.assertListEqual(matches, [])
+            self.assertDictEqual(
+                template,
+                self.result,
+                template,
+            )
+
+
+class TestTransformValueIsStringInMap(TestCase):
+    def setUp(self) -> None:
+        self.template_obj = convert_dict(
+            {
+                "Transform": ["AWS::LanguageExtensions"],
+                "Mappings": {
+                    "EngineMap": {
+                        "8.0.mysql-aurora.3.07.0": {
+                            "Engine": "aurora-mysql",
+                            "EngineVersion": "8.0.mysql_aurora.3.07.0",
+                        },
+                        "aurora-postgresql-15.10": {
+                            "Engine": "aurora-postgresql",
+                            "EngineVersion": "15.10",
+                        },
+                    }
+                },
+                "Resources": {
+                    "DBCluster": {
+                        "Type": "AWS::RDS::DBCluster",
+                        "Properties": {
+                            "Engine": {
+                                "Fn::FindInMap": [
+                                    "EngineMap",
+                                    {"Ref": "Engine"},
+                                    "Engine",
+                                ]
+                            },
+                            "EngineVersion": {
+                                "Fn::FindInMap": [
+                                    "EngineMap",
+                                    {"Ref": "Engine"},
+                                    "EngineVersion",
+                                ]
+                            },
+                        },
+                    }
+                },
+            }
+        )
+
+        self.result = {
+            "Mappings": {
+                "EngineMap": {
+                    "8.0.mysql-aurora.3.07.0": {
+                        "Engine": "aurora-mysql",
+                        "EngineVersion": "8.0.mysql_aurora.3.07.0",
+                    },
+                    "aurora-postgresql-15.10": {
+                        "Engine": "aurora-postgresql",
+                        "EngineVersion": "15.10",
+                    },
+                }
+            },
+            "Resources": {
+                "DBCluster": {
+                    "Type": "AWS::RDS::DBCluster",
+                    "Properties": {
+                        "Engine": "aurora-postgresql",
+                        "EngineVersion": "15.10",
+                    },
+                }
+            },
+            "Transform": ["AWS::LanguageExtensions"],
+        }
+
+    def test_transform(self):
+        self.maxDiff = None
+        with mock.patch(
+            "cfnlint.template.transforms._language_extensions._ACCOUNT_ID", None
+        ):
+            cfn = Template(
+                filename="", template=self.template_obj, regions=["us-east-1"]
+            )
+            matches, template = language_extension(cfn)
+            self.assertListEqual(matches, [])
+            self.assertDictEqual(
+                template,
+                self.result,
+                template,
+            )
+
+
+class TestTransformFnIfWithFunctionCondition(TestCase):
+    """Test that Fn::If with a function in the condition position is not resolved"""
+
+    def setUp(self) -> None:
+        self.template_obj = convert_dict(
+            {
+                "Transform": ["AWS::LanguageExtensions"],
+                "Conditions": {
+                    "Fn::ForEach::CondLoop": [
+                        "Identifier",
+                        ["1"],
+                        {
+                            "Condition${Identifier}": {
+                                "Fn::Not": [{"Fn::Equals": ["-", "-"]}]
+                            }
+                        },
+                    ]
+                },
+                "Resources": {
+                    "Fn::ForEach::ResLoop": [
+                        "Identifier",
+                        ["1"],
+                        {
+                            "Resource${Identifier}": {
+                                "Type": "AWS::SSM::Parameter",
+                                "Properties": {
+                                    "Type": "String",
+                                    "Value": {
+                                        "Fn::If": [
+                                            {"Fn::Sub": "Condition${Identifier}"},
+                                            1,
+                                            2,
+                                        ]
+                                    },
+                                },
+                            }
+                        },
+                    ]
+                },
+            }
+        )
+
+    def test_transform(self):
+        with mock.patch(
+            "cfnlint.template.transforms._language_extensions._ACCOUNT_ID", None
+        ):
+            cfn = Template(
+                filename="", template=self.template_obj, regions=["us-east-1"]
+            )
+            matches, template = language_extension(cfn)
+            self.assertListEqual(matches, [])
+            # The Fn::Sub in the condition position should NOT be resolved
+            fn_if = template["Resources"]["Resource1"]["Properties"]["Value"]["Fn::If"]
+            self.assertIsInstance(fn_if[0], dict)
+            self.assertIn("Fn::Sub", fn_if[0])
+            # But the true/false branches should still be walked
+            self.assertEqual(fn_if[1], 1)
+            self.assertEqual(fn_if[2], 2)
+
+
+class TestTransformFnIfWithStringCondition(TestCase):
+    """Test Fn::If with a string condition name is resolved"""
+
+    def setUp(self) -> None:
+        self.template_obj = convert_dict(
+            {
+                "Transform": ["AWS::LanguageExtensions"],
+                "Conditions": {
+                    "Fn::ForEach::CondLoop": [
+                        "Identifier",
+                        ["1"],
+                        {
+                            "Condition${Identifier}": {
+                                "Fn::Not": [{"Fn::Equals": ["-", "-"]}]
+                            }
+                        },
+                    ]
+                },
+                "Resources": {
+                    "Fn::ForEach::ResLoop": [
+                        "Identifier",
+                        ["1"],
+                        {
+                            "Resource${Identifier}": {
+                                "Type": "AWS::SSM::Parameter",
+                                "Properties": {
+                                    "Type": "String",
+                                    "Value": {
+                                        "Fn::If": [
+                                            "Condition${Identifier}",
+                                            1,
+                                            2,
+                                        ]
+                                    },
+                                },
+                            }
+                        },
+                    ]
+                },
+            }
+        )
+
+    def test_transform(self):
+        with mock.patch(
+            "cfnlint.template.transforms._language_extensions._ACCOUNT_ID", None
+        ):
+            cfn = Template(
+                filename="", template=self.template_obj, regions=["us-east-1"]
+            )
+            matches, template = language_extension(cfn)
+            self.assertListEqual(matches, [])
+            fn_if = template["Resources"]["Resource1"]["Properties"]["Value"]["Fn::If"]
+            # String condition name should NOT be resolved — CloudFormation
+            # does not support variable substitution in Fn::If condition names
+            self.assertEqual(fn_if[0], "Condition${Identifier}")
+            self.assertEqual(fn_if[1], 1)
+            self.assertEqual(fn_if[2], 2)
+
+
+class TestTransformSubWithUnderscoreVariable(TestCase):
+    def setUp(self) -> None:
+        self.template_obj = convert_dict(
+            {
+                "Transforms": ["AWS::LanguageExtensions"],
+                "Resources": {
+                    "Bucket": {
+                        "Type": "AWS::S3::Bucket",
+                        "Properties": {
+                            "BucketName": {
+                                "Fn::Sub": [
+                                    "${Bucket_Arn}/*",
+                                    {
+                                        "Bucket_Arn": {
+                                            "Fn::GetAtt": [
+                                                "Bucket",
+                                                "Arn",
+                                            ]
+                                        }
+                                    },
+                                ]
+                            },
+                        },
+                    },
+                },
+            }
+        )
+        return super().setUp()
+
+    def test_transform(self):
+        cfn = Template(filename="", template=self.template_obj, regions=["us-east-1"])
+        matches, template = language_extension(cfn)
+        self.assertListEqual(matches, [])
+        bucket_name = template["Resources"]["Bucket"]["Properties"]["BucketName"]
+        self.assertIn("Fn::Sub", bucket_name)
+        self.assertEqual(bucket_name["Fn::Sub"][0], "${Bucket_Arn}/*")
+        self.assertIn("Bucket_Arn", bucket_name["Fn::Sub"][1])
+
+
+class TestTransformFindInMapDistinctObjects(TestCase):
+    """Regression test for issue #4697 (W1101 false positive).
+
+    Two Fn::FindInMap calls that resolve to the same mapping entry must not
+    share object identity in the transformed template. Shared identity looks
+    like a YAML alias to rule W1101 and produces a false positive.
+    """
+
+    def setUp(self) -> None:
+        self.template_obj = convert_dict(
+            {
+                "Transform": ["AWS::LanguageExtensions"],
+                "Mappings": {
+                    "FooMap": {
+                        "TopKey": {
+                            "SecondKey": [0],
+                        },
+                    },
+                },
+                "Resources": {
+                    "NoOp": {
+                        "Type": "AWS::CloudFormation::WaitConditionHandle",
+                        "Metadata": {
+                            "A": {"Fn::FindInMap": ["FooMap", "TopKey", "SecondKey"]},
+                            "B": {"Fn::FindInMap": ["FooMap", "TopKey", "SecondKey"]},
+                        },
+                    },
+                },
+            }
+        )
+        return super().setUp()
+
+    def test_transform(self):
+        cfn = Template(filename="", template=self.template_obj, regions=["us-east-1"])
+        matches, template = language_extension(cfn)
+        self.assertListEqual(matches, [])
+        metadata = template["Resources"]["NoOp"]["Metadata"]
+        # Both resolve to the mapping value [0] ...
+        self.assertEqual(metadata["A"], [0])
+        self.assertEqual(metadata["B"], [0])
+        # ... but must be independent objects, not a shared reference (which
+        # would trip W1101 and let a mutation of one bleed into the other).
+        self.assertIsNot(metadata["A"], metadata["B"])
+        self.assertIsNot(
+            metadata["A"],
+            template["Mappings"]["FooMap"]["TopKey"]["SecondKey"],
+        )
+
+
+class TestTransformRefDistinctObjects(TestCase):
+    """Regression test for the Fn::ForEach Ref variant of issue #4697.
+
+    Two Refs to the same loop parameter that resolves to a dict/list must not
+    share object identity in the transformed template, or W1101 reports a
+    YAML-alias false positive.
+    """
+
+    def setUp(self) -> None:
+        self.template_obj = convert_dict(
+            {
+                "Transform": ["AWS::LanguageExtensions"],
+                "Parameters": {
+                    "Names": {"Type": "CommaDelimitedList"},
+                },
+                "Resources": {
+                    "Fn::ForEach::Loop": [
+                        "Name",
+                        {"Ref": "Names"},
+                        {
+                            "Bucket${Name}": {
+                                "Type": "AWS::S3::Bucket",
+                                "Properties": {
+                                    "Tags": [
+                                        {"Key": "a", "Value": {"Ref": "Name"}},
+                                        {"Key": "b", "Value": {"Ref": "Name"}},
+                                    ]
+                                },
+                            }
+                        },
+                    ]
+                },
+            }
+        )
+        return super().setUp()
+
+    def test_transform(self):
+        cfn = Template(filename="", template=self.template_obj, regions=["us-east-1"])
+        matches, template = language_extension(cfn)
+        self.assertListEqual(matches, [])
+        buckets = [
+            r for r in template["Resources"].values() if r["Type"] == "AWS::S3::Bucket"
+        ]
+        self.assertTrue(buckets, "expected the ForEach to expand into buckets")
+        for bucket in buckets:
+            tags = bucket["Properties"]["Tags"]
+            # Both Values resolve to the same parameter ...
+            self.assertEqual(tags[0]["Value"], tags[1]["Value"])
+            # ... but must be independent objects, not a shared reference.
+            self.assertIsNot(tags[0]["Value"], tags[1]["Value"])
+
+
+class TestTransformNestedRefResolvesParameter(TestCase):
+    """Cover the dict-form Ref path where a Ref value resolves to a parameter.
+
+    ``{"Ref": {"Ref": "Ptr"}}`` walks the inner Ref to a string that is itself
+    a loop parameter name, so the outer Ref resolves to that parameter's value.
+    """
+
+    def setUp(self) -> None:
+        self.template_obj = convert_dict(
+            {
+                "Transform": ["AWS::LanguageExtensions"],
+                "Resources": {
+                    "Fn::ForEach::Outer": [
+                        "Ptr",
+                        ["Name"],
+                        {
+                            "Fn::ForEach::Inner": [
+                                "Name",
+                                ["hello"],
+                                {
+                                    "Res${Name}": {
+                                        "Type": "AWS::SNS::Topic",
+                                        "Properties": {
+                                            "TopicName": {"Ref": {"Ref": "Ptr"}}
+                                        },
+                                    }
+                                },
+                            ]
+                        },
+                    ]
+                },
+            }
+        )
+        return super().setUp()
+
+    def test_transform(self):
+        cfn = Template(filename="", template=self.template_obj, regions=["us-east-1"])
+        matches, template = language_extension(cfn)
+        self.assertListEqual(matches, [])
+        self.assertEqual(
+            template["Resources"]["Reshello"]["Properties"]["TopicName"],
+            "hello",
+        )

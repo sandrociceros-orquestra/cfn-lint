@@ -27,7 +27,7 @@ class TestYamlParse(BaseTestCase):
             },
             "generic_bad": {
                 "filename": "test/fixtures/templates/bad/generic.yaml",
-                "failures": 35,
+                "failures": 38,
             },
         }
 
@@ -40,10 +40,10 @@ class TestYamlParse(BaseTestCase):
             cfn = Template(filename, template, ["us-east-1"])
 
             matches = list(self.rules.run(filename, cfn, ConfigMixIn({})))
-            assert (
-                len(matches) == failures
-            ), "Expected {} failures, got {} on {}".format(
-                failures, len(matches), filename
+            assert len(matches) == failures, (
+                "Expected {} failures, got {} on {}".format(
+                    failures, len(matches), filename
+                )
             )
 
     def test_success_parse_stdin(self):
@@ -60,10 +60,10 @@ class TestYamlParse(BaseTestCase):
 
                 matches = []
                 matches.extend(self.rules.run(filename, cfn, ConfigMixIn({})))
-                assert (
-                    len(matches) == failures
-                ), "Expected {} failures, got {} on {}".format(
-                    failures, len(matches), values.get("filename")
+                assert len(matches) == failures, (
+                    "Expected {} failures, got {} on {}".format(
+                        failures, len(matches), values.get("filename")
+                    )
                 )
 
     def test_map_failure(self):
@@ -74,4 +74,48 @@ class TestYamlParse(BaseTestCase):
             cfnlint.decode.cfn_yaml.CfnParseError,
             cfnlint.decode.cfn_yaml.load,
             filename,
+        )
+
+    def test_yaml_merge(self):
+        raw_template = """
+        Resources:
+            Parameter1:
+                Type: AWS::SSM::Parameter
+                Properties: &ssm-parameters
+                    Type: String
+                    Value: 1
+
+            Parameter2:
+                Type: AWS::SSM::Parameter
+                Properties:
+                    <<: *ssm-parameters
+                    Value: 2
+        """
+
+        result = cfnlint.decode.cfn_yaml.loads(raw_template)
+
+        self.assertTrue(
+            result.get("Resources").get("Parameter2").get("Properties").using_merge
+        )
+
+        self.assertDictEqual(
+            result,
+            {
+                "Resources": {
+                    "Parameter1": {
+                        "Type": "AWS::SSM::Parameter",
+                        "Properties": {
+                            "Type": "String",
+                            "Value": 1,
+                        },
+                    },
+                    "Parameter2": {
+                        "Type": "AWS::SSM::Parameter",
+                        "Properties": {
+                            "Type": "String",
+                            "Value": 2,
+                        },
+                    },
+                }
+            },
         )

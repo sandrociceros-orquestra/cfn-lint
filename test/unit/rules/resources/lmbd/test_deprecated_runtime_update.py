@@ -4,6 +4,7 @@ SPDX-License-Identifier: MIT-0
 """
 
 from datetime import datetime
+from unittest.mock import patch
 
 import pytest
 
@@ -37,15 +38,13 @@ def rule():
         ),
         (
             "python3.7",
-            datetime(2025, 2, 28),
+            datetime(2027, 3, 3),
             [
                 ValidationError(
-                    (
-                        "Runtime 'python3.7' was deprecated on "
-                        "'2023-12-04'. Creation was disabled on "
-                        "'2024-01-09' and update on '2025-02-28'. "
-                        "Please consider updating to 'python3.12'"
-                    ),
+                    "Runtime 'python3.7' was deprecated on "
+                    "'2023-12-04'. Creation was disabled on "
+                    "'2024-01-09' and update on '2027-03-03'. "
+                    "Please consider updating to 'python3.14'",
                 )
             ],
         ),
@@ -55,18 +54,20 @@ def rule():
             datetime(2016, 10, 31),
             [
                 ValidationError(
-                    (
-                        "Runtime 'nodejs' was deprecated on "
-                        "'2016-10-31'. Creation was disabled on "
-                        "'2016-10-31' and update on '2016-10-31'. "
-                        "Please consider updating to 'nodejs20.x'"
-                    ),
+                    "Runtime 'nodejs' was deprecated on "
+                    "'2016-08-30'. Creation was disabled on "
+                    "'2016-09-30' and update on '2016-10-31'. "
+                    "Please consider updating to 'nodejs24.x'",
                 )
             ],
         ),
     ],
 )
 def test_lambda_runtime(instance, date, expected, rule, validator):
-    rule.current_date = date
-    errs = list(rule.validate(validator, "LambdaRuntime", instance, {}))
+    with patch(
+        "cfnlint.rules.resources.lmbd.DeprecatedRuntimeUpdate.datetime"
+    ) as mock_dt:
+        mock_dt.today.return_value = date
+        mock_dt.strptime = datetime.strptime
+        errs = list(rule.validate(validator, "LambdaRuntime", instance, {}))
     assert errs == expected, f"Expected {expected} got {errs}"

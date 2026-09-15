@@ -11,7 +11,7 @@ from cfnlint.jsonschema import ValidationError, Validator
 from cfnlint.rules.functions._BaseFn import BaseFn
 
 _all = {
-    "items": [
+    "prefixItems": [
         {"type": "string", "const": "resolve"},
         {"type": "string", "enum": ["ssm", "ssm-secure", "secretsmanager"]},
     ],
@@ -19,10 +19,10 @@ _all = {
 }
 
 _ssm = {
-    "items": [
+    "prefixItems": [
         {"type": "string", "const": "resolve"},
         {"type": "string", "enum": ["ssm", "ssm-secure"]},
-        {"type": "string", "pattern": "[a-zA-Z0-9_.-/]+"},
+        {"type": "string", "pattern": "[a-zA-Z0-9_.\\-/]+"},
         {"type": "string", "pattern": "\\d+"},
     ],
     "maxItems": 4,
@@ -30,7 +30,7 @@ _ssm = {
 }
 
 _secrets_manager = {
-    "items": [
+    "prefixItems": [
         {"type": "string", "const": "resolve"},
         {"type": "string", "const": "secretsmanager"},
         {"type": "string", "pattern": "[ -~]*"},  # secret-id
@@ -45,7 +45,7 @@ _secrets_manager = {
 }
 
 _secrets_manager_arn = {
-    "items": [
+    "prefixItems": [
         {"type": "string", "const": "resolve"},
         {"type": "string", "const": "secretsmanager"},
         {"type": "string", "const": "arn"},  # arn
@@ -77,6 +77,7 @@ class DynamicReference(BaseFn):
         super().__init__()
         self.child_rules = {
             "E1051": None,
+            "W1051": None,
             "E1027": None,
         }
 
@@ -125,9 +126,10 @@ class DynamicReference(BaseFn):
                     evolved = validator.evolve(schema=_secrets_manager_arn)
                 else:  # this is secrets manager
                     evolved = validator.evolve(schema=_secrets_manager)
-                rule = self.child_rules["E1051"]
-                if rule and hasattr(rule, "validate"):
-                    yield from rule.validate(validator, {}, v, schema)
+                for rule_id in ["E1051", "W1051"]:
+                    rule = self.child_rules[rule_id]
+                    if rule and hasattr(rule, "validate"):
+                        yield from rule.validate(validator, {}, v, schema)
 
             for err in evolved.iter_errors(parts):
                 yield self._clean_errors(err)

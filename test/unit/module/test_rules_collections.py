@@ -69,12 +69,12 @@ class TestRulesCollection(BaseTestCase):
         filename = "test/fixtures/templates/bad/generic.yaml"
         template = cfnlint.decode.cfn_yaml.load(filename)
         cfn = Template(filename, template, ["us-east-1"])
-        expected_err_count = 38
+        expected_err_count = 41
         matches = []
         matches.extend(self.rules.run(filename, cfn))
-        assert (
-            len(matches) == expected_err_count
-        ), "Expected {} failures, got {}".format(expected_err_count, len(matches))
+        assert len(matches) == expected_err_count, (
+            "Expected {} failures, got {}".format(expected_err_count, len(matches))
+        )
 
     def test_success_filtering_of_rules_default(self):
         """Test extend function"""
@@ -322,8 +322,7 @@ class TestRulesCollection(BaseTestCase):
                     filename="-",
                     rule=RuleError(),
                     message=(
-                        "Unknown exception while processing rule "
-                        "EYYYY: 'Bad template'"
+                        "Unknown exception while processing rule EYYYY: 'Bad template'"
                     ),
                 )
             ],

@@ -14,6 +14,7 @@ from cfnlint.helpers import ensure_list, is_types_compatible
 from cfnlint.jsonschema import ValidationError, ValidationResult, Validator
 from cfnlint.rules.functions._BaseFn import BaseFn, all_types
 from cfnlint.schema import PROVIDER_SCHEMA_MANAGER
+from cfnlint.schema.resolver import RefResolutionError
 
 
 class GetAtt(BaseFn):
@@ -29,32 +30,10 @@ class GetAtt(BaseFn):
     tags = ["functions", "getatt"]
 
     def __init__(self) -> None:
-        super().__init__("Fn::GetAtt", all_types)
-
-    def schema(self, validator, instance) -> dict[str, Any]:
-        resource_functions = []
-        if validator.context.transforms.has_language_extensions_transform():
-            resource_functions = ["Ref"]
-
-        return {
-            "type": ["string", "array"],
-            "minItems": 2,
-            "maxItems": 2,
-            "fn_items": [
-                {
-                    "functions": resource_functions,
-                    "schema": {
-                        "type": ["string"],
-                    },
-                },
-                {
-                    "functions": ["Ref"],
-                    "schema": {
-                        "type": ["string"],
-                    },
-                },
-            ],
-        }
+        super().__init__(
+            "Fn::GetAtt",
+            all_types,
+        )
 
     def _resolve_getatt(
         self,
@@ -65,10 +44,17 @@ class GetAtt(BaseFn):
         s: Any,
         paths: Sequence[Any],
     ) -> ValidationResult:
-
         for resource_name, resource_name_validator, _ in validator.resolve_value(
             value[0]
         ):
+            # Module sub-resources (e.g. MyModuleBucket for MyModule of
+            # type ::MODULE) can't be validated — skip them.
+            if any(
+                resource_name.startswith(m) and resource_name != m
+                for m in validator.context.module_names
+            ):
+                continue
+
             for err in self.fix_errors(
                 resource_name_validator.descend(
                     resource_name,
@@ -82,71 +68,114 @@ class GetAtt(BaseFn):
                 yield err
                 break
             else:
-                for attribute_name, _, _ in validator.resolve_value(value[1]):
-                    if all(
-                        not (bool(re.fullmatch(each, attribute_name)))
-                        for each in validator.context.resources[resource_name].get_atts
-                    ):
-                        err = ValidationError(
-                            (
+                t = validator.context.resources[resource_name].type
+                for (
+                    regions,
+                    schema,
+                ) in PROVIDER_SCHEMA_MANAGER.get_resource_schemas_by_regions(
+                    t, validator.context.regions
+                ):
+                    region = regions[0]
+                    for attribute_name, _, _ in validator.resolve_value(value[1]):
+                        if all(
+                            not (bool(re.fullmatch(each, attribute_name)))
+                            for each in validator.context.resources[
+                                resource_name
+                            ].get_atts(region)
+                        ):
+                            err = ValidationError(
                                 f"{attribute_name!r} is not one of "
-                                f"{validator.context.resources[resource_name].get_atts!r}"
-                            ),
-                            validator=self.fn.py,
-                            path=deque([self.fn.name, 1]),
-                        )
-                        if attribute_name != value[1]:
-                            err.message = (
-                                err.message + f" when {value[1]!r} is resolved"
+                                f"{validator.context.resources[resource_name].get_atts(region)!r}"
+                                f" in {regions!r}",
+                                validator=self.fn.py,
+                                path=deque([self.fn.name, 1]),
                             )
-                        yield err
-                        continue
+                            if attribute_name != value[1]:
+                                err.message = (
+                                    err.message + f" when {value[1]!r} is resolved"
+                                )
+                            yield err
+                            continue
 
-                    evolved = validator.evolve(schema=s)  # type: ignore
-                    evolved.validators = {  # type: ignore
-                        "type": validator.validators.get("type"),  # type: ignore
-                    }
+                        evolved = validator.evolve(schema=s)  # type: ignore
+                        evolved.validators = {  # type: ignore
+                            "type": validator.validators.get("type"),  # type: ignore
+                        }
 
-                    getatts = validator.cfn.get_valid_getatts()
-                    t = validator.context.resources[resource_name].type
-                    pointer = getatts.match(
-                        validator.context.regions[0], [resource_name, attribute_name]
-                    )
+                        getatts = validator.cfn.get_valid_getatts()
+                        t = validator.context.resources[resource_name].type
+                        pointer = getatts.match(region, [resource_name, attribute_name])
 
-                    for (
-                        _,
-                        schema,
-                    ) in PROVIDER_SCHEMA_MANAGER.get_resource_schemas_by_regions(
-                        t, validator.context.regions
-                    ):
-                        getatt_schema = schema.resolver.resolve_cfn_pointer(pointer)
+                        try:
+                            getatt_schema = schema.resolver.resolve_cfn_pointer(pointer)
+                        except RefResolutionError:
+                            continue
+                        # there is one exception we need to handle.  The resource type
+                        # has a mix of types the input is integer and the output
+                        # is string.  Since this is the only occurence
+                        # we are putting in an exception to it.
+                        if (
+                            validator.context.resources[resource_name].type
+                            == "AWS::DocDB::DBCluster"
+                            and attribute_name == "Port"
+                        ):
+                            getatt_schema = {"type": "string"}
+
                         if not getatt_schema.get("type") or not s.get("type"):
                             continue
 
                         schema_types = ensure_list(getatt_schema.get("type"))
-
                         types = ensure_list(s.get("type"))
 
-                        if is_types_compatible(
-                            types, schema_types, validator.context.strict_types
-                        ):
+                        # GetAtt type checking is strict.
+                        # It must match in all cases
+                        if any(t in ["boolean", "integer", "boolean"] for t in types):
+                            # this should be switched to validate the value of the
+                            # property if it was available
+                            continue
+                        if is_types_compatible(types, schema_types, True):
                             continue
 
                         reprs = ", ".join(repr(type) for type in types)
                         yield ValidationError(
-                            (f"{instance!r} is not of type {reprs}"),
+                            f"{instance!r} is not of type {reprs}",
                             validator=self.fn.py,
                             path=deque([self.fn.name]),
                             schema_path=deque(["type"]),
                         )
 
+    def _run_format_rule(
+        self, validator: Validator, s: Any, value: Any
+    ) -> ValidationResult:
+        rule = self.child_rules.get("E1040")
+        if rule is None:
+            return
+        keyword = validator.context.path.cfn_path_string
+        if keyword in rule.keywords or "*" in rule.keywords:  # type: ignore
+            yield from rule.validate(validator, s, value, s)  # type: ignore
+
+    def _resolve_sam_getatt(self, value: list[Any], validator: Validator) -> list[Any]:
+        # A GetAtt is split on the first "." into [logical id, attribute],
+        # either by the decoder (``!GetAtt Foo.Bar``) or below (JSON string
+        # form). SAM generated resources (a function's ``Version``/``Alias``,
+        # for example) are modeled as synthetic resources whose logical id
+        # itself contains a "." (``MyFn.Version``). Re-associate the longest
+        # logical-id prefix that matches a known resource so
+        # ``!GetAtt MyFn.Version.FunctionArn`` resolves against the synthetic
+        # ``MyFn.Version`` resource instead of the function itself.
+        if len(value) != 2 or not all(validator.is_type(v, "string") for v in value):
+            return value
+        parts = ".".join(value).split(".")
+        for i in range(len(parts) - 1, 1, -1):
+            name = ".".join(parts[:i])
+            if name in validator.context.resources:
+                return [name, ".".join(parts[i:])]
+        return value
+
     def fn_getatt(
         self, validator: Validator, s: Any, instance: Any, schema: Any
     ) -> ValidationResult:
         errs = list(super().validate(validator, s, instance, schema))
-        if errs:
-            yield from iter(errs)
-            return
 
         key, value = self.key_value(instance)
         paths: list[int | None] = [0, 1]
@@ -154,9 +183,39 @@ class GetAtt(BaseFn):
             paths = [None, None]
             value = value.split(".", 1)
 
+        if validator.is_type(value, "array"):
+            value = self._resolve_sam_getatt(value, validator)
+
+            # The string form (``{"Fn::GetAtt": "MyResource"}``) is split on
+            # the first ".". The schema's ``minItems``/``maxItems`` and the
+            # string ``pattern`` reject a missing attribute, but resolve it
+            # cleanly here too so a malformed value can never reach the
+            # ``value[1]`` indexing in ``_resolve_getatt`` and crash with an
+            # IndexError.
+            if len(value) < 2:
+                yield ValidationError(
+                    f"{instance!r} is not a valid GetAtt. It must specify a "
+                    "resource and an attribute name",
+                    validator=self.fn.py,
+                    path=deque([self.fn.name]),
+                )
+                return
+
+        if errs:
+            if any(getattr(e, "unknown", False) for e in errs):
+                format_errs = list(self._run_format_rule(validator, s, value))
+                if format_errs:
+                    yield from iter(format_errs)
+                else:
+                    for e in errs:
+                        yield e
+            else:
+                yield from iter(errs)
+            return
+
         errs = list(
             self._resolve_getatt(
-                self.validator(validator), key, value, instance, s, paths
+                self.validator(validator, schema), key, value, instance, s, paths
             )
         )
         if errs:

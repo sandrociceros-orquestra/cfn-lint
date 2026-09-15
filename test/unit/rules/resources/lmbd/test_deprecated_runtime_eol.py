@@ -4,6 +4,7 @@ SPDX-License-Identifier: MIT-0
 """
 
 from datetime import datetime
+from unittest.mock import patch
 
 import pytest
 
@@ -40,12 +41,10 @@ def rule():
             datetime(2023, 12, 4),
             [
                 ValidationError(
-                    (
-                        "Runtime 'python3.7' was deprecated on "
-                        "'2023-12-04'. Creation was disabled on "
-                        "'2024-01-09' and update on '2025-02-28'. "
-                        "Please consider updating to 'python3.12'"
-                    ),
+                    "Runtime 'python3.7' was deprecated on "
+                    "'2023-12-04'. Creation was disabled on "
+                    "'2024-01-09' and update on '2027-03-03'. "
+                    "Please consider updating to 'python3.14'",
                 )
             ],
         ),
@@ -64,6 +63,8 @@ def rule():
     ],
 )
 def test_lambda_runtime(instance, date, expected, rule, validator):
-    rule.current_date = date
-    errs = list(rule.validate(validator, "LambdaRuntime", instance, {}))
+    with patch("cfnlint.rules.resources.lmbd.DeprecatedRuntimeEol.datetime") as mock_dt:
+        mock_dt.today.return_value = date
+        mock_dt.strptime = datetime.strptime
+        errs = list(rule.validate(validator, "LambdaRuntime", instance, {}))
     assert errs == expected, f"Expected {expected} got {errs}"

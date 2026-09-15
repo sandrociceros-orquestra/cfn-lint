@@ -44,16 +44,14 @@ class Value(CfnLintJsonSchema):
                 conditions=validator.context.conditions.evolve(
                     conditions,
                 ),
+                strict_types=False,
             )
         )
 
         for err in validator.descend(
             value,
             schema={
-                "type": ["array", "string"],
-                "items": {
-                    "type": "string",
-                },
+                "type": ["string"],
             },
             path=key,
             property_path=key,

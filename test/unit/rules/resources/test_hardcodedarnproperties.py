@@ -19,6 +19,7 @@ class TestHardCodedArnProperties(BaseRuleTestCase):
         super(TestHardCodedArnProperties, self).setUp()
         self.collection.register(HardCodedArnProperties())
         self.success_templates = [
+            "test/fixtures/templates/good/resources/properties/hard_coded_arn_properties.yaml",
             "test/fixtures/templates/good/resources/properties/hard_coded_arn_properties_sam.yaml",
         ]
 
@@ -26,6 +27,26 @@ class TestHardCodedArnProperties(BaseRuleTestCase):
         """Test Positive"""
         # By default, a set of "correct" templates are checked
         self.helper_file_positive()
+
+    def test_file_positive_with_config(self):
+        self.helper_file_negative(
+            "test/fixtures/templates/good/resources/properties/hard_coded_arn_properties.yaml",
+            0,
+            ConfigMixIn(
+                [],
+                include_experimental=True,
+                include_checks=[
+                    "I",
+                ],
+                configure_rules={
+                    "I3042": {
+                        "partition": True,
+                        "region": True,
+                        "accountId": True,
+                    }
+                },
+            ),
+        )
 
     def test_file_negative_partition(self):
         self.helper_file_negative(

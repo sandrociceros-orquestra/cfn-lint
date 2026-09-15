@@ -29,10 +29,14 @@ class DynamicReferenceSecretsManagerPath(CloudFormationLintRule):
             ):
                 return
 
+            if (
+                validator.context.path.path[0] == "Parameters"
+                and validator.context.path.path[2] == "Default"
+            ):
+                return
+
         yield ValidationError(
-            (
-                f"Dynamic reference {instance!r} to secrets manager can only be "
-                "used in resource properties"
-            ),
+            f"Dynamic reference {instance!r} to secrets manager can only be "
+            "used in resource properties",
             rule=self,
         )

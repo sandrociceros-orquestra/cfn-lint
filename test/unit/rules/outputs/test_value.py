@@ -67,7 +67,6 @@ def path():
 
 @pytest.fixture
 def validator(cfn, context):
-
     ref = Ref()
     ref.child_rules["W1030"] = RefResolved()
 
@@ -101,50 +100,26 @@ def validator(cfn, context):
             {
                 "Value": 1.0,
             },
-            [
-                ValidationError(
-                    "1.0 is not of type 'array', 'string'",
-                    validator="type",
-                    schema_path=deque(["type"]),
-                    path=deque(["Value"]),
-                    rule=Value(),
-                )
-            ],
+            [],
         ),
         (
             {
                 "Value": 1,
             },
-            [
-                ValidationError(
-                    "1 is not of type 'array', 'string'",
-                    validator="type",
-                    schema_path=deque(["type"]),
-                    path=deque(["Value"]),
-                    rule=Value(),
-                )
-            ],
+            [],
         ),
         (
             {"Value": True},
-            [
-                ValidationError(
-                    "True is not of type 'array', 'string'",
-                    validator="type",
-                    schema_path=deque(["type"]),
-                    path=deque(["Value"]),
-                    rule=Value(),
-                )
-            ],
+            [],
         ),
         (
             {"Value": [{}]},
             [
                 ValidationError(
-                    "{} is not of type 'string'",
+                    "[{}] is not of type 'string'",
                     validator="type",
-                    schema_path=deque(["items", "type"]),
-                    path=deque(["Value", 0]),
+                    schema_path=deque(["type"]),
+                    path=deque(["Value"]),
                     rule=Value(),
                 )
             ],
@@ -153,7 +128,7 @@ def validator(cfn, context):
             {"Value": {"foo": "bar"}},
             [
                 ValidationError(
-                    "{'foo': 'bar'} is not of type 'array', 'string'",
+                    "{'foo': 'bar'} is not of type 'string'",
                     validator="type",
                     schema_path=deque(["type"]),
                     path=deque(["Value"]),
@@ -167,10 +142,8 @@ def validator(cfn, context):
             },
             [
                 ValidationError(
-                    (
-                        "The output value {'Fn::ImportValue': 'test-stack-value'} "
-                        "is an import from another output"
-                    ),
+                    "The output value {'Fn::ImportValue': 'test-stack-value'} "
+                    "is an import from another output",
                     validator="fn_importvalue",
                     schema_path=deque(["fn_importvalue"]),
                     path=deque(["Value", "Fn::ImportValue"]),
@@ -202,14 +175,31 @@ def validator(cfn, context):
             },
             [
                 ValidationError(
-                    (
-                        "{'Ref': 'badAdditionalVpcCidr'} does not match "
-                        "'^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\\\/([0-9]|[1-2][0-9]|3[0-2]))$'"
-                        " when 'Ref' is resolved"
-                    ),
+                    "{'Ref': 'badAdditionalVpcCidr'} does not match"
+                    " '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\\\.)"
+                    "{3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])"
+                    "(\\\\/([0-9]|[1-2][0-9]|3[0-2]))$'"
+                    " when 'Ref' is resolved",
                     validator="ref",
                     schema_path=deque(
-                        ["fn_join", "fn_items", "fn_cidr", "fn_items", "ref", "pattern"]
+                        [
+                            "fn_join",
+                            "cfnContext",
+                            "schema",
+                            "prefixItems",
+                            1,
+                            "cfnContext",
+                            "schema",
+                            "fn_cidr",
+                            "cfnContext",
+                            "schema",
+                            "prefixItems",
+                            0,
+                            "cfnContext",
+                            "schema",
+                            "ref",
+                            "pattern",
+                        ]
                     ),
                     path=deque(["Value", "Fn::Join", 1, "Fn::Cidr", 0, "Ref"]),
                     rule=RefResolved(),
@@ -221,5 +211,4 @@ def validator(cfn, context):
 def test_output_value(input, expected, validator):
     rule = Value()
     results = list(rule.validate(validator, {}, input, {}))
-
     assert results == expected, f"Expected {expected} results, got {results}"

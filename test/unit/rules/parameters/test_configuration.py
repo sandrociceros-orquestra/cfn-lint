@@ -93,11 +93,9 @@ def context(cfn):
             },
             [
                 ValidationError(
-                    (
-                        "'AllowedPattern' is not one of ['AllowedValues', "
-                        "'ConstraintDescription', 'Default', 'Description', "
-                        "'MaxValue', 'MinValue', 'NoEcho', 'Type']"
-                    ),
+                    "'AllowedPattern' is not one of ['AllowedValues', "
+                    "'ConstraintDescription', 'Default', 'Description', "
+                    "'MaxValue', 'MinValue', 'NoEcho', 'Type']",
                     validator="enum",
                     schema_path=deque(
                         [
@@ -123,12 +121,10 @@ def context(cfn):
             },
             [
                 ValidationError(
-                    (
-                        "'MinValue' is not one of ['AllowedPattern', "
-                        "'AllowedValues', 'ConstraintDescription', "
-                        "'Default', 'Description', 'MaxLength', "
-                        "'MinLength', 'NoEcho', 'Type']"
-                    ),
+                    "'MinValue' is not one of ['AllowedPattern', "
+                    "'AllowedValues', 'ConstraintDescription', "
+                    "'Default', 'Description', 'MaxLength', "
+                    "'MinLength', 'NoEcho', 'Type']",
                     validator="enum",
                     schema_path=deque(
                         [
@@ -165,20 +161,48 @@ def context(cfn):
         (
             "Long key name",
             {
-                "a"
-                * 256: {
+                "a" * 256: {
                     "Type": "String",
                 }
             },
             [
                 ValidationError(
-                    f"{'a'*256!r} is longer than 255",
+                    "expected maximum length: 255, found: 256",
                     validator="maxLength",
                     schema_path=deque(["propertyNames", "maxLength"]),
                     rule=None,  # none becuase we don't load child rule
                     path=deque(["a" * 256]),
                 )
             ],
+        ),
+        (
+            "Unsupported SSM parameter type accepted",
+            {
+                "PrefixList": {
+                    "Type": "AWS::SSM::Parameter::Value<AWS::EC2::PrefixList::Id>",
+                }
+            },
+            [],
+        ),
+        (
+            "Arbitrary SSM parameter type accepted",
+            {
+                "Arbitrary": {
+                    "Type": (
+                        "AWS::SSM::Parameter::Value<AWS::FakeService::FakeResource>"
+                    ),
+                }
+            },
+            [],
+        ),
+        (
+            "Arbitrary List type accepted",
+            {
+                "ArbitraryList": {
+                    "Type": "List<AWS::FakeService::FakeResource>",
+                }
+            },
+            [],
         ),
     ],
 )

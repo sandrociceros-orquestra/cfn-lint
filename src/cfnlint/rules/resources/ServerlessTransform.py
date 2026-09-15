@@ -31,14 +31,12 @@ class ServerlessTransform(CfnLintKeyword):
         if not validator.is_type(instance, "string"):
             return
 
-        if validator.context.transforms.has_sam_transform():
+        if validator.cfn.has_serverless_transform():
             return
 
         if instance.startswith("AWS::Serverless::"):
             yield ValidationError(
-                (
-                    f"{instance!r} type used without the "
-                    f"serverless transform {TRANSFORM_SAM!r}"
-                ),
+                f"{instance!r} type used without the "
+                f"serverless transform {TRANSFORM_SAM!r}",
                 rule=self,
             )

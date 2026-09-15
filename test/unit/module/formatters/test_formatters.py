@@ -7,6 +7,7 @@ import json
 import sys
 from pathlib import Path
 from test.testlib.testcase import BaseTestCase
+from unittest.mock import patch
 
 import defusedxml.ElementTree as ET
 
@@ -39,6 +40,7 @@ class TestFormatters(BaseTestCase):
         super().setUp()
         self.rules = Rules.create_from_directory(cfnlint.config._DEFAULT_RULESDIR)
         self.filename = str(Path("test/fixtures/templates/bad/formatters.yaml"))
+        self.sarif_schema = str(Path("test/fixtures/schemas/sarif/schema-2.1.0.json"))
         self.config = ConfigMixIn(
             cli_args=[
                 "--include-checks",
@@ -132,10 +134,8 @@ class TestFormatters(BaseTestCase):
             # ruff: noqa: E501
             self.assertEqual(
                 a_results[i],
-                (
-                    f"{self.results[i].rule.id}:"
-                    f" {self.results[i].rule.shortdesc} {self.results[i].filename}:{self.results[i].linenumber}"
-                ),
+                f"{self.results[i].rule.id}:"
+                f" {self.results[i].rule.shortdesc} {self.results[i].filename}:{self.results[i].linenumber}",
             )
 
     def test_parseable_formatter(self):
@@ -164,54 +164,58 @@ class TestFormatters(BaseTestCase):
             self.assertEqual(results[0], f"\x1b[4m{self.filename}\x1b[0m")
             self.assertEqual(
                 results[1],
-                (
-                    f"\x1b[0m{self.results[2].linenumber}:{self.results[2].columnnumber}:"
-                    f"               \x1b[0m\x1b[31m{self.results[2].rule.id}    "
-                    f" \x1b[0m{self.results[2].message}"
-                ),
+                f"\x1b[0m{self.results[2].linenumber}:{self.results[2].columnnumber}:"
+                f"               \x1b[0m\x1b[31m{self.results[2].rule.id}    "
+                f" \x1b[0m{self.results[2].message}",
             )
             self.assertEqual(
                 results[2],
-                (
-                    f"\x1b[0m{self.results[1].linenumber}:{self.results[1].columnnumber}:"
-                    f"                \x1b[0m\x1b[33m{self.results[1].rule.id}    "
-                    f" \x1b[0m{self.results[1].message}"
-                ),
+                f"\x1b[0m{self.results[1].linenumber}:{self.results[1].columnnumber}:"
+                f"                \x1b[0m\x1b[33m{self.results[1].rule.id}    "
+                f" \x1b[0m{self.results[1].message}",
             )
             self.assertEqual(
                 results[3],
-                (
-                    f"\x1b[0m{self.results[0].linenumber}:{self.results[0].columnnumber}:"
-                    f"                \x1b[0m\x1b[34m{self.results[0].rule.id}    "
-                    f" \x1b[0m{self.results[0].message}"
-                ),
+                f"\x1b[0m{self.results[0].linenumber}:{self.results[0].columnnumber}:"
+                f"                \x1b[0m\x1b[34m{self.results[0].rule.id}    "
+                f" \x1b[0m{self.results[0].message}",
             )
         else:
             # Check the errors
             self.assertEqual(results[0], self.filename)
             self.assertEqual(
                 results[1],
-                (
-                    f"{self.results[2].linenumber}:{self.results[2].columnnumber}:     "
-                    f"          {self.results[2].rule.id}     {self.results[2].message}"
-                ),
+                f"{self.results[2].linenumber}:{self.results[2].columnnumber}:     "
+                f"          {self.results[2].rule.id}     {self.results[2].message}",
             )
             self.assertEqual(
                 results[2],
-                (
-                    f"{self.results[1].linenumber}:{self.results[1].columnnumber}:     "
-                    f"           {self.results[1].rule.id}    "
-                    f" {self.results[1].message}"
-                ),
+                f"{self.results[1].linenumber}:{self.results[1].columnnumber}:     "
+                f"           {self.results[1].rule.id}    "
+                f" {self.results[1].message}",
             )
             self.assertEqual(
                 results[3],
-                (
-                    f"{self.results[0].linenumber}:{self.results[0].columnnumber}:     "
-                    f"           {self.results[0].rule.id}    "
-                    f" {self.results[0].message}"
-                ),
+                f"{self.results[0].linenumber}:{self.results[0].columnnumber}:     "
+                f"           {self.results[0].rule.id}    "
+                f" {self.results[0].message}",
             )
+
+    @patch("sys.stdin.isatty", return_va=True)
+    def test_pretty_formatter_pipe(self, isatty_mock):
+        """Test pretty formatter"""
+        isatty_mock.return_value = True
+        formatter = PrettyFormatter()
+        self.config.cli_args.templates = None
+        results = formatter.print_matches(
+            self.results, rules=self.rules, config=self.config
+        ).splitlines()
+
+        if sys.stdout.isatty():
+            self.assertIn("Cfn-lint scanned 1 templates", results[5])
+        else:
+            # Check the errors
+            self.assertIn("Cfn-lint scanned 1 templates", results[5])
 
     def test_json_formatter(self):
         """Test JSON formatter"""
@@ -295,8 +299,10 @@ class TestFormatters(BaseTestCase):
             formatter.print_matches(self.results, self.rules, self.config)
         )
 
+        with open(self.sarif_schema, encoding="utf-8") as f:
+            schema = json.load(f)
         # Fetch the SARIF schema
-        schema = json.loads(cfnlint.helpers.get_url_content(sarif["$schema"], False))
+        # schema = json.loads(cfnlint.helpers.get_url_content(sarif["$schema"], False))
         validator = StandardValidator(schema=schema)
         validator.validate(sarif)
 

@@ -52,6 +52,10 @@ _enum_ is used to restrict a value to a fixed set of values. [JSON Schema docs](
 
 _pattern_ keyword is used to validate a string against a regular expression. [JSON Schema docs](https://json-schema.org/understanding-json-schema/reference/string#regexp)
 
+##### enumCaseInsensitive
+
+_enumCaseInsensitive_ is similar to _enum_ but performs case-insensitive matching for string values. This is useful for validating against values where case doesn't matter, such as certain AWS service names or property values.
+
 #### length
 
 _minLength_ and _maxLength_ are used to are used to constrain the size of a string. [JSON Schema docs](https://json-schema.org/understanding-json-schema/reference/string#length)
@@ -69,9 +73,31 @@ _exclusiveMinimum_ and _exclusiveMaximum_ is used to define the exlusive range f
 
 _minItems_ and _maxItems_ is used to provide the inclusive length of an array.
 
+##### maxUniqueItems
+
+_maxUniqueItems_ validates the maximum number of unique items in an array. Unlike _maxItems_ which counts all items including duplicates, _maxUniqueItems_ counts only distinct values. This is used when the API deduplicates array entries (e.g. CloudWatch Alarm actions).
+
+```json
+{
+  "maxUniqueItems": 5
+}
+```
+
 ##### prefixItems
 
 _prefixItems_ is similar to the definition of [prefixItems](https://json-schema.org/understanding-json-schema/reference/array#tupleValidation) but doesn't actually do the prefix. The current resource schema doesn't support [items](https://json-schema.org/understanding-json-schema/reference/array#items) being an array. We use `prefixItems` to validate array items where ordering matters.
+
+##### uniqueKeys
+
+_uniqueKeys_ validates that array items have unique values for specified keys. This is useful for ensuring that collections of objects don't contain duplicates based on specific identifying properties.
+
+```json
+{
+  "uniqueKeys": ["id", "name"]
+}
+```
+
+This ensures that no two objects in the array have the same combination of values for the specified keys.
 
 #### Objects
 
@@ -82,6 +108,49 @@ _properties_ provides the key names and a value that represents the schema to va
 ##### required
 
 _required_ defines a list of required properties. [JSON Schema docs](https://json-schema.org/understanding-json-schema/reference/object#required)
+
+##### requiredOr
+
+_requiredOr_ is used to define when at least one property from a set properties is required.
+
+On the following defined object
+
+```json
+{
+  "properties": {
+    "a": true,
+    "b": true,
+    "c": true
+  },
+  "additionalProperties": false
+}
+```
+
+The cfn-lint schema
+
+```json
+{
+  "requiredOr": ["a", "b", "c"]
+}
+```
+
+is equivalent to the JSON schema
+
+```json
+{
+  "anyOf": [
+    {
+      "required": ["a"]
+    },
+    {
+      "required": ["b"]
+    },
+    {
+      "required": ["c"]
+    }
+  ]
+}
+```
 
 ##### requiredXor
 
@@ -126,59 +195,19 @@ is equivalent to the JSON schema
 }
 ```
 
-##### propertiesNand
-
-_propertiesNand_ is used to define when none or only one property from a set properties can be defined.
-
-On the following defined object
-
-```json
-{
-  "properties": {
-    "a": true,
-    "b": true,
-    "c": true
-  },
-  "additionalProperties": false
-}
-```
-
-The cfn-lint schema
-
-```json
-{
-  "propertiesNand": ["a", "b", "c"]
-}
-```
-
-is equivalent to the JSON schema
-
-```json
-{
-  "oneOf": [
-    {
-      "required": ["a"]
-    },
-    {
-      "required": ["b"]
-    },
-    {
-      "required": ["c"]
-    },
-    {
-      "properties": {
-        "a": false,
-        "b": false,
-        "c": false
-      }
-    }
-  ]
-}
-```
-
 ##### dependentRequired
 
-_dependentRequired_ has been backported into cfn-lint. You can read the definition [here](https://json-schema.org/understanding-json-schema/reference/conditionals#dependentRequired)
+_dependentRequired_ has been backported into cfn-lint from JSON Schema 2019-09. It specifies that certain properties must be present if a given property is present.
+
+```json
+{
+  "dependentRequired": {
+    "credit_card": ["billing_address"]
+  }
+}
+```
+
+This means that if the `credit_card` property is present, the `billing_address` property must also be present. You can read more about this keyword [here](https://json-schema.org/understanding-json-schema/reference/conditionals#dependentRequired).
 
 ##### dependentExcluded
 
@@ -221,3 +250,218 @@ is equivalent to the JSON schema
   }
 }
 ```
+
+### CloudFormation Context-Aware Validation
+
+To support CloudFormation's unique validation requirements, cfn-lint extends JSON Schema with context-aware validation capabilities.
+
+#### cfnContext
+
+_cfnContext_ provides a way to specify which CloudFormation intrinsic functions are allowed in a specific context and define the schema for validating the value.
+
+```json
+{
+  "cfnContext": {
+    "functions": ["Ref", "Fn::GetAtt"],
+    "schema": {
+      "type": "string"
+    }
+  }
+}
+```
+
+The `functions` array specifies which intrinsic functions are allowed in this context. The `schema` object defines the validation rules for the value.
+
+For example, to specify that only `Ref` is allowed in a parameter reference:
+
+```json
+{
+  "cfnContext": {
+    "functions": ["Ref"],
+    "schema": {
+      "type": "string"
+    }
+  }
+}
+```
+
+#### dynamicValidation
+
+_dynamicValidation_ enables validation against dynamic sources from the template context, such as parameter names, condition names, or resource IDs.
+
+```json
+{
+  "dynamicValidation": {
+    "context": "conditions"
+  }
+}
+```
+
+This validates that the value exists in the specified context. Available contexts include:
+- `conditions`: Condition names defined in the template
+- `mappings`: Mapping names defined in the template
+- `refs`: CloudFormation valid refs
+
+_dynamicValidation_ can also check if a specific transform is present in the template:
+
+```json
+{
+  "dynamicValidation": {
+    "transformCheck": "AWS::LanguageExtensions"
+  }
+}
+```
+
+This will validate that the specified transform is included in the template.
+
+_dynamicValidation_ can also validate based on the current path in the template:
+
+```json
+{
+  "dynamicValidation": {
+    "pathCheck": "Resources/MyResource/Properties"
+  }
+}
+```
+
+This checks if the current path in the template matches the specified pattern.
+
+These context-aware validation features allow for more precise validation of CloudFormation templates, ensuring that references are valid and that template elements are used in the appropriate contexts.
+
+#### cfnGather
+
+_cfnGather_ enables cross-resource validation by gathering properties from related resources and validating them together. This replaces complex Python rule logic with declarative JSON Schema.
+
+A cfnGather schema has two parts: `gather` defines what data to collect, and `schema` defines the validation to run against the collected data.
+
+##### Gathering local properties
+
+Local entries collect properties from the current resource:
+
+```json
+{
+  "cfnGather": {
+    "gather": {
+      "service": {
+        "properties": {
+          "LaunchType": "/LaunchType"
+        }
+      }
+    },
+    "schema": {
+      "properties": {
+        "service": {
+          "properties": {
+            "LaunchType": {
+              "const": "FARGATE"
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+##### Gathering remote properties via references
+
+Remote entries follow a `Ref` or `GetAtt` to another resource and collect its properties. Use `reference` to specify which property contains the reference, and optionally `filter` to restrict by resource type:
+
+```json
+{
+  "cfnGather": {
+    "gather": {
+      "taskDef": {
+        "reference": "/TaskDefinition",
+        "filter": {
+          "type": "AWS::ECS::TaskDefinition"
+        },
+        "properties": {
+          "NetworkMode": {
+            "path": "/NetworkMode",
+            "default": null
+          },
+          "RequiresCompatibilities": "/RequiresCompatibilities"
+        }
+      }
+    },
+    "schema": {
+      "properties": {
+        "taskDef": {
+          "properties": {
+            "NetworkMode": {
+              "const": "awsvpc"
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+Property specifications can be a simple string (the path) or an object with `path` and `default` keys. The `default` value is used when the property doesn't exist on the remote resource.
+
+##### Using $data references
+
+The `schema` section supports `$data` references to compare gathered values against each other. A `$data` reference is an absolute JSON pointer into the gathered object:
+
+```json
+{
+  "cfnGather": {
+    "gather": {
+      "stage": {
+        "properties": {
+          "RestApiId": "/RestApiId"
+        }
+      },
+      "deployment": {
+        "reference": "/DeploymentId",
+        "filter": {
+          "type": "AWS::ApiGateway::Deployment"
+        },
+        "properties": {
+          "RestApiId": "/RestApiId"
+        }
+      }
+    },
+    "schema": {
+      "properties": {
+        "deployment": {
+          "properties": {
+            "RestApiId": {
+              "const": {
+                "$data": "/stage/RestApiId"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+##### Using $lookup references
+
+`$lookup` resolves a `$data` reference and maps it through a lookup table:
+
+```json
+{
+  "const": {
+    "$lookup": {
+      "key": {
+        "$data": "/target/resourceType"
+      },
+      "map": {
+        "AWS::S3::Bucket": "s3.amazonaws.com",
+        "AWS::SNS::Topic": "sns.amazonaws.com"
+      }
+    }
+  }
+}
+```
+
+##### Error path remapping
+
+Errors from the `schema` validation are automatically remapped to point at the original resource properties in the template, so users see errors at the correct location.

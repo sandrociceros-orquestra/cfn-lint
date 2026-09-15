@@ -37,9 +37,57 @@ def template():
     [
         (
             "Valid Fn::Select with array",
-            {"Fn::Select": [1, ["bar"]]},
+            {"Fn::Select": [0, ["bar"]]},
             {"type": "string"},
             [],
+        ),
+        (
+            "Invalid Fn::Select with an out of bounds index",
+            {"Fn::Select": [1, ["bar"]]},
+            {"type": "string"},
+            [
+                ValidationError(
+                    "1 is greater than the maximum of 0",
+                    path=deque(["Fn::Select", 0]),
+                    schema_path=deque(
+                        [
+                            "cfnContext",
+                            "schema",
+                            "else",
+                            "prefixItems",
+                            0,
+                            "cfnContext",
+                            "schema",
+                            "maximum",
+                        ]
+                    ),
+                    validator="fn_select",
+                ),
+            ],
+        ),
+        (
+            "Invalid Fn::Select with an out of bounds index and functions",
+            {"Fn::Select": [5, [{"Ref": "AWS::Region"}, "bar"]]},
+            {"type": "string"},
+            [
+                ValidationError(
+                    "5 is greater than the maximum of 1",
+                    path=deque(["Fn::Select", 0]),
+                    schema_path=deque(
+                        [
+                            "cfnContext",
+                            "schema",
+                            "else",
+                            "prefixItems",
+                            0,
+                            "cfnContext",
+                            "schema",
+                            "maximum",
+                        ]
+                    ),
+                    validator="fn_select",
+                ),
+            ],
         ),
         (
             "Invalid Fn::Select is NOT a array",
@@ -49,20 +97,55 @@ def template():
                 ValidationError(
                     "'foo' is not of type 'array'",
                     path=deque(["Fn::Select"]),
-                    schema_path=deque(["type"]),
+                    schema_path=deque(["cfnContext", "schema", "type"]),
                     validator="fn_select",
                 ),
             ],
         ),
         (
-            "Invalid Fn::Select using an invalid function for index",
-            {"Fn::Select": [{"Fn::GetAtt": "MyResource"}, ["bar"]]},
+            "Invalid Fn::Select with a negative index",
+            {"Fn::Select": [-1, ["foo", "bar"]]},
             {"type": "string"},
             [
                 ValidationError(
-                    "{'Fn::GetAtt': 'MyResource'} is not of type 'integer'",
+                    "-1 is less than the minimum of 0",
                     path=deque(["Fn::Select", 0]),
-                    schema_path=deque(["fn_items", "type"]),
+                    schema_path=deque(
+                        [
+                            "cfnContext",
+                            "schema",
+                            "else",
+                            "prefixItems",
+                            0,
+                            "cfnContext",
+                            "schema",
+                            "minimum",
+                        ]
+                    ),
+                    validator="fn_select",
+                ),
+            ],
+        ),
+        (
+            "Invalid Fn::Length using an invalid function for index",
+            {"Fn::Select": [{"Fn::Length": [1, 2]}, ["bar"]]},
+            {"type": "string"},
+            [
+                ValidationError(
+                    "{'Fn::Length': [1, 2]} is not of type 'integer'",
+                    path=deque(["Fn::Select", 0]),
+                    schema_path=deque(
+                        [
+                            "cfnContext",
+                            "schema",
+                            "else",
+                            "prefixItems",
+                            0,
+                            "cfnContext",
+                            "schema",
+                            "type",
+                        ]
+                    ),
                     validator="fn_select",
                 ),
             ],
@@ -75,7 +158,18 @@ def template():
                 ValidationError(
                     "{'foo': 'bar'} is not of type 'array'",
                     path=deque(["Fn::Select", 1]),
-                    schema_path=deque(["fn_items", "type"]),
+                    schema_path=deque(
+                        [
+                            "cfnContext",
+                            "schema",
+                            "else",
+                            "prefixItems",
+                            1,
+                            "cfnContext",
+                            "schema",
+                            "type",
+                        ]
+                    ),
                     validator="fn_select",
                 ),
             ],
@@ -88,7 +182,18 @@ def template():
                 ValidationError(
                     "{'Fn::Join': ['-', 'bar']} is not of type 'array'",
                     path=deque(["Fn::Select", 1]),
-                    schema_path=deque(["fn_items", "type"]),
+                    schema_path=deque(
+                        [
+                            "cfnContext",
+                            "schema",
+                            "else",
+                            "prefixItems",
+                            1,
+                            "cfnContext",
+                            "schema",
+                            "type",
+                        ]
+                    ),
                     validator="fn_select",
                 ),
             ],
@@ -108,15 +213,21 @@ def template():
         (
             "Invalid Fn::Select with an invalid function",
             {"Fn::Select": [1, ["foo", {"foo": "bar"}]]},
-            {"type": "string"},
+            {"type": "string", "enum": ["foo"]},
             [
                 ValidationError(
-                    (
-                        "{'Fn::Select': [1, ['foo', {'foo': 'bar'}]]} is not of type "
-                        "'string' when 'Fn::Select' is resolved"
-                    ),
+                    "{'Fn::Select': [1, ['foo', {'foo': 'bar'}]]} is not of type "
+                    "'string' when 'Fn::Select' is resolved",
                     path=deque(["Fn::Select"]),
                     schema_path=deque(["type"]),
+                    validator="fn_select",
+                    rule=SelectResolved(),
+                ),
+                ValidationError(
+                    "{'Fn::Select': [1, ['foo', {'foo': 'bar'}]]} is not one of "
+                    "['foo'] when 'Fn::Select' is resolved",
+                    path=deque(["Fn::Select"]),
+                    schema_path=deque(["enum"]),
                     validator="fn_select",
                     rule=SelectResolved(),
                 ),

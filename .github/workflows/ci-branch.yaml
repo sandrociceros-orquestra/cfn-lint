@@ -2,37 +2,43 @@ name: "[CI] Test branch"
 
 on: [push]
 
+permissions:
+  contents: read
+
 jobs:
   unitlint:
+    if: github.repository == 'aws-cloudformation/cfn-lint' && github.ref_name == 'main'
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python: [ "3.8", "3.9", "3.10", "3.11", "3.12" ]
+        python: ["3.10", "3.11", "3.12", "3.13", "3.14"]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python }}
-      - name: Install Tox and any other packages
-        run: pip install tox
-      - name: Run Lint
+      - name: Install dependencies
         run: |
-          pip install pre-commit
-          pre-commit run --all-files
+          pip install tox tox-gh
+          pip install -e .
+      - name: Download schemas
+        run: cfn-lint --update-specs --force
       - name: Run Tox
-        run: |
-          tox -e py -- -m "data or not data"
-      - uses: codecov/codecov-action@v4.1.0
+        run: tox
+        env:
+          TOX_GH_MAJOR_MINOR: ${{ matrix.python }}
+          PYTEST_ADDOPTS: '-m "data or (not data)"'
+      - uses: codecov/codecov-action@v7
         if: matrix.os == 'ubuntu-latest'
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          file: ./coverage.xml # optional
+          file: ./coverage.xml
           name: py${{ matrix.python }}-${{ matrix.os }}
-          flags: unittests # optional
-          fail_ci_if_error: true # optional (default = false)
+          flags: unittests
+          fail_ci_if_error: true
   integration:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -40,14 +46,16 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python: ["3.10"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python }}
       - name: Install cfn-lint
         run: |
           pip3 install -e .
+      - name: Download schemas
+        run: cfn-lint --update-specs --force
       - name: Run cfn-lint
         run: |
           cfn-lint test/fixtures/templates/good/generic.yaml
@@ -59,9 +67,9 @@ jobs:
         os: [ubuntu-latest]
         python: ["3.10"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python }}
       - name: Install cfn-lint
@@ -69,7 +77,7 @@ jobs:
           pip3 install -e .
           pip install --upgrade pip
           pip install --upgrade setuptools
-      - uses: pypa/gh-action-pip-audit@v1.0.8
+      - uses: pypa/gh-action-pip-audit@v1.1.0
         with:
           ignore-vulns: |
             GHSA-r9hx-vwmv-q579

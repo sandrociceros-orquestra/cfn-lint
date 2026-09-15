@@ -37,23 +37,21 @@ def template():
     [
         (
             "Valid Ref to a paraemter",
-            {"Ref": "MyImageId"},
+            "MyImageId",
             [],
         ),
         (
             "Valid Ref to a Pseudo-Parameter",
-            {"Ref": "AWS::Region"},
+            "AWS::Region",
             [],
         ),
         (
             "Invalid Ref to a parameter of the wrong type",
-            {"Ref": "MyString"},
+            "MyString",
             [
                 ValidationError(
-                    (
-                        "'String' is not one of ['AWS::EC2::Image::Id'"
-                        ", 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>']"
-                    ),
+                    "'String' is not one of ['AWS::EC2::Image::Id'"
+                    ", 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>']",
                     path=deque([]),
                     schema_path=deque(["enum"]),
                     validator="enum",

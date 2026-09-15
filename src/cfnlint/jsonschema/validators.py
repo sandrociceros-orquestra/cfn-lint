@@ -25,7 +25,7 @@ from dataclasses import dataclass, field, fields
 from typing import Any, Callable
 
 from cfnlint.conditions import UnknownSatisfisfaction
-from cfnlint.context import Context, create_context_for_template
+from cfnlint.context import Context
 from cfnlint.helpers import is_function
 from cfnlint.jsonschema import _keywords, _keywords_cfn, _resolvers_cfn
 from cfnlint.jsonschema._filter import FunctionFilter
@@ -92,7 +92,7 @@ def create(
 
         def __post_init__(self):
             if self.context is None:
-                self.context = create_context_for_template(self.cfn)
+                self.context = self.cfn.context.evolve()
             if self.resolver is None:
                 self.resolver = RefResolver.from_schema(
                     schema=self.schema,
@@ -155,7 +155,8 @@ def create(
                     fn_resolved_validator,
                     fn_resolved_err,
                 ) in self.fn_resolvers[key](
-                    value_resolved_validator, value_resolved_value  # type: ignore
+                    value_resolved_validator,  # type: ignore
+                    value_resolved_value,
                 ):
                     if fn_resolved_err:
                         fn_resolved_err.path.appendleft(key)
@@ -165,25 +166,40 @@ def create(
                         fn_resolved_err,
                     )
 
+        _RESOLVE_MAX_YIELDS: int = 512
+
         def resolve_value(self, instance: Any) -> ResolutionResult:
             key, value = is_function(instance)
             if key in self.fn_resolvers:
+                count = 0
                 # There is no None in self.fn_resolvers
                 for r_value, r_validator, r_errs in self._resolve_fn(key, value):  # type: ignore
                     if not r_errs:
                         try:
-                            for _, region_context in r_validator.context.ref_value(
+                            region_validator = r_validator.evolve(
+                                context=r_validator.context.evolve(
+                                    resolve_pseudo_parameters=True
+                                )
+                            )
+                            for _, region_context in region_validator.context.ref_value(
                                 "AWS::Region"
                             ):
                                 if self.cfn.conditions.satisfiable(
                                     region_context.conditions.status,
                                     region_context.ref_values,
                                 ):
-                                    yield r_value, r_validator.evolve(
-                                        context=region_context.evolve(
-                                            is_resolved_value=True,
-                                        )
-                                    ), r_errs
+                                    count += 1
+                                    if count > self._RESOLVE_MAX_YIELDS:
+                                        return
+                                    yield (
+                                        r_value,
+                                        r_validator.evolve(
+                                            context=region_context.evolve(
+                                                is_resolved_value=True,
+                                            )
+                                        ),
+                                        r_errs,
+                                    )
                         except UnknownSatisfisfaction as err:
                             LOGGER.debug(err)
                             return
@@ -374,12 +390,14 @@ _standard_validators: dict[str, V] = {
     "dependentRequired": _keywords.dependentRequired,
     "dependentExcluded": _keywords.dependentExcluded,
     "enum": _keywords.enum,
+    "enumCaseInsensitive": _keywords.enumCaseInsensitive,
     "exclusiveMaximum": _keywords.exclusiveMaximum,
     "exclusiveMinimum": _keywords.exclusiveMinimum,
     "format": _keywords.format,
     "if": _keywords.if_,
     "items": _keywords.items,
     "maxItems": _keywords.maxItems,
+    "maxUniqueItems": _keywords.maxUniqueItems,
     "maxLength": _keywords.maxLength,
     "maxProperties": _keywords.maxProperties,
     "maximum": _keywords.maximum,
@@ -396,6 +414,7 @@ _standard_validators: dict[str, V] = {
     "properties": _keywords.properties,
     "propertyNames": _keywords.propertyNames,
     "required": _keywords.required,
+    "requiredOr": _keywords.requiredOr,
     "requiredXor": _keywords.requiredXor,
     "type": _keywords.type,
     "uniqueItems": _keywords.uniqueItems,
@@ -413,5 +432,7 @@ CfnTemplateValidator = create(
 
 StandardValidator = create(
     validators=_standard_validators,
-    function_filter=FunctionFilter(),
+    function_filter=FunctionFilter(
+        add_cfn_lint_keyword=False,
+    ),
 )

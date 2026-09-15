@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT-0
 
 from __future__ import annotations
 
+import dataclasses
 import datetime
 import fnmatch
 import gzip
@@ -18,8 +19,10 @@ import json
 import logging
 import os
 import sys
+import time
 from io import BytesIO
-from typing import Any, Sequence
+from typing import Any, Callable, Sequence, TypeVar
+from urllib.error import HTTPError
 from urllib.request import Request, urlopen, urlretrieve
 
 import regex as re
@@ -29,6 +32,7 @@ LOGGER = logging.getLogger(__name__)
 AVAILABILITY_ZONES = {
     "af-south-1": ["af-south-1a", "af-south-1b", "af-south-1c"],
     "ap-east-1": ["ap-east-1a", "ap-east-1b", "ap-east-1c"],
+    "ap-east-2": ["ap-east-2a", "ap-east-2b", "ap-east-2c"],
     "ap-northeast-1": [
         "ap-northeast-1a",
         "ap-northeast-1b",
@@ -55,6 +59,21 @@ AVAILABILITY_ZONES = {
         "ap-southeast-4a",
         "ap-southeast-4b",
         "ap-southeast-4c",
+    ],
+    "ap-southeast-5": [
+        "ap-southeast-5a",
+        "ap-southeast-5b",
+        "ap-southeast-5c",
+    ],
+    "ap-southeast-6": [
+        "ap-southeast-6a",
+        "ap-southeast-6b",
+        "ap-southeast-6c",
+    ],
+    "ap-southeast-7": [
+        "ap-southeast-7a",
+        "ap-southeast-7b",
+        "ap-southeast-7c",
     ],
     "ca-west-1": [
         "ca-west-1a",
@@ -92,6 +111,7 @@ AVAILABILITY_ZONES = {
         "me-central-1b",
         "me-central-1c",
     ],
+    "mx-central-1": ["mx-central-1a", "mx-central-1b", "mx-central-1c"],
     "sa-east-1": ["sa-east-1a", "sa-east-1b", "sa-east-1c"],
     "us-east-1": [
         "us-east-1a",
@@ -106,6 +126,15 @@ AVAILABILITY_ZONES = {
     "us-gov-west-1": ["us-gov-west-1a", "us-gov-west-1b", "us-gov-west-1c"],
     "us-west-1": ["us-west-1a", "us-west-1c"],
     "us-west-2": ["us-west-2a", "us-west-2b", "us-west-2c", "us-west-2d"],
+    # Isolated regions
+    "us-iso-east-1": ["us-iso-east-1a", "us-iso-east-1b", "us-iso-east-1c"],
+    "us-iso-west-1": ["us-iso-west-1a", "us-iso-west-1b", "us-iso-west-1c"],
+    "us-isob-east-1": ["us-isob-east-1a", "us-isob-east-1b", "us-isob-east-1c"],
+    "us-isob-west-1": ["us-isob-west-1a", "us-isob-west-1b", "us-isob-west-1c"],
+    "us-isof-east-1": ["us-isof-east-1a", "us-isof-east-1b", "us-isof-east-1c"],
+    "us-isof-south-1": ["us-isof-south-1a", "us-isof-south-1b", "us-isof-south-1c"],
+    "eu-isoe-west-1": ["eu-isoe-west-1a", "eu-isoe-west-1b", "eu-isoe-west-1c"],
+    "eusc-de-east-1": ["eusc-de-east-1a", "eusc-de-east-1b", "eusc-de-east-1c"],
 }
 
 REGIONS = list(AVAILABILITY_ZONES.keys())
@@ -126,12 +155,15 @@ REGEX_IPV6 = re.compile(
     r"^(((?=.*(::))(?!.*\3.+\3))\3?|[\dA-F]{1,4}:)([\dA-F]{1,4}(\3|:\b)|\2){5}(([\dA-F]{1,4}(\3|:\b|$)|\2){2}|(((2[0-4]|1\d|[1-9])?\d|25[0-5])\.?\b){4})\Z",
     re.I | re.S,
 )
-REGEX_DYN_REF = re.compile(r"^.*{{\s*(resolve:.+)\s*}}.*$")
+REGEX_DYN_REF = re.compile(r"^.*{{(resolve:.+)}}.*$")
+REGEX_DYN_REF_SPACES = re.compile(
+    r"\{\{\s+resolve\s*:\s*(?:ssm|ssm-secure|secretsmanager)\s*:"
+)
 REGEX_DYN_REF_SSM = re.compile(r"^.*{{resolve:ssm:[a-zA-Z0-9_\.\-/]+(:\d+)?}}.*$")
 REGEX_DYN_REF_SSM_SECURE = re.compile(
     r"^.*{{resolve:ssm-secure:[a-zA-Z0-9_\.\-/]+(:\d+)?}}.*$"
 )
-REGEX_SUB_PARAMETERS = re.compile(r"\${([^!].*?)}")
+REGEX_SUB_PARAMETERS = re.compile(r"\${\s*([^!\s].*?)\s*}")
 
 FUNCTIONS = frozenset(
     [
@@ -142,6 +174,7 @@ FUNCTIONS = frozenset(
         "Fn::ForEach::[a-zA-Z0-9]+",
         "Fn::GetAtt",
         "Fn::GetAZs",
+        "Fn::GetStackOutput",
         "Fn::If",
         "Fn::ImportValue",
         "Fn::Join",
@@ -180,10 +213,32 @@ FUNCTION_OR = "Fn::Or"
 FUNCTION_NOT = "Fn::Not"
 FUNCTION_EQUALS = "Fn::Equals"
 FUNCTION_BASE64 = "Fn::Base64"
+FUNCTION_CONTAINS = "Fn::Contains"
+FUNCTION_EACH_MEMBER_EQUALS = "Fn::EachMemberEquals"
+FUNCTION_EACH_MEMBER_IN = "Fn::EachMemberIn"
+FUNCTION_REF_ALL = "Fn::RefAll"
+FUNCTION_VALUE_OF = "Fn::ValueOf"
+FUNCTION_VALUE_OF_ALL = "Fn::ValueOfAll"
 FUNCTION_FOR_EACH = re.compile(r"^Fn::ForEach::[a-zA-Z0-9]+$")
+FUNCTION_TRANSFORM = "Fn::Transform"
 
 FUNCTION_CONDITIONS = frozenset(
     [FUNCTION_AND, FUNCTION_OR, FUNCTION_NOT, FUNCTION_EQUALS]
+)
+
+FUNCTION_RULES = frozenset(
+    [
+        FUNCTION_AND,
+        FUNCTION_OR,
+        FUNCTION_NOT,
+        FUNCTION_EQUALS,
+        FUNCTION_CONTAINS,
+        FUNCTION_EACH_MEMBER_EQUALS,
+        FUNCTION_EACH_MEMBER_IN,
+        FUNCTION_REF_ALL,
+        FUNCTION_VALUE_OF,
+        FUNCTION_VALUE_OF_ALL,
+    ]
 )
 
 FUNCTIONS_ALL = frozenset.union(
@@ -322,11 +377,12 @@ VALID_PARAMETER_TYPES = list(VALID_PARAMETER_TYPES_SINGLE) + list(
     VALID_PARAMETER_TYPES_LIST
 )
 
-BOOLEAN_STRINGS_TRUE = frozenset(["true", "True"])
-BOOLEAN_STRINGS_FALSE = frozenset(["false", "False"])
+BOOLEAN_STRINGS_TRUE = frozenset(["true", "True", "TRUE"])
+BOOLEAN_STRINGS_FALSE = frozenset(["false", "False", "FALSE"])
 BOOLEAN_STRINGS = frozenset(list(BOOLEAN_STRINGS_TRUE) + list(BOOLEAN_STRINGS_FALSE))
 
 TRANSFORM_SAM = "AWS::Serverless-2016-10-31"
+TRANSFORM_LANGUAGE_EXTENSION = "AWS::LanguageExtensions"
 
 
 # pylint: disable=missing-class-docstring
@@ -356,13 +412,83 @@ class RegexDict(dict):
             return default
 
 
+def get_cache_dir() -> str:
+    """Returns the platform-appropriate cache directory for cfn-lint.
+
+    Uses AWS-standard paths:
+        Linux:   ~/.cache/aws/cfn-lint/schemas/
+        macOS:   ~/Library/Caches/aws/cfn-lint/schemas/
+        Windows: %LOCALAPPDATA%/aws/cfn-lint/schemas/
+    """
+    if sys.platform == "win32":
+        base = os.environ.get("LOCALAPPDATA", os.path.expanduser("~\\AppData\\Local"))
+    elif sys.platform == "darwin":
+        base = os.path.expanduser("~/Library/Caches")
+    else:
+        base = os.environ.get("XDG_CACHE_HOME", os.path.expanduser("~/.cache"))
+
+    return os.path.join(base, "aws", "cfn-lint", "schemas")
+
+
 def get_metadata_filename(url):
     """Returns the filename for a metadata file associated with a remote resource"""
-    caching_dir = os.path.join(os.path.dirname(__file__), "data", "DownloadsMetadata")
+    caching_dir = os.path.join(get_cache_dir(), "metadata")
     encoded_url = hashlib.sha256(url.encode()).hexdigest()
     metadata_filename = os.path.join(caching_dir, encoded_url + ".meta.json")
 
     return metadata_filename
+
+
+# Schema specs are downloaded from GitHub release assets served through a CDN
+# that intermittently resets connections under load ("Remote end closed
+# connection without response"). A single reset would otherwise fail the whole
+# `--update-specs` run, so transient network errors are retried with backoff.
+_URL_RETRY_ATTEMPTS = 3
+_URL_RETRY_BASE_DELAY = 0.5
+
+_T = TypeVar("_T")
+
+
+def _is_retryable_url_error(exc: OSError) -> bool:
+    """Return True for transient network errors worth retrying.
+
+    Deterministic HTTP client errors (4xx other than 429) are not retried;
+    429, 5xx, connection resets, and timeouts are.
+    """
+    if isinstance(exc, HTTPError):
+        return exc.code == 429 or exc.code >= 500
+    # URLError, ConnectionError (incl. RemoteDisconnected / ConnectionReset),
+    # and socket timeouts are all OSError subclasses.
+    return True
+
+
+def _retry_url_operation(operation: Callable[[], _T], description: str) -> _T:
+    """Run a network operation, retrying transient failures with backoff.
+
+    Args:
+        operation: A zero-argument callable that performs the network request.
+        description: Human-readable description used in retry log messages.
+    Returns:
+        Whatever ``operation`` returns on the first successful attempt.
+    """
+    delay = _URL_RETRY_BASE_DELAY
+    for attempt in range(1, _URL_RETRY_ATTEMPTS + 1):
+        try:
+            return operation()
+        except OSError as exc:
+            if attempt >= _URL_RETRY_ATTEMPTS or not _is_retryable_url_error(exc):
+                raise
+            LOGGER.warning(
+                "Transient error while %s (attempt %d/%d): %s; retrying in %.1fs",
+                description,
+                attempt,
+                _URL_RETRY_ATTEMPTS,
+                exc,
+                delay,
+            )
+            time.sleep(delay)
+            delay *= 2
+    raise RuntimeError("unreachable retry state")  # pragma: no cover
 
 
 def url_has_newer_version(url):
@@ -386,7 +512,8 @@ def url_has_newer_version(url):
     try:
         # Make an initial HEAD request
         req = Request(url, method="HEAD")
-        with urlopen(req) as res:
+        response = _retry_url_operation(lambda: urlopen(req), f"checking {url}")
+        with response as res:
             # If we have an ETag value stored and it matches the returned one,
             # then we already have a copy of the most recent version of the
             # resource, so don't bother fetching it again
@@ -414,7 +541,8 @@ def url_has_newer_version(url):
 def get_url_content(url, caching=False):
     """Get the contents of a spec file"""
 
-    with urlopen(url) as res:
+    response = _retry_url_operation(lambda: urlopen(url), f"fetching {url}")
+    with response as res:
         if caching and res.info().get("ETag"):
             metadata_filename = get_metadata_filename(url)
             # Load in all existing values
@@ -434,29 +562,34 @@ def get_url_content(url, caching=False):
     return content
 
 
-def get_url_retrieve(url: str, caching: bool = False) -> str:
-    """Get the contents of a zip file and returns
-    a string representing the file
+def get_url_metadata(url: str) -> tuple[dict[str, Any], str] | None:
+    """Get updated cache metadata for a URL without persisting it."""
+    req = Request(url, method="HEAD")
+    with urlopen(req) as res:
+        etag = res.info().get("ETag")
+        if not etag:
+            return None
+
+        metadata_filename = get_metadata_filename(url)
+        metadata = load_metadata(metadata_filename)
+        metadata["etag"] = etag
+        metadata["url"] = url
+        return metadata, metadata_filename
+
+
+def get_url_retrieve(url: str) -> str:
+    """Download a URL with retries and return the local file path.
 
     Args:
         url (str): The url to retrieve
-        caching (bool): If we can cache the results (default: False)
     Returns:
         str: A string representing the file object that was retrieved
     """
 
-    if caching:
-        req = Request(url, method="HEAD")
-        with urlopen(req) as res:
-            if res.info().get("ETag"):
-                metadata_filename = get_metadata_filename(url)
-                # Load in all existing values
-                metadata = load_metadata(metadata_filename)
-                metadata["etag"] = res.info().get("ETag")
-                metadata["url"] = url  # To make it obvious which url the Tag relates to
-                save_metadata(metadata, metadata_filename)
-
-    fileobject, _ = urlretrieve(url)
+    fileobject, _ = _retry_url_operation(
+        lambda: urlretrieve(url),
+        f"downloading {url}",
+    )
 
     return fileobject
 
@@ -473,8 +606,7 @@ def load_metadata(filename):
 def save_metadata(metadata, filename):
     """Save the contents of the download metadata file"""
     dirname = os.path.dirname(filename)
-    if not os.path.exists(dirname):
-        os.mkdir(dirname)
+    os.makedirs(dirname, exist_ok=True)
 
     with open(filename, "w", encoding="utf-8") as metadata_file:
         json.dump(metadata, metadata_file)
@@ -486,14 +618,11 @@ def load_resource(package, filename="us-east-1.json"):
     :param filename: filename to load
     :return: Json output of the resource laoded
     """
-    if sys.version_info >= (3, 9):
-        return json.loads(
-            pkg_resources.files(package)  # pylint: disable=no-member
-            .joinpath(filename)
-            .read_text(encoding="utf-8")
-        )
-    # pylint: disable=W4902
-    return json.loads(pkg_resources.read_text(package, filename, encoding="utf-8"))
+    return json.loads(
+        pkg_resources.files(package)  # pylint: disable=no-member
+        .joinpath(filename)
+        .read_text(encoding="utf-8")
+    )
 
 
 def is_custom_resource(resource_type):
@@ -596,6 +725,8 @@ def format_json_string(json_string):
         """Help convert date/time into strings"""
         if isinstance(o, datetime.datetime):
             return o.__str__()  # pylint: disable=unnecessary-dunder-call
+        elif dataclasses.is_dataclass(o):
+            return dataclasses.asdict(o)
 
     return json.dumps(
         json_string, indent=1, sort_keys=True, separators=(",", ": "), default=converter

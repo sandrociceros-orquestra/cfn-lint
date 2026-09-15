@@ -58,6 +58,32 @@
    "description": "custom rule file to use",
    "type": "string"
   },
+  "debug": {
+   "description": "Debug mode",
+   "type": "boolean"
+  },
+  "deployment_files": {
+   "items": {
+    "type": "string"
+   },
+   "type": "array"
+  },
+  "format": {
+   "description": "Output format",
+   "enum": [
+    "quiet",
+    "parseable",
+    "json",
+    "junit",
+    "pretty",
+    "sarif"
+   ],
+   "type": "string"
+  },
+  "ignore_bad_template": {
+   "description": "Ignore bad templates",
+   "type": "boolean"
+  },
   "ignore_checks": {
    "description": "List of checks to ignore",
    "items": {
@@ -79,6 +105,10 @@
    },
    "type": "array"
   },
+  "include_experimental": {
+   "description": "Include experimental rules",
+   "type": "boolean"
+  },
   "mandatory_checks": {
    "description": "List of mandatory checks to enforce",
    "items": {
@@ -90,6 +120,16 @@
    "description": "Merges lists between configuration layers",
    "type": "boolean"
   },
+  "non_zero_exit_code": {
+   "description": "Exit code will be non zero from the specified rule class and higher",
+   "enum": [
+    "informational",
+    "warning",
+    "error",
+    "none"
+   ],
+   "type": "string"
+  },
   "output_file": {
    "description": "Path to the file to write the main output to",
    "type": "string"
@@ -97,6 +137,20 @@
   "override_spec": {
    "description": "Path to spec file to override with",
    "type": "string"
+  },
+  "parameter_files": {
+   "description": "Path to spec file to override with",
+   "items": {
+    "type": "string"
+   },
+   "type": "array"
+  },
+  "parameters": {
+   "description": "Path to spec file to override with",
+   "items": {
+    "type": "object"
+   },
+   "type": "array"
   },
   "regions": {
    "description": "Regions to test against",
@@ -109,6 +163,22 @@
    "description": "One or more directories of CloudFormation Registry Resource Schemas",
    "items": {
     "type": "string"
+   },
+   "type": "array"
+  },
+  "template_parameters": {
+   "items": {
+    "patternProperties": {
+     "^.*$": {
+      "type": [
+       "string",
+       "integer",
+       "boolean",
+       "number"
+      ]
+     }
+    },
+    "type": "object"
    },
    "type": "array"
   },

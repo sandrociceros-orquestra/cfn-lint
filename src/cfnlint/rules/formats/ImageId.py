@@ -21,20 +21,23 @@ class ImageId(FormatKeyword):
     source_url = "https://github.com/aws-cloudformation/cfn-lint/blob/main/docs/format_keyword.md#AWS::EC2::Image.Id"
 
     def __init__(self):
-        super().__init__(format="AWS::EC2::Image.Id")
+        super().__init__(
+            format="AWS::EC2::Image.Id", pattern=r"^ami-([0-9a-z]{8}|[0-9a-z]{17})$"
+        )
 
     def format(self, validator: Validator, instance: Any) -> bool:
         if not isinstance(instance, str):
             return True
 
-        if validator.context.path.cfn_path_string == (
-            "Resources/AWS::EC2::LaunchTemplate/"
+        if (
+            validator.context.path.cfn_path_string
+            == "Resources/AWS::EC2::LaunchTemplate/"
             "Properties/LaunchTemplateData/ImageId"
         ):
             if instance.startswith("resolve:ssm"):
                 return True
 
-        if re.match(r"^ami-([0-9a-z]{8}|[0-9a-z]{17})$", instance):
+        if re.match(self.pattern, instance):
             return True
 
         return False
